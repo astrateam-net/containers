@@ -1,0 +1,8 @@
+/*
+!entrypoint.py
+!shutdown-wait.sh
+!shared-components/
+!shared-components/image/entrypoint_helpers.py
+!shared-components/support/
+!config/
+!config/*

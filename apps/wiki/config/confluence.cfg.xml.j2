@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<confluence-configuration>
+
+  <setupStep>{{ atl_setup_step | default('setupstart') }}</setupStep>
+  <setupType>{{ atl_setup_type | default('custom') }}</setupType>
+  <buildNumber>{{ atl_build_number | default('0') }}</buildNumber>
+
+  <properties>
+    <property name="confluence.database.connection.type">database-type-standard</property>
+    <property name="struts.multipart.saveDir">${localHome}/temp</property>
+    <property name="webwork.multipart.saveDir">${localHome}/temp</property>
+    <property name="attachments.dir">${confluenceHome}/attachments</property>
+    <property name="lucene.index.dir">{{ atl_lucene_index_dir | default('${confluenceHome}/index') }}</property>
+    {% if atl_product_server_id is defined %}
+    <property name="confluence.setup.server.id">{{ atl_product_server_id }}</property>
+    {% endif %}
+
+    {# We need mappings for "oracle12c" and "oracle" to remain backwards compatible with Confluence 7.3.0 and earlier. Oracle 19c support was added in Confluence 7.3.1 and changed the database type name for oracle databases from "oracle12c" to "oracle" #}
+    {% if atl_jdbc_url is defined %}
+      {% set databases =  {
+           "mysql": ["com.mysql.jdbc.Driver", "MySQLDialect"],
+           "postgresql": ["org.postgresql.Driver", "PostgreSQLDialect"],
+           "mssql": ["com.microsoft.sqlserver.jdbc.SQLServerDriver", "SQLServerDialect"],
+           "oracle12c": ["oracle.jdbc.driver.OracleDriver", "OracleDialect"],
+           "oracle": ["oracle.jdbc.driver.OracleDriver", "OracleDialect"]
+          } %}
+      <property name="confluence.database.choice">{{ atl_db_type }}</property>
+
+      <property name="hibernate.connection.url">{% if "&amp;" in atl_jdbc_url %}{{ atl_jdbc_url }}{% else %}{{ atl_jdbc_url | replace("&", "&amp;") }}{% endif %}</property>
+      <property name="hibernate.connection.username">{{ atl_jdbc_user }}</property>
+      {% if atl_jdbc_secret_class is defined %}
+      <property name="jdbc.password.decrypter.classname">{{ atl_jdbc_secret_class }}</property>
+      {% endif %}
+      <property name="hibernate.connection.password">{{ atl_jdbc_password }}</property>
+      <property name="hibernate.connection.driver_class">{{ databases[atl_db_type][0] }}</property>
+      <property name="hibernate.connection.autocommit">{{ atl_db_connection_autocommit | default('false') }}</property>
+      <property name="hibernate.connection.isolation">{{ atl_db_connection_isolation | default('2') }}</property>
+      <property name="hibernate.dialect">com.atlassian.confluence.impl.hibernate.dialect.{{ databases[atl_db_type][1] }}</property>
+
+      {# Confluence versions 7.13 and newer #}
+      {% if (confluence_version.split(".")[0] | int() == 7 and confluence_version.split(".")[1] | int() <= 13) or confluence_version.split(".")[0] | int() < 7 %}
+      <property name="hibernate.c3p0.min_size">{{ atl_db_poolminsize | default('20') }}</property>
+      <property name="hibernate.c3p0.max_size">{{ atl_db_poolmaxsize | default('100') }}</property>
+      <property name="hibernate.c3p0.timeout">{{ atl_db_timeout | default('30') }}</property>
+      <property name="hibernate.c3p0.idle_test_period">{{ atl_db_idletestperiod | default('100') }}</property>
+      <property name="hibernate.c3p0.max_statements">{{ atl_db_maxstatements | default('0') }}</property>
+      <property name="hibernate.c3p0.validate">{{ atl_db_validate | default('true') }}</property>
+      <property name="hibernate.c3p0.acquire_increment">{{ atl_db_acquireincrement | default('1') }}</property>
+      {% if atl_db_validationquery is defined %}
+      <property name="hibernate.c3p0.preferredTestQuery">{{ atl_db_validationquery }}</property>
+      {% endif %}
+      {% else %}
+      <property name="hibernate.hikari.idleTimeout">{{ (atl_db_timeout | default(30) | int) * 1000 }}</property>
+      <property name="hibernate.hikari.maximumPoolSize">{{ atl_db_poolmaxsize | default('100') }}</property>
+      <property name="hibernate.hikari.minimumIdle">{{ atl_db_poolminsize | default('20') }}</property>
+      <property name="hibernate.hikari.registerMbeans">true</property>
+      <property name="hibernate.connection.provider_class">{{ atl_db_provider_class | default('com.atlassian.confluence.impl.hibernate.DelegatingHikariConnectionProvider') }}</property>
+      <property name="spring.datasource.hikari.registerMbeans">{{ atl_db_datasource_hikari_register_mbeans | default('true') }}</property>
+      {% endif %}
+
+    {% endif %}
+
+    {% if atl_cluster_type is defined %}
+      <property name="confluence.cluster">true</property>
+      <property name="confluence.cluster.name">{{ atl_cluster_name }}</property>
+      <property name="confluence.cluster.node.name">{{ atl_cluster_node_name }}</property>
+      {% if atl_cluster_interface is defined %}
+      <property name="confluence.cluster.interface">{{ atl_cluster_interface }}</property>
+      {% endif %}
+      <property name="confluence.cluster.home">{{ atl_product_home_shared | default(confluence_shared_home) | default('') }}</property>
+      <property name="shared-home">{{ atl_product_home_shared | default(confluence_shared_home) | default('') }}</property>
+
+      <property name="confluence.cluster.join.type">{{ atl_cluster_type }}</property>
+      {% if atl_cluster_type == 'aws' %}
+        <property name="confluence.cluster.aws.iam.role">{{ atl_hazelcast_network_aws_iam_role }}</property>
+        <property name="confluence.cluster.aws.region">{{ atl_hazelcast_network_aws_iam_region }}</property>
+        <property name="confluence.cluster.aws.host.header">{{ atl_hazelcast_network_aws_host_header }}</property>
+        <property name="confluence.cluster.aws.security.group.name">{{ atl_hazelcast_network_aws_security_group }}</property>
+        <property name="confluence.cluster.aws.tag.key">{{ atl_hazelcast_network_aws_tag_key }}</property>
+        <property name="confluence.cluster.aws.tag.value">{{ atl_hazelcast_network_aws_tag_value }}</property>
+        <property name="confluence.cluster.ttl">{{ atl_cluster_ttl }}</property>
+
+      {% elif atl_cluster_type == 'tcp_ip' %}
+        <property name="confluence.cluster.peers">{{ atl_cluster_peers }}</property>
+
+      {% elif atl_cluster_type == 'multicast' %}
+        <property name="confluence.cluster.address">{{ atl_cluster_address }}</property>
+        <property name="confluence.cluster.ttl">{{ atl_cluster_ttl }}</property>
+
+      {% endif %}
+
+    {% endif %}
+
+    {% if atl_license_key is defined %}
+      <property name="atlassian.license.message">{{ atl_license_key }}</property>
+    {% endif %}
+
+    {% if atl_tomcat_contextpath is defined and atl_tomcat_contextpath != '' %}
+    {% set context_path = atl_tomcat_contextpath if atl_tomcat_contextpath.startswith('/') else '/' + atl_tomcat_contextpath %}
+    <property name="confluence.webapp.context.path">{{ context_path }}</property>
+    {% endif %}
+
+    {% if atl_snapshot_used is defined %}
+      <property name="hibernate.setup">true</property>
+    {% endif %}
+
+    {# Confluence versions 9.1 and newer #}
+    {% if (confluence_version.split(".")[0] | int() == 9 and confluence_version.split(".")[1] | int() >= 1) or confluence_version.split(".")[0] | int() > 9 %}
+      <property name="secure.properties">true</property>
+    {% endif %}
+    {% set os_props = {
+      "search.platform": atl_search_platform,
+      "opensearch.http.url": atl_opensearch_http_url,
+      "opensearch.username": atl_opensearch_username,
+      "opensearch.password": atl_opensearch_password
+    } %}
+    {% for name, value in os_props.items() %}
+      {% if value is defined and value != '' %}
+      <property name="{{ name }}">{{ value | replace("&", "&amp;") }}</property>
+      {% endif %}
+    {% endfor %}
+    {% if atl_confluence_cfg_additional_properties is defined and atl_confluence_cfg_additional_properties != '' %}
+      {% set additional_props_list = atl_confluence_cfg_additional_properties.split(',') %}
+      {% for prop in additional_props_list %}
+        {% set kv = prop.split('=') %}
+        {% if kv|length == 2 %}
+          <property name="{{ kv[0]|trim }}">{{ kv[1]|trim }}</property>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </properties>
+</confluence-configuration>
