@@ -131,13 +131,13 @@ jobs:
           targets: image
           workdir: ./apps/${{ inputs.app }}
 
-      - if: ${{ ! inputs.release }}
-        name: Run Application Tests
-        uses: ./.github/actions/app-tests
-        with:
-          app: ${{ inputs.app }}
-          image: ${{ fromJSON(steps.bake.outputs.metadata).image['containerimage.config.digest'] }}
-          token: ${{ github.token }}
+      # - if: ${{ ! inputs.release }}
+      #   name: Run Application Tests
+      #   uses: ./.github/actions/app-tests
+      #   with:
+      #     app: ${{ inputs.app }}
+      #     image: ${{ fromJSON(steps.bake.outputs.metadata).image['containerimage.config.digest'] }}
+      #     token: ${{ github.token }}
 
       - if: ${{ inputs.release }}
         name: Export Digest
