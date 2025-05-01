@@ -3,6 +3,11 @@ set -Eeuo pipefail
 
 APP="${1:?}"
 
+if [[ ! -f "./apps/${APP}/tests.yaml" ]]; then
+    echo "No test file found for ${APP}, skipping setup."
+    exit 0
+fi
+
 if yq --exit-status '.schemaVersion' "./apps/${APP}/tests.yaml" &>/dev/null; then
     gh release download --repo GoogleContainerTools/container-structure-test --pattern "*-linux-$(dpkg --print-architecture)" --output /usr/local/bin/container-structure-test
     chmod +x /usr/local/bin/container-structure-test

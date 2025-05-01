@@ -4,6 +4,12 @@ set -Eeuo pipefail
 APP="${1:?}"
 IMAGE="${2:?}"
 
+
+if [[ ! -f "./apps/${APP}/tests.yaml" ]]; then
+    echo "No test file found for ${APP}, skipping tests."
+    exit 0
+fi
+
 if [[ -x "$(command -v container-structure-test)" ]]; then
     container-structure-test test --image "${IMAGE}" --config "./apps/${APP}/tests.yaml"
 elif [[ -x "$(command -v goss)" && -x "$(command -v dgoss)" ]]; then
