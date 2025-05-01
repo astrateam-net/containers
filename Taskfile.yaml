@@ -1,0 +1,104 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: '3'
+
+set: [pipefail]
+shopt: [globstar]
+
+vars:
+  BIN_DIR: '{{.ROOT_DIR}}/.bin'
+
+tasks:
+
+  default:
+    cmd: task --list
+    silent: true
+
+  init:
+    desc: Initialize the project
+    cmds:
+      - mkdir -p {{.BIN_DIR}}/{goss,dgoss}
+      - gh release download --repo goss-org/goss --skip-existing --pattern "*-linux-{{ARCH}}" --output {{.BIN_DIR}}/goss/goss
+      - gh release download --repo goss-org/goss --skip-existing --pattern "dgoss" --output {{.BIN_DIR}}/goss/dgoss
+      - chmod +x {{.BIN_DIR}}/goss/goss {{.BIN_DIR}}/dgoss/dgoss
+    preconditions:
+      - which gh
+
+  local-build-*:
+    desc: Build and Test an app via Docker Buildx
+    dir: '{{.ROOT_DIR}}/apps/{{.APP}}'
+    cmds:
+      - docker buildx bake --metadata-file docker-bake.json --load
+      - |
+        IMAGE=$(jq --raw-output '."image-local"."image.name"' docker-bake.json)
+        case "{{.TEST_TOOL}}" in
+            "cst")
+                container-structure-test test --image "${IMAGE}" --config tests.yaml
+                ;;
+            "goss")
+                {{.ROOT_DIR}}/.bin/dgoss/dgoss run "${IMAGE}"
+                ;;
+        esac
+      - defer: rm -f docker-bake.json
+    env:
+      GOSS_FILE: tests.yaml
+      GOSS_OPTS: --retry-timeout 60s --sleep 1s
+      GOSS_PATH: '{{.BIN_DIR}}/goss/goss'
+    vars:
+      APP: '{{index .MATCH 0}}'
+      TEST_TOOL:
+        sh: yq --exit-status '.schemaVersion' {{.ROOT_DIR}}/apps/{{.APP}}/tests.yaml &>/dev/null && echo "cst" || echo "goss"
+    preconditions:
+      - test -f {{.ROOT_DIR}}/apps/{{.APP}}/docker-bake.hcl
+      - test -f {{.ROOT_DIR}}/apps/{{.APP}}/tests.yaml
+      - test -f {{.ROOT_DIR}}/apps/{{.APP}}/Dockerfile
+      - which container-structure-test docker gh jq yq
+
+  remote-build-*:
+    desc: Build and Test an app via GitHub Actions
+    cmds:
+      - gh workflow run release.yaml -f app={{.APP}} -f release={{.RELEASE}}
+    vars:
+      APP: '{{index .MATCH 0}}'
+      RELEASE: '{{.RELEASE | default "false"}}'
+    preconditions:
+      - gh auth status
+      - test -f {{.ROOT_DIR}}/.github/workflows/release.yaml
+      - which gh
+
+  generate-app-labels:
+    desc: Generate app labels in the labels config file
+    cmds:
+      - for: { var: apps }
+        cmd: |
+          yq --inplace '. += [{"name": "app/{{.ITEM}}", "color": "0e8a16"}]' {{.ROOT_DIR}}/.github/labels.yaml
+    vars:
+      apps:
+        sh: ls --directory {{.ROOT_DIR}}/apps/*/ | xargs --max-args=1 basename
+    preconditions:
+      - sh: '[[ -z {{.CLI_FORCE}} ]]'
+
+  sync-from-upstream:
+    desc: Sync Confluence entrypoints and assets from upstream Atlassian repo
+    cmds:
+      - |
+        set -e
+        TMP_DIR=$(mktemp -d)
+        git clone --recurse-submodules https://bitbucket.org/atlassian-docker/docker-atlassian-confluence-server.git "$TMP_DIR"
+        # Copy entrypoint.py
+        cp "$TMP_DIR/entrypoint.py" {{.ROOT_DIR}}/apps/confluence/
+        # Copy shutdown-wait.sh
+        cp "$TMP_DIR/shutdown-wait.sh" {{.ROOT_DIR}}/apps/confluence/
+        # Copy shared-components/image/entrypoint_helpers.py
+        mkdir -p {{.ROOT_DIR}}/apps/confluence/shared-components/image
+        cp "$TMP_DIR/shared-components/image/entrypoint_helpers.py" {{.ROOT_DIR}}/apps/confluence/shared-components/image/
+        # Copy shared-components/support/*
+        mkdir -p {{.ROOT_DIR}}/apps/confluence/shared-components/support
+        cp -r "$TMP_DIR/shared-components/support/." {{.ROOT_DIR}}/apps/confluence/shared-components/support/
+        # Copy config/*
+        mkdir -p {{.ROOT_DIR}}/apps/confluence/config
+        cp -r "$TMP_DIR/config/." {{.ROOT_DIR}}/apps/confluence/config/
+        # Clean up
+        rm -rf "$TMP_DIR"
+    preconditions:
+      - which git

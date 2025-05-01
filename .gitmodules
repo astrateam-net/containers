@@ -1,0 +1,6 @@
+[submodule "apps/confluence/assets"]
+	path = apps/confluence/assets
+	url = https://bitbucket.org/atlassian-docker/docker-atlassian-confluence-server.git
+[submodule "apps/jira/assets"]
+	path = apps/jira/assets
+	url = https://bitbucket.org/atlassian-docker/docker-atlassian-jira.git
