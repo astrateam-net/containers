@@ -78,7 +78,7 @@ tasks:
     preconditions:
       - sh: '[[ -z {{.CLI_FORCE}} ]]'
 
-  sync-from-upstream:
+  sync-wiki-upstream:
     desc: Sync Confluence entrypoints and assets from upstream Atlassian repo
     cmds:
       - |
@@ -98,6 +98,31 @@ tasks:
         # Copy config/*
         mkdir -p {{.ROOT_DIR}}/apps/wiki/config
         cp -r "$TMP_DIR/config/." {{.ROOT_DIR}}/apps/wiki/config/
+        # Clean up
+        rm -rf "$TMP_DIR"
+    preconditions:
+      - which git
+
+  sync-agile-upstream:
+    desc: Sync Jira entrypoints and assets from upstream Atlassian repo
+    cmds:
+      - |
+        set -e
+        TMP_DIR=$(mktemp -d)
+        git clone --recurse-submodules https://bitbucket.org/atlassian-docker/docker-atlassian-jira.git "$TMP_DIR"
+        # Copy entrypoint.py
+        cp "$TMP_DIR/entrypoint.py" {{.ROOT_DIR}}/apps/agile/
+        # Copy shutdown-wait.sh
+        cp "$TMP_DIR/shutdown-wait.sh" {{.ROOT_DIR}}/apps/agile/
+        # Copy shared-components/image/entrypoint_helpers.py
+        mkdir -p {{.ROOT_DIR}}/apps/agile/shared-components/image
+        cp "$TMP_DIR/shared-components/image/entrypoint_helpers.py" {{.ROOT_DIR}}/apps/agile/shared-components/image/
+        # Copy shared-components/support/*
+        mkdir -p {{.ROOT_DIR}}/apps/agile/shared-components/support
+        cp -r "$TMP_DIR/shared-components/support/." {{.ROOT_DIR}}/apps/agile/shared-components/support/
+        # Copy config/*
+        mkdir -p {{.ROOT_DIR}}/apps/agile/config
+        cp -r "$TMP_DIR/config/." {{.ROOT_DIR}}/apps/agile/config/
         # Clean up
         rm -rf "$TMP_DIR"
     preconditions:

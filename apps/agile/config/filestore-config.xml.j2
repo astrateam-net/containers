@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<filestore-config>
+  <filestores>
+    {% if (atl_s3avatars_bucket_name is defined and atl_s3avatars_bucket_name == atl_s3attachments_bucket_name) or (atl_s3backups_bucket_name is defined and atl_s3backups_bucket_name == atl_s3avatars_bucket_name) -%}
+    <s3-filestore id="jiraBucket">
+      <config>
+        <bucket-name>{{ atl_s3avatars_bucket_name }}</bucket-name>
+        <region>{{ atl_s3avatars_region }}</region>
+        {% if atl_s3avatars_endpoint_override -%}
+        <endpoint-override>{{ atl_s3avatars_endpoint_override }}</endpoint-override>
+        {% endif -%}
+      </config>
+    </s3-filestore>
+    {% else -%}
+    {% if atl_s3avatars_bucket_name and atl_s3avatars_region -%}
+    <s3-filestore id="avatarBucket">
+      <config>
+        <bucket-name>{{ atl_s3avatars_bucket_name }}</bucket-name>
+        <region>{{ atl_s3avatars_region }}</region>
+        {% if atl_s3avatars_endpoint_override -%}
+        <endpoint-override>{{ atl_s3avatars_endpoint_override }}</endpoint-override>
+        {% endif -%}
+      </config>
+    </s3-filestore>
+    {% endif -%}
+    {% if atl_s3attachments_bucket_name and atl_s3attachments_region -%}
+    <s3-filestore id="attachmentBucket">
+      <config>
+        <bucket-name>{{ atl_s3attachments_bucket_name }}</bucket-name>
+        <region>{{ atl_s3attachments_region }}</region>
+        {% if atl_s3attachments_endpoint_override -%}
+        <endpoint-override>{{ atl_s3attachments_endpoint_override }}</endpoint-override>
+        {% endif -%}
+      </config>
+    </s3-filestore>
+    {% endif -%}
+    {% if atl_s3backups_bucket_name and atl_s3backups_region -%}
+    <s3-filestore id="backupsBucket">
+      <config>
+        <bucket-name>{{ atl_s3backups_bucket_name }}</bucket-name>
+        <region>{{ atl_s3backups_region }}</region>
+        {% if atl_s3backups_endpoint_override -%}
+        <endpoint-override>{{ atl_s3backups_endpoint_override }}</endpoint-override>
+        {% endif -%}
+      </config>
+    </s3-filestore>
+    {% endif -%}
+    {% endif -%}
+  </filestores>
+  <associations>
+    {% if atl_s3avatars_bucket_name is defined and atl_s3avatars_bucket_name == atl_s3attachments_bucket_name and atl_s3backups_bucket_name is defined and atl_s3backups_bucket_name == atl_s3avatars_bucket_name -%}
+    <association target="avatars" file-store="jiraBucket"/>
+    <association target="attachments" file-store="jiraBucket"/>
+    <association target="backups" file-store="jiraBucket" />
+    {% elif atl_s3avatars_bucket_name is defined and atl_s3avatars_bucket_name == atl_s3attachments_bucket_name %}
+    <association target="avatars" file-store="jiraBucket"/>
+    <association target="attachments" file-store="jiraBucket"/>
+    {% else -%}
+    {% if atl_s3avatars_bucket_name and atl_s3avatars_region -%}
+    <association target="avatars" file-store="avatarBucket"/>
+    {% endif -%}
+    {% if atl_s3attachments_bucket_name and atl_s3attachments_region -%}
+    <association target="attachments" file-store="attachmentBucket"/>
+    {% endif -%}
+    {% if atl_s3backups_bucket_name and atl_s3backups_region -%}
+    <association target="backups" file-store="backupsBucket" />
+    {% endif -%}
+    {% endif -%}
+  </associations>
+</filestore-config>

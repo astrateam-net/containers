@@ -1,0 +1,11 @@
+jira.node.id={{ jira_node_id | default(container_id) | default(uuid) }}
+jira.shared.home={{ jira_shared_home | default(jira_home+'/shared') }}
+{% if ehcache_peer_discovery is defined %}ehcache.peer.discovery={{ ehcache_peer_discovery }}{% else %}# ehcache.peer.discovery={% endif %}
+{% if ehcache_listener_hostname is defined %}ehcache.listener.hostName={{ ehcache_listener_hostname }}{% else %}# ehcache.listener.hostName={% endif %}
+{% if ehcache_object_port is defined %}ehcache.object.port={{ ehcache_object_port }}{% else %}# ehcache.object.port={% endif %}
+{% if ehcache_listener_port is defined %}ehcache.listener.port={{ ehcache_listener_port }}{% else %}# ehcache.listener.port={% endif %}
+{% if ehcache_listener_sockettimeoutmillis is defined %}ehcache.listener.socketTimeoutMillis={{ ehcache_listener_sockettimeoutmillis }}{% else %}# ehcache.listener.socketTimeoutMillis={% endif %}
+{% if ehcache_multicast_address is defined %}ehcache.multicast.address={{ ehcache_multicast_address }}{% else %}# ehcache.multicast.address={% endif %}
+{% if ehcache_multicast_port is defined %}ehcache.multicast.port={{ ehcache_multicast_port }}{% else %}# ehcache.multicast.port={% endif %}
+{% if ehcache_multicast_timetolive is defined %}ehcache.multicast.timeToLive={{ ehcache_multicast_timetolive }}{% else %}# ehcache.multicast.timeToLive={% endif %}
+{% if ehcache_multicast_hostname is defined %}ehcache.multicast.hostName={{ ehcache_multicast_hostname }}{% else %}# ehcache.multicast.hostName={% endif %}

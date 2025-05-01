@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<jira-database-config>
+  <name>defaultDS</name>
+  <delegator-name>default</delegator-name>
+  {% set schema_names = {
+    "mssql": "dbo",
+    "mysql": "",
+    "mysql57": "",
+    "mysql8": "",
+    "oracle10g": "",
+    "postgres72": "public",
+    "postgresaurora96": "public",
+  } %}
+  <schema-name>{{ atl_db_schema_name | default(schema_names.get(atl_db_type, '')) }}</schema-name>
+  <database-type>{{ atl_db_type }}</database-type>
+  <jdbc-datasource>
+    <url>{{ atl_jdbc_url }}</url>
+    <username>{{ atl_jdbc_user }}</username>
+    {% if atl_jdbc_secret_class is defined and atl_jdbc_secret_class != "" %}
+    <atlassian-password-cipher-provider>{{ atl_jdbc_secret_class }}</atlassian-password-cipher-provider>
+    {% endif -%}
+    <password>{{ atl_jdbc_password }}</password>
+    <driver-class>{{ atl_db_driver }}</driver-class>
+    {% if 'postgres' in atl_db_type %}
+      <connection-properties>tcpKeepAlive={{ atl_db_keepalive | default('true') }};socketTimeout={{ atl_db_sockettimeout | default('240') }}</connection-properties>
+    {% endif %}
+
+    <pool-min-size>{{ atl_db_poolminsize | default('20') }}</pool-min-size>
+    <pool-max-size>{{ atl_db_poolmaxsize | default('100') }}</pool-max-size>
+    <pool-min-idle>{{ atl_db_minidle | default('10') }}</pool-min-idle>
+    <pool-max-idle>{{ atl_db_maxidle | default('20') }}</pool-max-idle>
+
+    <pool-max-wait>{{ atl_db_maxwaitmillis | default('30000') }}</pool-max-wait>
+    <validation-query>{{ atl_db_validationquery | default('select 1') }}</validation-query>
+    {% if atl_db_type in ['mysql', 'mysql57', 'mysql8'] %}
+      <validation-query-timeout>{{ atl_db_validationquerytimeout | default('3') }}</validation-query-timeout>
+    {% endif %}
+    <time-between-eviction-runs-millis>{{ atl_db_timebetweenevictionrunsmillis | default('30000') }}</time-between-eviction-runs-millis>
+    <min-evictable-idle-time-millis>{{ atl_db_minevictableidletimemillis | default('5000') }}</min-evictable-idle-time-millis>
+    <pool-remove-abandoned>{{ atl_db_removeabandoned | default('true') }}</pool-remove-abandoned>
+    <pool-remove-abandoned-timeout>{{ atl_db_removeabandonedtimeout | default('300') }}</pool-remove-abandoned-timeout>
+    <pool-test-while-idle>{{ atl_db_testwhileidle | default('true') }}</pool-test-while-idle>
+    <pool-test-on-borrow>{{ atl_db_testonborrow | default('false') }}</pool-test-on-borrow>
+  </jdbc-datasource>
+</jira-database-config>
