@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 ARG VERSION
-FROM node:16-bullseye AS builder
+FROM node:18-bullseye AS builder
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ RUN yarn install && \
 WORKDIR /app
 RUN make console
 
-FROM node:16-bullseye-slim
+FROM node:18-bullseye-slim
 
 WORKDIR /app
 
