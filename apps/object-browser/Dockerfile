@@ -9,8 +9,8 @@ RUN git clone https://github.com/OpenMaxIO/openmaxio-object-browser . && \
     git checkout ${VERSION}
 
 WORKDIR /app/web-app
-RUN yarn install --frozen-lockfile
-RUN yarn build
+RUN yarn install && \
+    yarn build
 
 WORKDIR /app
 RUN make console
