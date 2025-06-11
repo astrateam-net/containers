@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=github-tags depName=openmaxio-object-browser/tags
-  default = "v2.0.1"
+  default = "v1.7.6"
 }
 
 variable "SOURCE" {
