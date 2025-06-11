@@ -27,7 +27,8 @@ RUN corepack enable && \
     corepack prepare yarn@4.4.0 --activate && \
     yarn install && \
     npx update-browserslist-db@latest && \
-    yarn build
+    yarn build && \
+    ls -la build/
 
 WORKDIR /app
 RUN make console
@@ -40,7 +41,7 @@ WORKDIR /app
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 COPY --from=builder /app/console /app/console
-COPY --from=builder /app/web-app/dist /app/web-app/dist
+COPY --from=builder /app/web-app/build /app/web-app/dist
 
 RUN chown -R appuser:appuser /app
 
