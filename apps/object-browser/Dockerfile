@@ -9,7 +9,9 @@ RUN git clone https://github.com/OpenMaxIO/openmaxio-object-browser . && \
     git checkout ${VERSION}
 
 WORKDIR /app/web-app
-RUN yarn install && \
+RUN corepack enable && \
+    corepack prepare yarn@4.4.0 --activate && \
+    yarn install && \
     yarn build
 
 WORKDIR /app
