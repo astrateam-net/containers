@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Clone and checkout specific version
 RUN git clone https://github.com/OpenMaxIO/openmaxio-object-browser . && \
-    git checkout ${VERSION}
+    git checkout v1.7.6
 
 # Build web-app
 WORKDIR /app/web-app
