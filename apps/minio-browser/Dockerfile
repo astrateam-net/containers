@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Go with multi-arch support
-RUN GO_VERSION=1.23.0 \
+RUN GO_VERSION=1.22.1 \
     && if [ "$TARGETARCH" = "amd64" ]; then GOARCH=amd64; else GOARCH=$TARGETARCH; fi \
     && curl -LO https://go.dev/dl/go${GO_VERSION}.linux-${GOARCH}.tar.gz \
     && rm -rf /usr/local/go && tar -C /usr/local -xzf go${GO_VERSION}.linux-${GOARCH}.tar.gz \
@@ -50,4 +50,4 @@ USER appuser
 
 EXPOSE 9090
 
-CMD ["./console", "server"]
+CMD ["./console", "server"] 
