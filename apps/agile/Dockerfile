@@ -22,8 +22,7 @@ WORKDIR $JIRA_HOME
 EXPOSE 8080
 
 COPY entrypoint.py \
-     shutdown-wait.sh \
-     wait-for-catalina-shutdown.sh \     
+     shutdown-wait.sh \  
      shared-components/image/entrypoint_helpers.py  /
 COPY shared-components/support                      /opt/atlassian/support
 COPY config/*                                       /opt/atlassian/etc/
