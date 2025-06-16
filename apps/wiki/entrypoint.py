@@ -4,7 +4,7 @@ import logging
 import re
 import pathlib
 
-from entrypoint_helpers import env, gen_cfg, str2bool_or, exec_app
+from entrypoint_helpers import env, gen_cfg, str2bool_or, exec_app_wait
 
 
 RUN_USER = env['run_user']
@@ -25,12 +25,32 @@ gen_cfg('confluence.cfg.xml.j2', f'{CONFLUENCE_HOME}/confluence.cfg.xml',
 session_timeout = env.get('atl_confluence_session_timeout')
 if session_timeout:
     logging.info(f"Updating session timeout to {session_timeout}")
-    try:
-        p = pathlib.Path(f'{CONFLUENCE_INSTALL_DIR}/conf/web.xml')
-        t = p.read_text()
-        p.write_text(re.sub(r'(<session-timeout>).*?(</session-timeout>)', rf'\g<1>{session_timeout}\g<2>', t))
-    except Exception as e:
-        logging.warning(f"Failed to update session timeout in web.xml: {e}")
+    paths = [
+        pathlib.Path(f'{CONFLUENCE_INSTALL_DIR}/conf/web.xml'),
+        pathlib.Path(f'{CONFLUENCE_INSTALL_DIR}/confluence/WEB-INF/web.xml'),
+    ]
+    for path in paths:
+        try:
+            text = path.read_text()
+            updated = re.sub(r'(<session-timeout>).*?(</session-timeout>)', rf'\g<1>{session_timeout}\g<2>', text)
+            path.write_text(updated)
+            logging.info(f"Updated session timeout in {path}")
+        except Exception as e:
+            logging.warning(f"Failed to update session timeout in {path}: {e}")
 
-exec_app([f'{CONFLUENCE_INSTALL_DIR}/bin/start-confluence.sh', '-fg'], CONFLUENCE_HOME,
-         name='Confluence', env_cleanup=UNSET_SENSITIVE_VARS)
+
+# Run the startup script for conluence, and wait until confluence has been stopped.
+exec_app_wait([f'{CONFLUENCE_INSTALL_DIR}/bin/start-confluence.sh', '-fg'], CONFLUENCE_HOME,
+        name='Confluence', env_cleanup=UNSET_SENSITIVE_VARS)
+
+
+
+# Once confluence has been stopped, run the script that waits for
+# catalina.sh to finish shutting down.
+# If this is not done /shutdown-wait.sh will exit with error
+try:
+        exec_app_wait(['/wait-for-catalina-shutdown.sh'], "/",
+                name='Waitforshutdown', env_cleanup=UNSET_SENSITIVE_VARS)
+except Exception as e:
+        exit(1)
+

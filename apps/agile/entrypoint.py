@@ -44,12 +44,18 @@ if env.get('atl_jira_clear_plugin_cache'):
 session_timeout = env.get('atl_jira_session_timeout')
 if session_timeout:
     logging.info(f"Updating session timeout to {session_timeout}")
-    try:
-        p = pathlib.Path(f'{JIRA_INSTALL_DIR}/conf/web.xml')
-        t = p.read_text()
-        p.write_text(re.sub(r'(<session-timeout>).*?(</session-timeout>)', rf'\g<1>{session_timeout}\g<2>', t))
-    except Exception as e:
-        logging.warning(f"Failed to update session timeout in web.xml: {e}")
+    paths = [
+        pathlib.Path(f'{JIRA_INSTALL_DIR}/conf/web.xml'),
+        pathlib.Path(f'{JIRA_INSTALL_DIR}/atlassian-jira/WEB-INF/web.xml'),
+    ]
+    for path in paths:
+        try:
+            text = path.read_text()
+            updated = re.sub(r'(<session-timeout>).*?(</session-timeout>)', rf'\g<1>{session_timeout}\g<2>', text)
+            path.write_text(updated)
+            logging.info(f"Updated session timeout in {path}")
+        except Exception as e:
+            logging.warning(f"Failed to update session timeout in {path}: {e}")
 
 
 exec_app([f'{JIRA_INSTALL_DIR}/bin/start-jira.sh', '-fg'], JIRA_HOME,

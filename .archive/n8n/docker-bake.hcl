@@ -1,17 +1,12 @@
 target "docker-metadata-action" {}
 
 variable "VERSION" {
-  // renovate: datasource=docker depName=docker.io/atlassian/confluence
-  default = "9.4.1"
-}
-
-variable "AGENT_VERSION" {
-  // renovate: datasource=github-tags depName=haxqer/confluence/tags
-  default = "1.3.3"
+  // renovate: datasource=docker depName=ghcr.io/n8n-io/n8n
+  default = "1.98.1"
 }
 
 variable "SOURCE" {
-  default = "https://bitbucket.org/atlassian-docker/docker-atlassian-confluence-server"
+  default = "https://github.com/n8n-io/n8n"
 }
 
 group "default" {
@@ -22,7 +17,7 @@ target "image" {
   inherits = ["docker-metadata-action"]
   args = {
     VERSION = "${VERSION}"
-    AGENT_VERSION = "${AGENT_VERSION}"
+    VUE_APP_URL_BASE_API = "/"
   }
   labels = {
     "org.opencontainers.image.source" = "${SOURCE}"

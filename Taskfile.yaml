@@ -89,6 +89,8 @@ tasks:
         cp "$TMP_DIR/entrypoint.py" {{.ROOT_DIR}}/apps/wiki/
         # Copy shutdown-wait.sh
         cp "$TMP_DIR/shutdown-wait.sh" {{.ROOT_DIR}}/apps/wiki/
+        # Copy wait-for-catalina-shutdown.sh
+        cp "$TMP_DIR/wait-for-catalina-shutdown.sh" {{.ROOT_DIR}}/apps/wiki/
         # Copy shared-components/image/entrypoint_helpers.py
         mkdir -p {{.ROOT_DIR}}/apps/wiki/shared-components/image
         cp "$TMP_DIR/shared-components/image/entrypoint_helpers.py" {{.ROOT_DIR}}/apps/wiki/shared-components/image/
