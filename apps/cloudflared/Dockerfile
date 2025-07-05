@@ -5,13 +5,13 @@ ARG TARGETPLATFORM
 
 FROM --platform=$TARGETPLATFORM alpine AS builder
 RUN apk add --no-cache busybox
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh /bin/busybox && cp /bin/busybox /busybox
+RUN mkdir -p /opt/bin
+COPY entrypoint.sh /opt/bin/entrypoint.sh
+RUN chmod +x /opt/bin/entrypoint.sh /bin/busybox && cp /bin/busybox /opt/bin/busybox
 
 FROM cloudflare/cloudflared:${VERSION}
-COPY --from=builder /busybox /busybox
-COPY --from=builder /entrypoint.sh /entrypoint.sh
-
+USER root
+COPY --from=builder /opt/bin /opt/bin
 USER 65532:65532
-ENTRYPOINT ["/busybox", "sh", "/entrypoint.sh"]
+ENTRYPOINT ["/opt/bin/busybox", "sh", "/opt/bin/entrypoint.sh"]
 CMD ["tunnel", "--no-autoupdate"]
