@@ -7,11 +7,13 @@ ARG VERSION
 FROM alpine AS builder
 RUN apk add --no-cache busybox
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh /bin/busybox
-RUN cp /bin/busybox /busybox
+RUN chmod +x /entrypoint.sh /bin/busybox && \
+    cp /bin/busybox /busybox && \
+    # Check that both files exist and are executable
+    [ -x /entrypoint.sh ] && [ -x /busybox ]
 
 # Stage 2: final image (distroless)
-FROM cloudflare/cloudflared:${VERSION}
+FROM docker.io/cloudflare/cloudflared:${VERSION}
 COPY --from=builder /busybox /busybox
 COPY --from=builder /entrypoint.sh /entrypoint.sh
 
