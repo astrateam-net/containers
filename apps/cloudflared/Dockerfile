@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG VERSION
+ARG VERSION=2025.7.0
 # FROM docker.io/cloudflare/cloudflared:${VERSION}
 
 # Stage 1: get busybox and prepare entrypoint
