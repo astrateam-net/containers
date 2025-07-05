@@ -11,7 +11,7 @@ RUN chmod +x /entrypoint.sh /bin/busybox
 RUN cp /bin/busybox /busybox
 
 # Stage 2: final image (distroless)
-FROM docker.io/cloudflare/cloudflared:${VERSION}
+FROM cloudflare/cloudflared:${VERSION}
 COPY --from=builder /busybox /busybox
 COPY --from=builder /entrypoint.sh /entrypoint.sh
 
