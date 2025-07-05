@@ -3,14 +3,18 @@
 ARG VERSION
 FROM docker.io/cloudflare/cloudflared:${VERSION}
 
-USER root
+# --- Stage to get busybox for the right arch ---
+FROM --platform=$BUILDPLATFORM alpine AS busybox
+RUN apk add --no-cache busybox
+# Copy the static busybox binary out
+RUN cp /bin/busybox /busybox
 
-# Install envsubst (from gettext)
-RUN apt-get update && apt-get install -y gettext && rm -rf /var/lib/apt/lists/*
+# --- Final image ---
+FROM docker.io/cloudflare/cloudflared:${VERSION}
+COPY --from=busybox /busybox /busybox
 
-# Add entrypoint script
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN chmod +x /entrypoint.sh /busybox
 
 USER 65532:65532
 
