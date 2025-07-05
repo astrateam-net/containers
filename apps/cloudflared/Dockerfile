@@ -1,23 +1,21 @@
 # syntax=docker/dockerfile:1
 
 ARG VERSION=2025.7.0
-# FROM docker.io/cloudflare/cloudflared:${VERSION}
+ARG TARGETPLATFORM
 
-# Stage 1: get busybox and prepare entrypoint
-FROM alpine AS builder
+FROM --platform=$TARGETPLATFORM alpine AS builder
 RUN apk add --no-cache busybox
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh /bin/busybox && \
-    cp /bin/busybox /busybox && \
-    # Check that both files exist and are executable
-    [ -x /entrypoint.sh ] && [ -x /busybox ]
+RUN chmod +x /entrypoint.sh /bin/busybox && cp /bin/busybox /busybox
 
-# Stage 2: final image (distroless)
-FROM docker.io/cloudflare/cloudflared:${VERSION}
+# Test stage: check that /entrypoint.sh and /busybox are present and executable, and /busybox works
+FROM builder AS test
+RUN [ -x /entrypoint.sh ] && [ -x /busybox ] && /busybox echo ok && /busybox uname -m
+
+FROM cloudflare/cloudflared:${VERSION}
 COPY --from=builder /busybox /busybox
 COPY --from=builder /entrypoint.sh /entrypoint.sh
 
 USER 65532:65532
-
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["tunnel", "--no-autoupdate"]
