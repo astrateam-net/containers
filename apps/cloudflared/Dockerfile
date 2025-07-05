@@ -1,20 +1,19 @@
 # syntax=docker/dockerfile:1
 
 ARG VERSION
-FROM docker.io/cloudflare/cloudflared:${VERSION}
+# FROM docker.io/cloudflare/cloudflared:${VERSION}
 
-# --- Stage to get busybox for the right arch ---
-FROM --platform=$BUILDPLATFORM alpine AS busybox
+# Stage 1: get busybox and prepare entrypoint
+FROM alpine AS builder
 RUN apk add --no-cache busybox
-# Copy the static busybox binary out
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh /bin/busybox
 RUN cp /bin/busybox /busybox
 
-# --- Final image ---
+# Stage 2: final image (distroless)
 FROM docker.io/cloudflare/cloudflared:${VERSION}
-COPY --from=busybox /busybox /busybox
-
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh /busybox
+COPY --from=builder /busybox /busybox
+COPY --from=builder /entrypoint.sh /entrypoint.sh
 
 USER 65532:65532
 
