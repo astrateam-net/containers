@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG VERSION=2025.7.0
+ARG VERSION=2025.8.0
 ARG TARGETPLATFORM
 
 FROM --platform=$TARGETPLATFORM alpine AS builder
