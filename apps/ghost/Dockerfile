@@ -3,7 +3,10 @@
 ARG VERSION
 FROM docker.io/ghost:${VERSION}
 
-RUN apk add --no-cache \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
       git \
       openssh-client \
-      ca-certificates
+      ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
