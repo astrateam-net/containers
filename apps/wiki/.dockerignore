@@ -1,6 +1,7 @@
 /*
 !entrypoint.py
 !shutdown-wait.sh
+!wait-for-catalina-shutdown.sh
 !shared-components/
 !shared-components/image/entrypoint_helpers.py
 !shared-components/support/
