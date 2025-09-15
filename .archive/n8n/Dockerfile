@@ -2,7 +2,7 @@
 
 ARG VERSION
 FROM ghcr.io/n8n-io/n8n:${VERSION}
-ARG NODE_VERSION=22
+ARG NODE_VERSION=24
 ARG BASE_URL=/
 
 # Build stage for n8n-editor-ui
