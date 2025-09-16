@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=docker.io/nocodb/nocodb
-  default = "0.264.6"
+  default = "0.264.7"
 }
 
 variable "SOURCE" {
