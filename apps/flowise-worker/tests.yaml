@@ -1,0 +1,6 @@
+command:
+  /bin/sh:
+    exit-status: 0
+    stdout:
+      - "sh"
+

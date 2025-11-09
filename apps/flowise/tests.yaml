@@ -1,0 +1,10 @@
+command:
+  /bin/sh:
+    exit-status: 0
+    stdout:
+      - "sh"
+http:
+  http://localhost:3000:
+    status: 200
+    timeout: 30000
+
