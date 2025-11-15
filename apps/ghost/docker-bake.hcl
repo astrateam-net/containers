@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=docker.io/ghost
-  default = "6.0.5-alpine"
+  default = "6.8.0"
 }
 
 variable "SOURCE" {
