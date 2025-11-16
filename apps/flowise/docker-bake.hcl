@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=docker.io/flowiseai/flowise
-  default = "3.0.10"
+  default = "3.0.11"
 }
 
 variable "SOURCE" {
