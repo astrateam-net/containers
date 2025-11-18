@@ -1,0 +1,13 @@
+command:
+  /bin/sh:
+    exit-status: 0
+    stdout:
+      - "sh"
+http:
+  http://localhost:4401/mcp:
+    status: 200
+    timeout: 30000
+  http://localhost:4400/manifest.json:
+    status: 200
+    timeout: 30000
+
