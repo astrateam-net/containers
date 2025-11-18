@@ -90,6 +90,9 @@ docker run -d \
   - Controls the `/mcp` and `/sse` endpoints
 - `PLUGIN_PORT` - Port for plugin server (default: `4400`)
   - Controls where the plugin manifest is served
+- `ALLOWED_HOSTS` - Comma-separated list of allowed hosts for vite preview (default: all hosts)
+  - Example: `penpot-mcp.astrateam.net,penpot-api.example.com`
+  - If not set, all hosts are allowed (useful when behind reverse proxy)
 
 ### Endpoints
 

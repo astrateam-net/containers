@@ -59,6 +59,7 @@ RUN npm install -g vite@^7.0.5
 # Environment variables for configuration
 # MCP_PORT: Port for MCP server (default: 4401)
 # PLUGIN_PORT: Port for plugin server (default: 4400)
+# ALLOWED_HOSTS: Comma-separated list of allowed hosts for vite preview (default: all hosts)
 ENV MCP_PORT=4401 \
     PLUGIN_PORT=4400
 
