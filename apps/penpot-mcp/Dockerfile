@@ -45,7 +45,6 @@ COPY --from=builder /app/mcp-server/data ./mcp-server/data
 COPY --from=builder /app/penpot-plugin/dist ./penpot-plugin/dist
 COPY --from=builder /app/penpot-plugin/public ./penpot-plugin/public
 COPY --from=builder /app/penpot-plugin/index.html ./penpot-plugin/
-COPY --from=builder /app/penpot-plugin/vite.config.ts ./penpot-plugin/
 
 # Copy entrypoint
 COPY entrypoint.sh /entrypoint.sh
