@@ -1,26 +1,19 @@
 # syntax=docker/dockerfile:1
 
 ARG VERSION
+ARG GIT_REF=master
 FROM docker.io/library/node:22-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY penpot-mcp/package*.json ./
-COPY penpot-mcp/common/package*.json ./common/
-COPY penpot-mcp/mcp-server/package*.json ./mcp-server/
-COPY penpot-mcp/penpot-plugin/package*.json ./penpot-plugin/
+# Clone penpot-mcp repository using Docker ADD (supports branches/commits)
+ADD https://github.com/penpot/penpot-mcp.git#${GIT_REF} .
 
 # Install root dependencies
 RUN npm ci
 
 # Install dependencies for all components
 RUN npm run install:all
-
-# Copy source files
-COPY penpot-mcp/common ./common/
-COPY penpot-mcp/mcp-server ./mcp-server/
-COPY penpot-mcp/penpot-plugin ./penpot-plugin/
 
 # Build all components
 RUN npm run build:all

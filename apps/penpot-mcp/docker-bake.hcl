@@ -14,10 +14,17 @@ group "default" {
   targets = ["image-local"]
 }
 
+variable "GIT_REF" {
+  // Git reference (branch/commit) to build from
+  // Default: master branch
+  default = "master"
+}
+
 target "image" {
   inherits = ["docker-metadata-action"]
   args = {
     VERSION = "${VERSION}"
+    GIT_REF = "${GIT_REF}"
   }
   labels = {
     "org.opencontainers.image.source" = "${SOURCE}"
