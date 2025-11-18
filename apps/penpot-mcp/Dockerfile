@@ -47,7 +47,7 @@ COPY --from=builder /app/penpot-plugin/public ./penpot-plugin/public
 COPY --from=builder /app/penpot-plugin/index.html ./penpot-plugin/
 
 # Copy vite config for preview server (allows all hosts)
-COPY apps/penpot-mcp/vite.config.js ./penpot-plugin/vite.config.js
+COPY vite.config.js ./penpot-plugin/vite.config.js
 
 # Copy entrypoint
 COPY entrypoint.sh /entrypoint.sh
