@@ -24,7 +24,7 @@ MCP_PID=$!
 
 # Start plugin preview server in background with unbuffered output  
 cd /app/penpot-plugin
-NODE_ENV=production vite preview --host 0.0.0.0 --port "$PLUGIN_PORT" --cors 2>&1 | sed 's/^/[PLUGIN] /' &
+NODE_ENV=production vite preview --host 0.0.0.0 --port "$PLUGIN_PORT" 2>&1 | sed 's/^/[PLUGIN] /' &
 PLUGIN_PID=$!
 
 # Wait for both processes (exit if either dies)
