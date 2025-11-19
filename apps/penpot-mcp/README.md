@@ -39,7 +39,51 @@ When accessed via HTTPS through a reverse proxy, the browser treats it as a secu
 
 ## 📋 Quick Start
 
-### Using Docker Compose with Traefik
+### Using Docker Compose with Traefik (Separate Domains)
+
+```yaml
+services:
+  penpot-mcp:
+    image: ghcr.io/astrateam-net/penpot-mcp:0.0.1
+    container_name: penpot-mcp
+    labels:
+      - "traefik.enable=true"
+      - "traefik.swarm.network=trf_proxy"
+      
+      # MCP router for /mcp and /sse (port 4401) - separate domain
+      - "traefik.http.routers.penpot-mcp-mcp.entrypoints=websecure"
+      - "traefik.http.routers.penpot-mcp-mcp.rule=Host(`penpot-mcp.yourdomain.com`)"
+      - "traefik.http.routers.penpot-mcp-mcp.service=penpot-mcp-mcp-svc"
+      - "traefik.http.routers.penpot-mcp-mcp.tls=true"
+      - "traefik.http.services.penpot-mcp-mcp-svc.loadbalancer.server.port=4401"
+      
+      # WebSocket router for plugin connection (port 4402) - same domain as MCP
+      - "traefik.http.routers.penpot-mcp-ws.entrypoints=websecure"
+      - "traefik.http.routers.penpot-mcp-ws.rule=Host(`penpot-mcp.yourdomain.com`) && PathPrefix(`/ws`)"
+      - "traefik.http.routers.penpot-mcp-ws.service=penpot-mcp-ws-svc"
+      - "traefik.http.routers.penpot-mcp-ws.tls=true"
+      - "traefik.http.services.penpot-mcp-ws-svc.loadbalancer.server.port=4402"
+      
+      # Plugin router (port 4400) - separate domain
+      - "traefik.http.routers.penpot-mcp-plugin.entrypoints=websecure"
+      - "traefik.http.routers.penpot-mcp-plugin.rule=Host(`penpot-plugin.yourdomain.com`)"
+      - "traefik.http.routers.penpot-mcp-plugin.service=penpot-mcp-plugin-svc"
+      - "traefik.http.routers.penpot-mcp-plugin.tls=true"
+      - "traefik.http.services.penpot-mcp-plugin-svc.loadbalancer.server.port=4400"
+    networks:
+      - trf_proxy
+      - penpot_internal
+    environment:
+      - MCP_PORT=4401
+      - PLUGIN_PORT=4400
+      - ALLOWED_HOSTS=penpot-plugin.yourdomain.com,penpot-mcp.yourdomain.com
+```
+
+**⚠️ Important:** The plugin code is hardcoded to connect to `ws://localhost:4402/`. The container automatically patches this at startup to use `wss://${window.location.host}` (same origin). **Use the single domain approach below for best compatibility.**
+
+### Using Docker Compose with Traefik (Single Domain) ⭐ Recommended
+
+The container automatically patches the plugin to use `wss://${window.location.host}` instead of `ws://localhost:4402/`. Use a single domain so the plugin and WebSocket are on the same origin:
 
 ```yaml
 services:
@@ -49,25 +93,39 @@ services:
     labels:
       - "traefik.enable=true"
       
-      # Main router for plugin server (port 4400)
-      - "traefik.http.routers.penpot-mcp.rule=Host(`penpot-api.yourdomain.com`)"
-      - "traefik.http.routers.penpot-mcp.entrypoints=websecure"
-      - "traefik.http.routers.penpot-mcp.tls.certresolver=letsencrypt"
-      - "traefik.http.services.penpot-mcp-plugin.loadbalancer.server.port=4400"
-      - "traefik.http.routers.penpot-mcp.service=penpot-mcp-plugin"
+      # Plugin router (port 4400) - main domain
+      - "traefik.http.routers.penpot-mcp-plugin.entrypoints=websecure"
+      - "traefik.http.routers.penpot-mcp-plugin.rule=Host(`penpot-api.yourdomain.com`)"
+      - "traefik.http.routers.penpot-mcp-plugin.service=penpot-mcp-plugin-svc"
+      - "traefik.http.routers.penpot-mcp-plugin.tls=true"
+      - "traefik.http.services.penpot-mcp-plugin-svc.loadbalancer.server.port=4400"
       
-      # MCP router for /mcp and /sse (port 4401)
-      - "traefik.http.routers.penpot-mcp-mcp.rule=Host(`penpot-api.yourdomain.com`) && (PathPrefix(`/mcp`) || PathPrefix(`/sse`))"
+      # MCP router for /mcp and /sse (port 4401) - higher priority
       - "traefik.http.routers.penpot-mcp-mcp.entrypoints=websecure"
-      - "traefik.http.routers.penpot-mcp-mcp.tls.certresolver=letsencrypt"
-      - "traefik.http.services.penpot-mcp-mcp.loadbalancer.server.port=4401"
-      - "traefik.http.routers.penpot-mcp-mcp.service=penpot-mcp-mcp"
+      - "traefik.http.routers.penpot-mcp-mcp.rule=Host(`penpot-api.yourdomain.com`) && (PathPrefix(`/mcp`) || PathPrefix(`/sse`))"
+      - "traefik.http.routers.penpot-mcp-mcp.service=penpot-mcp-mcp-svc"
+      - "traefik.http.routers.penpot-mcp-mcp.tls=true"
       - "traefik.http.routers.penpot-mcp-mcp.priority=10"
+      - "traefik.http.services.penpot-mcp-mcp-svc.loadbalancer.server.port=4401"
+      
+      # WebSocket router (port 4402) - HTTP router with WebSocket upgrade
+      # The plugin is patched to use wss://same-domain/ws, so we route /ws to port 4402
+      # Note: WebSocket server accepts connections on any path, so /ws works fine
+      - "traefik.http.routers.penpot-mcp-ws.entrypoints=websecure"
+      - "traefik.http.routers.penpot-mcp-ws.rule=Host(`penpot-api.yourdomain.com`) && PathPrefix(`/ws`)"
+      - "traefik.http.routers.penpot-mcp-ws.service=penpot-mcp-ws-svc"
+      - "traefik.http.routers.penpot-mcp-ws.tls=true"
+      - "traefik.http.routers.penpot-mcp-ws.priority=15"
+      - "traefik.http.services.penpot-mcp-ws-svc.loadbalancer.server.port=4402"
+      # Optional: Strip /ws path prefix when forwarding (if WebSocket server requires root path)
+      # - "traefik.http.middlewares.penpot-mcp-ws-stripprefix.stripprefix.prefixes=/ws"
+      # - "traefik.http.routers.penpot-mcp-ws.middlewares=penpot-mcp-ws-stripprefix"
     networks:
       - traefik
     environment:
       - MCP_PORT=4401
       - PLUGIN_PORT=4400
+      - ALLOWED_HOSTS=penpot-api.yourdomain.com
 ```
 
 ### Using Docker Run
@@ -77,6 +135,7 @@ docker run -d \
   --name penpot-mcp \
   -p 4400:4400 \
   -p 4401:4401 \
+  -p 4402:4402 \
   -e MCP_PORT=4401 \
   -e PLUGIN_PORT=4400 \
   ghcr.io/astrateam-net/penpot-mcp:0.0.1
@@ -93,6 +152,8 @@ docker run -d \
 - `ALLOWED_HOSTS` - Comma-separated list of allowed hosts for vite preview (default: all hosts)
   - Example: `penpot-mcp.astrateam.net,penpot-api.example.com`
   - If not set, all hosts are allowed (useful when behind reverse proxy)
+
+**Note:** The plugin's WebSocket URL (`ws://localhost:4402/`) is automatically patched at container startup to use `wss://${window.location.host}/ws` (same origin with `/ws` path). This allows the plugin to connect via HTTPS through Traefik, which routes `/ws` to the WebSocket server on port 4402.
 
 ### Endpoints
 
@@ -151,12 +212,13 @@ The container runs two services:
 1. **MCP Server** (port 4401) - Provides MCP tools to LLMs
    - `/mcp` - Modern Streamable HTTP endpoint
    - `/sse` - Legacy SSE endpoint
+   - WebSocket server (port 4402) - For plugin connections
 
 2. **Plugin Server** (port 4400) - Serves the Penpot plugin
    - `/manifest.json` - Plugin manifest
    - Plugin UI and assets
 
-Both services run in the same container and can be routed via Traefik based on path prefixes.
+Both services run in the same container and can be routed via Traefik based on path prefixes or separate domains.
 
 ## 🔄 Updating
 

@@ -49,6 +49,9 @@ COPY --from=builder /app/penpot-plugin/index.html ./penpot-plugin/
 # Copy vite config for preview server (allows all hosts)
 COPY vite.config.js ./penpot-plugin/vite.config.js
 
+# Copy WebSocket URL patcher
+COPY patch-websocket.js /patch-websocket.js
+
 # Copy entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
@@ -60,10 +63,11 @@ RUN npm install -g vite@^7.0.5
 # MCP_PORT: Port for MCP server (default: 4401)
 # PLUGIN_PORT: Port for plugin server (default: 4400)
 # ALLOWED_HOSTS: Comma-separated list of allowed hosts for vite preview (default: all hosts)
+# WEBSOCKET_URL: WebSocket URL to patch in plugin code (default: uses window.location.host)
 ENV MCP_PORT=4401 \
     PLUGIN_PORT=4400
 
-EXPOSE 4400 4401
+EXPOSE 4400 4401 4402
 
 ENTRYPOINT ["/entrypoint.sh"]
 

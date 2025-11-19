@@ -4,6 +4,11 @@
 MCP_PORT=${MCP_PORT:-4401}
 PLUGIN_PORT=${PLUGIN_PORT:-4400}
 
+# Patch plugin WebSocket URL to use same origin (wss://)
+# This replaces hardcoded ws://localhost:4402/ with wss://${window.location.host}
+echo "Patching plugin WebSocket URL to use same origin..."
+node /patch-websocket.js
+
 # Function to handle shutdown
 cleanup() {
     echo "Shutting down..."
