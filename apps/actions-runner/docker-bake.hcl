@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=ghcr.io/actions/actions-runner
-  default = "2.329.0"
+  default = "2.330.0"
 }
 
 variable "SOURCE" {
