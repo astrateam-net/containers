@@ -25,7 +25,7 @@ jobs:
             build-mode: none
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@c3d42c5d08633d8b33635fbd94b000a0e2585b3c # v3.31.4
