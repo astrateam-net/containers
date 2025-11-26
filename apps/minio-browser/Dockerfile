@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 ARG VERSION
 
-FROM node:20 AS build
+FROM node:24 AS build
 
 ARG TARGETARCH
 
