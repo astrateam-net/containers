@@ -3,7 +3,7 @@
 ARG VERSION
 FROM docker.io/library/node:20-bookworm AS builder
 
-# Install pnpm and git
+# Install pnpm and git (needed for git config before ADD)
 RUN corepack enable && corepack prepare pnpm@9.14.4 --activate && \
     apt-get update && \
     apt-get install -y --no-install-recommends git ca-certificates && \
@@ -13,19 +13,15 @@ WORKDIR /app
 
 # Clone webstudio repository using version tag
 # VERSION should match GitHub release tag (e.g., "0.235.0" or "v0.235.0")
-# Note: We skip submodules as the private submodule requires SSH access
+# Using ADD like atuin-server-sqlite - it handles git refs automatically
+# Configure git to skip submodules (private submodule requires SSH access)
 # The code handles missing private-src gracefully with fallbacks
-# Try with 'v' prefix first, fallback to without prefix
-RUN set -e; \
-    if git clone --depth 1 --single-branch --branch v${VERSION} https://github.com/webstudio-is/webstudio.git . 2>/dev/null; then \
-        echo "Cloned with v${VERSION} tag"; \
-    elif git clone --depth 1 --single-branch --branch ${VERSION} https://github.com/webstudio-is/webstudio.git .; then \
-        echo "Cloned with ${VERSION} tag"; \
-    else \
-        echo "ERROR: Failed to clone tag v${VERSION} or ${VERSION}"; \
-        exit 1; \
-    fi && \
-    rm -rf .git
+RUN git config --global --add safe.directory '*' && \
+    git config --global protocol.file.allow always && \
+    git config --global submodule.active false
+ADD https://github.com/webstudio-is/webstudio.git#${VERSION} .
+# Remove submodule reference if it exists (private submodule requires SSH)
+RUN rm -rf .git/modules packages/sdk-components-animation/private-src 2>/dev/null || true
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
