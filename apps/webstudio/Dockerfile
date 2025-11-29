@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 ARG VERSION
-FROM docker.io/library/node:20-bookworm AS builder
+FROM docker.io/library/node:24-bookworm AS builder
 
 # Install pnpm and git
 RUN corepack enable && corepack prepare pnpm@9.14.4 --activate && \
@@ -33,7 +33,7 @@ RUN pnpm --filter=@webstudio-is/prisma-client generate
 RUN pnpm build
 
 # Final stage
-FROM docker.io/library/node:20-bookworm
+FROM docker.io/library/node:24-bookworm
 
 # Install Docker-in-Docker using the official devcontainer script
 # This script handles all Docker installation and creates docker-init.sh
