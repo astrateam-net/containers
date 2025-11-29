@@ -3,6 +3,9 @@
 ARG VERSION
 FROM docker.io/library/node:20-bookworm AS builder
 
+# Redeclare ARG in this stage so it's available in RUN commands
+ARG VERSION
+
 # Install pnpm and git
 RUN corepack enable && corepack prepare pnpm@9.14.4 --activate && \
     apt-get update && \
