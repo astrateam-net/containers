@@ -3,14 +3,22 @@
 ARG VERSION
 FROM docker.io/library/node:20-bookworm AS builder
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@9.14.4 --activate
+# Install pnpm and git
+RUN corepack enable && corepack prepare pnpm@9.14.4 --activate && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends git ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Clone webstudio repository using version tag
 # VERSION should match GitHub release tag (e.g., "0.235.0" or "v0.235.0")
-ADD https://github.com/webstudio-is/webstudio.git#${VERSION} .
+# Note: We skip submodules as the private submodule requires SSH access
+# The code handles missing private-src gracefully with fallbacks
+# Try with 'v' prefix first, fallback to without prefix
+RUN git clone --depth 1 --branch v${VERSION} --single-branch https://github.com/webstudio-is/webstudio.git . 2>/dev/null || \
+    git clone --depth 1 --branch ${VERSION} --single-branch https://github.com/webstudio-is/webstudio.git . && \
+    rm -rf .git
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
