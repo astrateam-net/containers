@@ -16,8 +16,15 @@ WORKDIR /app
 # Note: We skip submodules as the private submodule requires SSH access
 # The code handles missing private-src gracefully with fallbacks
 # Try with 'v' prefix first, fallback to without prefix
-RUN git clone --depth 1 --branch v${VERSION} --single-branch https://github.com/webstudio-is/webstudio.git . 2>/dev/null || \
-    git clone --depth 1 --branch ${VERSION} --single-branch https://github.com/webstudio-is/webstudio.git . && \
+RUN set -e; \
+    if git clone --depth 1 --single-branch --branch v${VERSION} https://github.com/webstudio-is/webstudio.git . 2>/dev/null; then \
+        echo "Cloned with v${VERSION} tag"; \
+    elif git clone --depth 1 --single-branch --branch ${VERSION} https://github.com/webstudio-is/webstudio.git .; then \
+        echo "Cloned with ${VERSION} tag"; \
+    else \
+        echo "ERROR: Failed to clone tag v${VERSION} or ${VERSION}"; \
+        exit 1; \
+    fi && \
     rm -rf .git
 
 # Install dependencies
