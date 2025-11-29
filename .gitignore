@@ -1,3 +1,4 @@
 .bin
 .private
 docker-bake.json
+webstudio/
