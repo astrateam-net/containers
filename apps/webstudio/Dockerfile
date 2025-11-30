@@ -78,6 +78,13 @@ COPY --from=builder /app/packages ./packages
 # This will set up workspace links correctly
 RUN pnpm install --frozen-lockfile --prod
 
+# Install Prisma CLI globally for runtime migrations
+# Prisma CLI is needed when RUN_MIGRATIONS=true to generate client and run migrations
+RUN pnpm add -g prisma@5.12.1
+
+# Set Prisma binary target for Debian Linux (needed for runtime Prisma client generation)
+ENV PRISMA_BINARY_TARGET='["native","debian-openssl-3.0.x"]'
+
 # Copy entrypoint script for migrations and app startup
 # Note: docker-init.sh is already created by docker-in-docker-debian.sh script above
 COPY entrypoint.sh /entrypoint.sh
