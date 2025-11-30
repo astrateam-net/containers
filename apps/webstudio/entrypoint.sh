@@ -7,15 +7,20 @@ set -e
 if [ "${RUN_MIGRATIONS}" = "true" ]; then
   echo "Running database migrations..."
   cd /app
+  
   # Generate Prisma client first (required before migrations)
+  # Use global prisma CLI directly since local prisma is a devDependency
   echo "Generating Prisma client..."
-  if ! pnpm --filter=@webstudio-is/prisma-client generate; then
+  cd /app/packages/prisma-client
+  if ! PRISMA_BINARY_TARGET="${PRISMA_BINARY_TARGET:-[\"native\",\"debian-openssl-3.0.x\"]}" prisma generate; then
     echo "WARNING: Prisma client generation failed, but continuing..."
   fi
-  # Run migrations (production mode, without --dev flag)
-  # Using the same pattern as upstream: pnpm --filter=./packages/prisma-client migrations migrate
+  
+  # Run migrations using global tsx to execute the TypeScript migration script
+  # The migrations script is at ./migrations-cli/cli.ts
   echo "Running database migrations..."
-  if ! pnpm --filter=./packages/prisma-client migrations migrate --cwd /app/apps/builder; then
+  cd /app/packages/prisma-client
+  if ! tsx ./migrations-cli/cli.ts migrate --cwd /app/apps/builder; then
     echo "WARNING: Database migrations failed, but continuing startup..."
     echo "You may need to run migrations manually or check database connection"
   else

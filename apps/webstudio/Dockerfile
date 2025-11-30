@@ -78,10 +78,11 @@ COPY --from=builder /app/packages ./packages
 # This will set up workspace links correctly
 RUN pnpm install --frozen-lockfile --prod
 
-# Install Prisma CLI globally for runtime migrations
-# Prisma CLI is needed when RUN_MIGRATIONS=true to generate client and run migrations
+# Install runtime tools globally for migrations
+# Prisma CLI: needed for generating Prisma client and running migrations
+# tsx: needed for running TypeScript migration scripts
 # Use npm instead of pnpm for global installs (pnpm requires setup for global bin directory)
-RUN npm install -g prisma@5.12.1
+RUN npm install -g prisma@5.12.1 tsx@^4.19.2
 
 # Set Prisma binary target for Debian Linux (needed for runtime Prisma client generation)
 ENV PRISMA_BINARY_TARGET='["native","debian-openssl-3.0.x"]'
@@ -90,8 +91,6 @@ ENV PRISMA_BINARY_TARGET='["native","debian-openssl-3.0.x"]'
 # Note: docker-init.sh is already created by docker-in-docker-debian.sh script above
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
-
-WORKDIR /app/apps/builder
 
 # Environment variables
 # DATABASE_URL: PostgreSQL connection string (required)
@@ -106,6 +105,7 @@ ENV NODE_ENV=production \
 EXPOSE 3000
 
 # Use entrypoint script to optionally run migrations before starting
+# Run start command from workspace root using filter to target builder app
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["pnpm", "start"]
+CMD ["pnpm", "--filter", "@webstudio-is/builder", "start"]
 
