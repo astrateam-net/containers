@@ -42,6 +42,18 @@ RUN pnpm --filter=@webstudio-is/prisma-client generate
 # Build all packages and apps
 RUN pnpm build
 
+# Create a stable symlink for Remix build output
+# The Vercel preset creates build/server/nodejs-{hash}/index.js
+# We create a symlink to build/server/index.js for predictable access
+RUN cd /app/apps/builder && \
+    if [ -d "build/server" ] && [ -n "$(find build/server -maxdepth 1 -type d -name 'nodejs-*')" ]; then \
+        SERVER_DIR=$(find build/server -maxdepth 1 -type d -name 'nodejs-*' | head -1); \
+        if [ -f "$SERVER_DIR/index.js" ]; then \
+            ln -sf "$(basename $SERVER_DIR)/index.js" build/server/index.js || \
+            cp "$SERVER_DIR/index.js" build/server/index.js; \
+        fi; \
+    fi
+
 # Final stage
 FROM docker.io/library/node:20-bookworm
 
@@ -66,7 +78,8 @@ RUN corepack enable && corepack prepare pnpm@9.14.4 --activate
 
 WORKDIR /app
 
-# Copy workspace structure (package files and built artifacts)
+# Copy workspace structure (package files, source files, and built artifacts)
+# Following devcontainer approach: copy everything, not just built artifacts
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/pnpm-lock.yaml ./
 COPY --from=builder /app/pnpm-workspace.yaml ./
@@ -74,17 +87,13 @@ COPY --from=builder /app/patches ./patches
 COPY --from=builder /app/apps ./apps
 COPY --from=builder /app/packages ./packages
 
-# Install production dependencies only
-# This will set up workspace links correctly
-RUN pnpm install --frozen-lockfile --prod
-
-# Install runtime tools globally for migrations
-# Prisma CLI: needed for generating Prisma client and running migrations
-# tsx: needed for running TypeScript migration scripts
-# Use npm instead of pnpm for global installs (pnpm requires setup for global bin directory)
-RUN npm install -g prisma@5.12.1 tsx@^4.19.2
+# Install ALL dependencies (like devcontainer does with `pnpm install`)
+# This ensures all devDependencies like @prisma/client, tsx, etc. are available
+# The devcontainer approach doesn't use --prod, so we follow the same pattern
+RUN pnpm install --frozen-lockfile
 
 # Set Prisma binary target for Debian Linux (needed for runtime Prisma client generation)
+# Note: prisma CLI and tsx are now available via pnpm install (devDependencies)
 ENV PRISMA_BINARY_TARGET='["native","debian-openssl-3.0.x"]'
 
 # Copy entrypoint script for migrations and app startup
@@ -105,7 +114,8 @@ ENV NODE_ENV=production \
 EXPOSE 3000
 
 # Use entrypoint script to optionally run migrations before starting
-# Run start command from workspace root using filter to target builder app
+# The build stage creates a stable symlink at build/server/index.js
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["pnpm", "--filter", "@webstudio-is/builder", "start"]
+WORKDIR /app/apps/builder
+CMD ["pnpm", "start"]
 
