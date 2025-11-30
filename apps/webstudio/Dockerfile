@@ -115,7 +115,8 @@ EXPOSE 3000
 
 # Use entrypoint script to optionally run migrations before starting
 # The build stage creates a stable symlink at build/server/index.js
+# Run from workspace root using filter (pnpm workspace pattern)
 ENTRYPOINT ["/entrypoint.sh"]
-WORKDIR /app/apps/builder
-CMD ["pnpm", "start"]
+WORKDIR /app
+CMD ["pnpm", "--filter", "@webstudio-is/builder", "start"]
 
