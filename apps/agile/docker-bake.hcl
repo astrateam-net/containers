@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=docker.io/atlassian/jira-software
-  default = "11.2.1"
+  default = "11.3.0"
 }
 
 variable "AGENT_VERSION" {
