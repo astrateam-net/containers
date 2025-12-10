@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM alpine:3.21 as builder
+FROM alpine:3.23 as builder
 ARG VERSION
 
 WORKDIR /root
@@ -16,7 +16,7 @@ WORKDIR /root/vlmcsd-${VERSION}
 RUN make
 
 
-FROM alpine:3.21
+FROM alpine:3.23
 
 COPY --from=builder /root/vlmcsd-${VERSION}/bin/vlmcsd /vlmcsd
 COPY --from=builder /root/vlmcsd-${VERSION}/etc/vlmcsd.kmd /vlmcsd.kmd
