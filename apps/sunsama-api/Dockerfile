@@ -4,6 +4,9 @@ ARG VERSION
 ARG GIT_REF=main
 FROM docker.io/library/node:20-alpine AS builder
 
+# Redeclare ARG after FROM to make it available in this stage
+ARG GIT_REF
+
 WORKDIR /app
 
 # Enable corepack for pnpm
@@ -12,7 +15,7 @@ RUN corepack enable
 # Clone sunsama-http-api-server repository
 # Using git clone since the repo has no tags, we clone from the main branch
 RUN apk add --no-cache git && \
-    git clone --depth 1 --single-branch --branch ${GIT_REF} \
+    git clone --depth 1 --single-branch --branch "${GIT_REF:-main}" \
         https://github.com/mrkhachaturov/sunsama-http-api-server.git . && \
     rm -rf .git
 
