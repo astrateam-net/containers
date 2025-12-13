@@ -1,0 +1,38 @@
+# goss test configuration for sunsama-api
+# https://github.com/goss-org/goss
+
+file:
+  /app/dist/esm/server/index.js:
+    exists: true
+  /app/package.json:
+    exists: true
+    contains:
+      - "sunsama-http-api-server"
+
+user:
+  sunsama:
+    exists: true
+    uid: 1001
+    groups:
+      - nodejs
+
+group:
+  nodejs:
+    exists: true
+    gid: 1001
+
+process:
+  node:
+    running: true
+
+port:
+  tcp:3000:
+    listening: true
+    ip:
+      - 0.0.0.0
+
+http:
+  http://localhost:3000/health:
+    status: 200
+    timeout: 5000
+
