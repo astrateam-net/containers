@@ -2,7 +2,7 @@
 
 ARG VERSION
 ARG GIT_REF=master
-FROM docker.io/library/node:22-alpine AS builder
+FROM docker.io/library/node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ WORKDIR /app/penpot-plugin
 RUN npm run build
 
 # Final stage
-FROM docker.io/library/node:22-alpine
+FROM docker.io/library/node:24-alpine
 
 WORKDIR /app
 

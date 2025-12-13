@@ -2,7 +2,7 @@
 
 ARG VERSION
 ARG GIT_REF=main
-FROM docker.io/library/node:20-alpine AS builder
+FROM docker.io/library/node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm build
 
 # Production stage
-FROM docker.io/library/node:20-alpine
+FROM docker.io/library/node:24-alpine
 
 WORKDIR /app
 
