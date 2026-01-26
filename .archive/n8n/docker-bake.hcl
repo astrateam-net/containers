@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=ghcr.io/n8n-io/n8n
-  default = "2.5.2"
+  default = "2.6.0"
 }
 
 variable "SOURCE" {
