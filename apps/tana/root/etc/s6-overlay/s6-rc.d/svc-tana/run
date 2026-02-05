@@ -1,0 +1,22 @@
+#!/usr/bin/with-contenv bash
+
+# Create necessary directories
+mkdir -p /config/.config/tana
+mkdir -p /config/.local/share/applications
+chown -R abc:abc /config/.config /config/.local 2>/dev/null || true
+
+# Setup MIME handlers for OAuth callback
+cat > /config/.local/share/applications/mimeapps.list << 'MIME'
+[Default Applications]
+x-scheme-handler/tana=tana.desktop
+x-scheme-handler/http=chromium.desktop
+x-scheme-handler/https=chromium.desktop
+MIME
+
+# Set environment for browser handling
+export BROWSER=/usr/local/bin/xdg-open
+export DISPLAY=:1
+
+cd /config || exit 1
+
+exec s6-setuidgid abc /usr/bin/tana --no-sandbox

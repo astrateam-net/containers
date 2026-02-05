@@ -1,0 +1,7 @@
+#!/usr/bin/with-contenv bash
+
+# Wait for MCP server to be ready
+sleep 10
+
+# Proxy localhost:8262 to 0.0.0.0:8262 so it's accessible externally
+exec socat TCP-LISTEN:18262,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:8262
