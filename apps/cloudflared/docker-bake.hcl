@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=docker.io/cloudflare/cloudflared
-  default = "2026.1.2"
+  default = "2026.2.0"
 }
 
 variable "SOURCE" {
