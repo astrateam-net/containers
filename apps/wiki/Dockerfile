@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=eclipse-temurin:21-noble
+ARG BASE_IMAGE=eclipse-temurin:25-noble
 FROM $BASE_IMAGE
 
 LABEL maintainer="dc-deployments@atlassian.com"
