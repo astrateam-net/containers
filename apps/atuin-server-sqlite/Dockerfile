@@ -15,7 +15,7 @@ RUN cargo chef cook --release --recipe-path recipe.json
 ADD https://github.com/conradludgate/atuin-server-sqlite.git#${VERSION} .
 RUN cargo build --release --bin atuin-server-sqlite-unofficial
 
-FROM docker.io/library/alpine:3.21
+FROM docker.io/library/alpine:3.23
 ENV ATUIN_HOST=0.0.0.0 \
     ATUIN_PORT=8888 \
     ATUIN_CONFIG_DIR=/config \
