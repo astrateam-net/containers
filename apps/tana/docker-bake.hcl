@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=github-releases depName=tanainc/tana-desktop-releases
-  default = "1.511.5"
+  default = "1.513.2"
 }
 
 variable "SOURCE" {
