@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=ghcr.io/paperless-ngx/paperless-ngx
-  default = "2.20.9"
+  default = "2.20.10"
 }
 
 variable "SOURCE" {
