@@ -17,8 +17,8 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [cloudflared](apps/cloudflared/) | `ghcr.io/astrateam-net/cloudflared` | `2026.2.0` |
 | [flowise](apps/flowise/) | `ghcr.io/astrateam-net/flowise` | `3.0.13` |
 | [flowise-worker](apps/flowise-worker/) | `ghcr.io/astrateam-net/flowise-worker` | `3.0.13` |
-| [ghost](apps/ghost/) | `ghcr.io/astrateam-net/ghost` | `6.0.5-alpine` |
-| [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.21.1` |
+| [ghost](apps/ghost/) | `ghcr.io/astrateam-net/ghost` | `6.21.0` |
+| [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.27.0` |
 | [home-assistant](apps/home-assistant/) | `ghcr.io/astrateam-net/home-assistant` | `2025.11.3` |
 | [k8s-sidecar](apps/k8s-sidecar/) | `ghcr.io/astrateam-net/k8s-sidecar` | `2.5.0` |
 | [minio-browser](apps/minio-browser/) | `ghcr.io/astrateam-net/minio-browser` | `v1.7.6` |
