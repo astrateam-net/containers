@@ -1,9 +1,11 @@
 # syntax=docker/dockerfile:1
 
-ARG VERSION
+ARG VERSION=6.21.0
 FROM docker.io/ghost:${VERSION}
 
-RUN apk add --no-cache \
-      git \
-      openssh-client \
-      ca-certificates
+RUN apt-get update -qq \
+    && apt-get install -y -qq --no-install-recommends \
+        ca-certificates \
+        git \
+        openssh-client \
+    && rm -rf /var/lib/apt/lists/*
