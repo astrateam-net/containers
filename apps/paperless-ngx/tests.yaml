@@ -1,0 +1,5 @@
+command:
+  tesseract --list-langs:
+    exit-status: 0
+    stdout:
+      - rus

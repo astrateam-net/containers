@@ -1,0 +1,90 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Update README
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "apps/**/docker-bake.hcl"
+      - "apps/*/Dockerfile"
+  workflow_dispatch:
+
+jobs:
+  update:
+    name: Update README
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Generate Token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+        id: app-token
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Extract Versions and Update README
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const appsDir = path.resolve(process.cwd(), 'apps');
+            const apps = fs.readdirSync(appsDir, { withFileTypes: true })
+              .filter(e => e.isDirectory())
+              .map(e => e.name)
+              .sort();
+
+            const rows = apps.map(name => {
+              const bakePath = path.join(appsDir, name, 'docker-bake.hcl');
+              let version = '—';
+              if (fs.existsSync(bakePath)) {
+                const content = fs.readFileSync(bakePath, 'utf8');
+                const match = content.match(/variable\s+"VERSION"\s*\{[^}]*default\s*=\s*"([^"]+)"/s);
+                if (match) version = match[1];
+              }
+              const image = `\`ghcr.io/${{ github.repository_owner }}/${name}\``;
+              return `| [${name}](apps/${name}/) | ${image} | \`${version}\` |`;
+            });
+
+            const table = [
+              '| App | Image | Version |',
+              '|-----|-------|---------|',
+              ...rows,
+            ].join('\n');
+
+            const readmePath = path.resolve(process.cwd(), 'README.md');
+            let readme = fs.readFileSync(readmePath, 'utf8');
+
+            // Replace content between the Images section header and the next --- divider
+            const updated = readme.replace(
+              /(## Images\n\n)[\s\S]*?(\n\n---)/,
+              `$1${table}$2`
+            );
+
+            if (updated === readme) {
+              core.info('README already up to date, no changes needed.');
+              return;
+            }
+
+            fs.writeFileSync(readmePath, updated);
+            core.info('README.md updated with current versions.');
+
+      - name: Commit Changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet README.md; then
+            echo "No changes to commit."
+          else
+            git add README.md
+            git commit -m "docs: update README app version table [skip ci]"
+            git push
+          fi

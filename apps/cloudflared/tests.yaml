@@ -1,0 +1,5 @@
+command:
+  cloudflared version:
+    exit-status: 0
+    stdout:
+      - /cloudflared version/

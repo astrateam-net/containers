@@ -1,0 +1,9 @@
+addr:
+  tcp://localhost:8080:
+    reachable: true
+    timeout: 30s
+
+http:
+  http://localhost:8080/status:
+    status: 200
+    timeout: 60s

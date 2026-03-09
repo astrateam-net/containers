@@ -1,0 +1,11 @@
+file:
+  /vlmcsd:
+    exists: true
+    mode: "0755"
+  /vlmcsd.kmd:
+    exists: true
+
+addr:
+  tcp://localhost:1688:
+    reachable: true
+    timeout: 10s

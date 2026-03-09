@@ -10,26 +10,26 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 
 | App | Image | Version |
 |-----|-------|---------|
-| [actions-runner](apps/actions-runner/) | `ghcr.io/astrateam-net/actions-runner` | ![](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/astrateam-net/containers/main/apps/actions-runner/docker-bake.hcl&query=%24&label=&color=blue) |
+| [actions-runner](apps/actions-runner/) | `ghcr.io/astrateam-net/actions-runner` | `2.332.0` |
 | [actions-runner-synology](apps/actions-runner-synology/) | `ghcr.io/astrateam-net/actions-runner-synology` | `0.1.0` |
 | [agile](apps/agile/) | `ghcr.io/astrateam-net/agile` | `11.3.3` |
 | [atuin-server-sqlite](apps/atuin-server-sqlite/) | `ghcr.io/astrateam-net/atuin-server-sqlite` | `v18.4.0` |
 | [cloudflared](apps/cloudflared/) | `ghcr.io/astrateam-net/cloudflared` | `2026.2.0` |
 | [flowise](apps/flowise/) | `ghcr.io/astrateam-net/flowise` | `3.0.13` |
 | [flowise-worker](apps/flowise-worker/) | `ghcr.io/astrateam-net/flowise-worker` | `3.0.13` |
-| [ghost](apps/ghost/) | `ghcr.io/astrateam-net/ghost` | `6.0.5` |
+| [ghost](apps/ghost/) | `ghcr.io/astrateam-net/ghost` | `6.0.5-alpine` |
 | [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.21.1` |
 | [home-assistant](apps/home-assistant/) | `ghcr.io/astrateam-net/home-assistant` | `2025.11.3` |
 | [k8s-sidecar](apps/k8s-sidecar/) | `ghcr.io/astrateam-net/k8s-sidecar` | `2.5.0` |
 | [minio-browser](apps/minio-browser/) | `ghcr.io/astrateam-net/minio-browser` | `v1.7.6` |
 | [nocodb](apps/nocodb/) | `ghcr.io/astrateam-net/nocodb` | `0.301.3` |
 | [paperless-ngx](apps/paperless-ngx/) | `ghcr.io/astrateam-net/paperless-ngx` | `2.20.10` |
-| [penpot-mcp](apps/penpot-mcp/) | `ghcr.io/astrateam-net/penpot-mcp` | — |
+| [penpot-mcp](apps/penpot-mcp/) | `ghcr.io/astrateam-net/penpot-mcp` | `0.0.1` |
 | [rest-api-redis](apps/rest-api-redis/) | `ghcr.io/astrateam-net/rest-api-redis` | `1.0.7` |
-| [sunsama-api](apps/sunsama-api/) | `ghcr.io/astrateam-net/sunsama-api` | — |
+| [sunsama-api](apps/sunsama-api/) | `ghcr.io/astrateam-net/sunsama-api` | `1.0.0` |
 | [tana](apps/tana/) | `ghcr.io/astrateam-net/tana` | `1.513.10` |
 | [vlmcsd](apps/vlmcsd/) | `ghcr.io/astrateam-net/vlmcsd` | `svn1113` |
-| [webstudio](apps/webstudio/) | `ghcr.io/astrateam-net/webstudio` | — |
+| [webstudio](apps/webstudio/) | `ghcr.io/astrateam-net/webstudio` | `0.235.0` |
 | [wiki](apps/wiki/) | `ghcr.io/astrateam-net/wiki` | `10.2.7` |
 
 ---

@@ -1,0 +1,9 @@
+addr:
+  tcp://localhost:3000:
+    reachable: true
+    timeout: 30s
+
+http:
+  http://localhost:3000/health:
+    status: 200
+    timeout: 30s

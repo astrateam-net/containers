@@ -19,15 +19,20 @@ runs:
           const fs = require('fs');
           const path = require('path');
 
-          function scanDirectory(path) {
+          function scanDirectory(dirPath) {
               try {
-                  const entries = fs.readdirSync(path, { withFileTypes: true });
-                  const folderNames = entries
+                  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+                  const required = ['Dockerfile', 'docker-bake.hcl', 'tests.yaml'];
+                  return entries
                       .filter((entry) => entry.isDirectory())
-                      .map((entry) => entry.name);
-                  return folderNames;
+                      .map((entry) => entry.name)
+                      .filter((name) =>
+                          required.every((file) =>
+                              fs.existsSync(path.join(dirPath, name, file))
+                          )
+                      );
               } catch (error) {
-                  core.setFailed(`Error reading directory ${path}: ${error.message}`);
+                  core.setFailed(`Error reading directory ${dirPath}: ${error.message}`);
                   return [];
               }
           }
