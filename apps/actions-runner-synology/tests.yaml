@@ -1,0 +1,18 @@
+---
+schemaVersion: "2.0.0"
+
+commandTests:
+  - name: ansible-playbook is available
+    command: ansible-playbook
+    args: ["--version"]
+    exitCode: 0
+    expectedOutput:
+      - "ansible-playbook"
+      - "core 2.20.3"
+
+  - name: community.docker collection is installed
+    command: ansible-galaxy
+    args: ["collection", "list", "community.docker"]
+    exitCode: 0
+    expectedOutput:
+      - "community.docker"

@@ -1,0 +1,10 @@
+/*
+!Dockerfile
+!docker-bake.hcl
+!requirements.txt
+!ansible-requirements.yml
+!tests.yaml
+!install_actions.sh
+!token.sh
+!app_token.sh
+!entrypoint.sh
