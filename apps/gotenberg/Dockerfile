@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG VERSION
+ARG VERSION=8.21.1
 FROM docker.io/gotenberg/gotenberg:${VERSION}
 
 USER root
