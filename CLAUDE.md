@@ -1,94 +1,130 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working in this repository.
 
-## Repository Overview
+## What This Repo Is
 
-This repository manages Docker container builds for multiple applications. Each app in `/apps/` is independently built and published to `ghcr.io`. The repository also contains an embedded Webstudio monorepo at `/webstudio/`.
+A collection of custom Docker images published to `ghcr.io/astrateam-net`. Each app under `/apps/` is independently built and released via GitHub Actions. Renovate automatically updates version pins in `docker-bake.hcl` files.
+
+The repo also contains an embedded Webstudio monorepo at `/webstudio/` — a separate concern with its own toolchain.
+
+---
+
+## Adding a New App
+
+1. Create `apps/<name>/` with `Dockerfile`, `docker-bake.hcl`, and `tests.yaml`.
+2. In `docker-bake.hcl`, follow this structure exactly — it's what the CI pipeline parses:
+
+```hcl
+target "docker-metadata-action" {}
+
+variable "VERSION" {
+  // renovate: datasource=docker depName=<upstream>
+  default = "1.2.3"
+}
+
+variable "SOURCE" {
+  default = "https://github.com/upstream/repo"
+}
+
+group "default" { targets = ["image-local"] }
+
+target "image" {
+  inherits = ["docker-metadata-action"]
+  args = { VERSION = "${VERSION}" }
+  labels = { "org.opencontainers.image.source" = "${SOURCE}" }
+}
+
+target "image-local" { inherits = ["image"]; output = ["type=docker"] }
+
+target "image-all" {
+  inherits = ["image"]
+  platforms = ["linux/amd64", "linux/arm64"]
+}
+```
+
+3. The `// renovate: datasource=...` comment must be on the line immediately before `default = "..."` for Renovate to pick it up. Common datasources: `datasource=docker`, `datasource=github-releases`, `datasource=github-tags`.
+4. If the app version is not upstream-tracked (custom image), omit the Renovate comment and bump `VERSION` manually.
+5. Push to `main` — CI triggers on any change under `apps/**`.
+
+---
 
 ## Common Commands
 
-### Container Apps (Main Repository)
-
 ```bash
-# Initialize tools (downloads goss/dgoss for testing)
+# Install test tools (goss/dgoss binaries into .bin/)
 task init
 
-# Build and test an app locally
-task local-build-<app-name>    # e.g., task local-build-flowise
+# Build and test locally (auto-detects goss vs CST)
+task local-build-<app-name>
 
-# Trigger remote build via GitHub Actions
+# Trigger remote build only (no publish)
 task remote-build-<app-name>
 
-# List all available tasks
-task
+# Trigger remote build + publish release
+task remote-build-<app-name> RELEASE=true
 ```
 
-### Webstudio Development
+---
 
-```bash
-cd webstudio
+## App Structure
 
-# Install dependencies
-pnpm install
-
-# Start development server
-pnpm dev
-
-# Build all packages
-pnpm build
-
-# Run all checks (tests + typecheck + lint)
-pnpm checks
-
-# Individual commands
-pnpm -r test              # Run tests across all packages
-pnpm lint                 # ESLint with zero warnings tolerance
-pnpm format               # Format with Prettier
-
-# Database
-pnpm migrations           # Generate Prisma client + run migrations
-
-# Storybook
-pnpm storybook:dev        # Start on port 6006
+```
+apps/<name>/
+├── Dockerfile        # Multi-stage build; use ARG VERSION for upstream version
+├── docker-bake.hcl   # VERSION + SOURCE variables; defines image, image-local, image-all targets
+└── tests.yaml        # GOSS (default) or Container Structure Test (requires schemaVersion key)
 ```
 
-## Architecture
+The CI `app-options` action extracts `VERSION`, `SOURCE`, and `platforms` from `docker-bake.hcl` by running `docker buildx bake --list type=variables,format=json`. All three targets (`image`, `image-local`, `image-all`) must be present.
 
-### Container Apps Structure
+---
 
-Each app in `/apps/<name>/` contains:
-- `Dockerfile` - Multi-stage build
-- `docker-bake.hcl` - Build configuration with VERSION variable (Renovate auto-updates this)
-- `tests.yaml` - Container tests (GOSS format for runtime tests, CST format for structure tests)
+## CI Pipeline Summary
 
-The Taskfile auto-detects the test tool based on `tests.yaml` format:
-- Has `schemaVersion` → Container Structure Test (CST)
-- No `schemaVersion` → GOSS
+| Trigger | Workflow | What happens |
+|---------|----------|--------------|
+| Push to `main` (apps/** changed) | `release.yaml` | Detect changed apps → build → push with semver + rolling tags → attest → GitHub release (first time only) |
+| Pull request | `pull-request.yaml` | Build changed apps only, no push |
+| Manual dispatch | `release.yaml` | Build single app, optionally release |
+| Daily cron | `vulnerability-scan.yaml` | Grype scan of all `:rolling` images → SARIF upload |
 
-### Webstudio Architecture
+### Versioning
 
-A monorepo with 30+ packages at `/webstudio/packages/`:
-- `builder` - Main application (Remix)
-- `design-system` - UI component library
-- `react-sdk` - React SDK for projects
-- `prisma-client` - Database client
-- `sdk-components-*` - Component libraries (react, radix, remix, router, animation)
+Tags generated per image: `X.Y.Z`, `X.Y`, `X`, `rolling`. Derived from `VERSION` in `docker-bake.hcl` via semver coerce. If `VERSION` is not valid semver, a CalVer date tag is used instead.
 
-Stack: React 18 (canary), TypeScript 5.8, Remix, PostgreSQL 15, Prisma, PostgREST
+### First vs subsequent releases
 
-## Code Style
+The `release` job in `app-builder.yaml` only runs when the package does **not yet exist** in GHCR (`app-exists` check). This creates the GitHub Release entry. Subsequent builds skip the release job but still push new image tags.
 
-- **PR titles**: Follow Conventional Commits (`feat:`, `fix:`, `docs:`, `build:`, `ci:`, etc.)
-- **Branch naming**: `feature/my-feature-name`
-- **Webstudio**: ESLint with strict rules, Prettier with `babel-ts` parser for TypeScript
-- **Pre-commit hooks**: Prettier runs automatically on staged files
+---
 
 ## Testing
 
-Container tests verify:
-- Port availability and HTTP responses
-- Command execution and exit status
-- File system structure
+- **GOSS**: `tests.yaml` without `schemaVersion` — runtime tests via `dgoss run`
+- **CST**: `tests.yaml` with `schemaVersion` — structure tests via `container-structure-test`
+- Tests verify ports, HTTP responses, commands, and file system structure.
 
-All containers are built for both `linux/amd64` and `linux/arm64` platforms.
+---
+
+## Code Style
+
+- **PR titles / commits**: Conventional Commits — `feat:`, `fix:`, `build:`, `ci:`, `docs:`
+- **Branch naming**: `feature/my-feature-name` or `fix/describe-issue`
+- No linting on HCL/YAML beyond schema validation
+
+---
+
+## Webstudio (apps/webstudio + /webstudio/)
+
+Separate monorepo embedded at `/webstudio/`. Stack: React 18, TypeScript 5.8, Remix, PostgreSQL 15, Prisma.
+
+```bash
+cd webstudio
+pnpm install
+pnpm dev          # Start dev server
+pnpm checks       # tests + typecheck + lint
+pnpm build        # Build all packages
+pnpm migrations   # Prisma client + migrations
+pnpm storybook:dev  # Storybook on port 6006
+```
