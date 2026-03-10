@@ -27,7 +27,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [penpot-mcp](apps/penpot-mcp/) | `ghcr.io/astrateam-net/penpot-mcp` | `0.0.1` |
 | [rest-api-redis](apps/rest-api-redis/) | `ghcr.io/astrateam-net/rest-api-redis` | `1.0.7` |
 | [sunsama-api](apps/sunsama-api/) | `ghcr.io/astrateam-net/sunsama-api` | `1.0.0` |
-| [tana](apps/tana/) | `ghcr.io/astrateam-net/tana` | `1.513.10` |
+| [tana](apps/tana/) | `ghcr.io/astrateam-net/tana` | `1.515.0` |
 | [vlmcsd](apps/vlmcsd/) | `ghcr.io/astrateam-net/vlmcsd` | `svn1113` |
 | [webstudio](apps/webstudio/) | `ghcr.io/astrateam-net/webstudio` | `0.235.0` |
 | [wiki](apps/wiki/) | `ghcr.io/astrateam-net/wiki` | `10.2.7` |
