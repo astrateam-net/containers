@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG PG_VERSION=17.8
+ARG PG_VERSION=18.3
 FROM postgres:${PG_VERSION}
 
 ARG PGBACKREST_VERSION=2.58.0
