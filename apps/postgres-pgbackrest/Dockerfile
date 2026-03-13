@@ -6,7 +6,8 @@ FROM postgres:${PG_VERSION}
 ARG PGBACKREST_VERSION=2.58.0
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends pgbackrest \
+    && apt-get install -y --no-install-recommends ca-certificates pgbackrest \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && pgbackrest version
 

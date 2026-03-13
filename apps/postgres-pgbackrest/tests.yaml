@@ -14,3 +14,8 @@ commandTests:
     exitCode: 0
     expectedOutput:
       - "pgBackRest"
+
+  - name: ca bundle is present
+    command: sh
+    args: ["-lc", "test -s /etc/ssl/certs/ca-certificates.crt"]
+    exitCode: 0
