@@ -2,16 +2,16 @@
 set -eu
 
 setup_pgbackrest_cron() {
-    full_cron="${PGBACKREST_FULL_BACKUP_CRON:-}"
-    incr_cron="${PGBACKREST_INCR_BACKUP_CRON:-}"
+    full_cron="${PG_SCHEDULE_FULL_BACKUP_CRON:-}"
+    incr_cron="${PG_SCHEDULE_INCR_BACKUP_CRON:-}"
 
     if [ -z "$full_cron" ] && [ -z "$incr_cron" ]; then
         echo "pgbackrest scheduler disabled: no backup schedules configured"
         return
     fi
 
-    stanza="${PGBACKREST_BACKUP_STANZA:-nas}"
-    backup_opts="${PGBACKREST_BACKUP_OPTIONS:-}"
+    stanza="${PG_SCHEDULE_BACKUP_STANZA:-nas}"
+    backup_opts="${PG_SCHEDULE_BACKUP_OPTIONS:-}"
 
     cat > /usr/local/bin/pgbackrest-backup-full <<EOF
 #!/bin/sh
