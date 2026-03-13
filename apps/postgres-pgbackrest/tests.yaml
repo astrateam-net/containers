@@ -19,3 +19,13 @@ commandTests:
     command: sh
     args: ["-lc", "test -s /etc/ssl/certs/ca-certificates.crt"]
     exitCode: 0
+
+  - name: cron is available
+    command: sh
+    args: ["-lc", "command -v cron"]
+    exitCode: 0
+
+  - name: custom entrypoint is present
+    command: sh
+    args: ["-lc", "test -x /usr/local/bin/pgbackrest-entrypoint.sh"]
+    exitCode: 0
