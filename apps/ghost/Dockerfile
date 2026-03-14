@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG VERSION=6.21.0
+ARG VERSION=6.22.0
 FROM docker.io/ghost:${VERSION}
 
 RUN apt-get update -qq \
