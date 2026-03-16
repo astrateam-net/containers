@@ -23,7 +23,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [k8s-sidecar](apps/k8s-sidecar/) | `ghcr.io/astrateam-net/k8s-sidecar` | `2.5.0` |
 | [minio-browser](apps/minio-browser/) | `ghcr.io/astrateam-net/minio-browser` | `v1.7.6` |
 | [nocodb](apps/nocodb/) | `ghcr.io/astrateam-net/nocodb` | `0.301.3` |
-| [paperless-ngx](apps/paperless-ngx/) | `ghcr.io/astrateam-net/paperless-ngx` | `2.20.10` |
+| [paperless-ngx](apps/paperless-ngx/) | `ghcr.io/astrateam-net/paperless-ngx` | `2.20.11` |
 | [penpot-mcp](apps/penpot-mcp/) | `ghcr.io/astrateam-net/penpot-mcp` | `0.0.1` |
 | [postgres-pgbackrest](apps/postgres-pgbackrest/) | `ghcr.io/astrateam-net/postgres-pgbackrest` | `17.8.0` |
 | [rest-api-redis](apps/rest-api-redis/) | `ghcr.io/astrateam-net/rest-api-redis` | `1.0.7` |
