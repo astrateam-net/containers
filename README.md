@@ -16,7 +16,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [atuin-server-sqlite](apps/atuin-server-sqlite/) | `ghcr.io/astrateam-net/atuin-server-sqlite` | `v18.4.0` |
 | [cloudflared](apps/cloudflared/) | `ghcr.io/astrateam-net/cloudflared` | `2026.3.0` |
 | [flowise](apps/flowise/) | `ghcr.io/astrateam-net/flowise` | `3.1.0` |
-| [flowise-worker](apps/flowise-worker/) | `ghcr.io/astrateam-net/flowise-worker` | `3.0.13` |
+| [flowise-worker](apps/flowise-worker/) | `ghcr.io/astrateam-net/flowise-worker` | `3.1.0` |
 | [ghost](apps/ghost/) | `ghcr.io/astrateam-net/ghost` | `6.21.0` |
 | [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.27.0` |
 | [home-assistant](apps/home-assistant/) | `ghcr.io/astrateam-net/home-assistant` | `2025.11.3` |
