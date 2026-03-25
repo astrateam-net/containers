@@ -48,6 +48,13 @@ jobs:
       - name: Install regctl
         uses: regclient/actions/regctl-installer@7c7e6f032ce752dc58585af38e242635f4e7cd8e # main
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
       - name: Get Bake Options
         id: app-options
         uses: ./.github/actions/app-options
@@ -56,18 +63,21 @@ jobs:
 
       - name: Get Container Registry Version
         id: registry
-        env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          if ! version=$(regctl image inspect ghcr.io/${{ github.repository_owner }}/${{ matrix.app }}:rolling \
-              | jq --raw-output '.config.Labels["org.opencontainers.image.version"]' 2>/dev/null) || [[ -z "${version}" ]];
-          then
-              echo "Failed to get registry version for ${{ matrix.app }}"
-              exit 1
-          fi
-          echo "version=${version}" >> $GITHUB_OUTPUT
+          IMAGE="ghcr.io/${{ github.repository_owner }}/${{ matrix.app }}:rolling"
 
-      - if: ${{ steps.app-options.outputs.version != steps.registry.outputs.version }}
+          if version=$(regctl image inspect "${IMAGE}" \
+              | jq --raw-output '.config.Labels["org.opencontainers.image.version"]' 2>/dev/null) && [[ -n "${version}" ]];
+          then
+              echo "available=true" >> $GITHUB_OUTPUT
+              echo "version=${version}" >> $GITHUB_OUTPUT
+          else
+              echo "available=false" >> $GITHUB_OUTPUT
+              echo "version=" >> $GITHUB_OUTPUT
+              echo "Skipping retry check for ${IMAGE}: image is unavailable or inaccessible."
+          fi
+
+      - if: ${{ steps.registry.outputs.available == 'true' && steps.app-options.outputs.version != steps.registry.outputs.version }}
         name: Find Pull Request
         uses: juliangruber/find-pull-request-action@33d46d4ff90884bb23aaead16044125daaf733d8 # v1.11.0
         id: find-pull-request
@@ -93,3 +103,7 @@ jobs:
               echo '|----------------|------------------|----------------|'
               echo '| `${{ matrix.app }}` | `${{ steps.registry.outputs.version }}` | `${{ steps.app-options.outputs.version }}` |'
           } >> $GITHUB_STEP_SUMMARY
+
+      - if: ${{ steps.registry.outputs.available != 'true' }}
+        name: Skip unavailable image
+        run: echo "Skipped retry check for ghcr.io/${{ github.repository_owner }}/${{ matrix.app }}:rolling because the image is unavailable in GHCR."

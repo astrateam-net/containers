@@ -15,12 +15,10 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [agile](apps/agile/) | `ghcr.io/astrateam-net/agile` | `11.3.3` |
 | [atuin-server-sqlite](apps/atuin-server-sqlite/) | `ghcr.io/astrateam-net/atuin-server-sqlite` | `v18.4.0` |
 | [ci-opentofu](apps/ci-opentofu/) | `ghcr.io/astrateam-net/ci-opentofu` | `1.11.5` |
-| [cloudflared](apps/cloudflared/) | `ghcr.io/astrateam-net/cloudflared` | `2026.3.0` |
 | [flowise](apps/flowise/) | `ghcr.io/astrateam-net/flowise` | `3.1.1` |
 | [flowise-worker](apps/flowise-worker/) | `ghcr.io/astrateam-net/flowise-worker` | `3.1.1` |
 | [ghost](apps/ghost/) | `ghcr.io/astrateam-net/ghost` | `6.21.0` |
 | [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.27.0` |
-| [home-assistant](apps/home-assistant/) | `ghcr.io/astrateam-net/home-assistant` | `2025.11.3` |
 | [k8s-sidecar](apps/k8s-sidecar/) | `ghcr.io/astrateam-net/k8s-sidecar` | `2.5.0` |
 | [minio-browser](apps/minio-browser/) | `ghcr.io/astrateam-net/minio-browser` | `v1.7.6` |
 | [nocodb](apps/nocodb/) | `ghcr.io/astrateam-net/nocodb` | `0.301.5` |
