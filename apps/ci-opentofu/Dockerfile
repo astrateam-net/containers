@@ -2,7 +2,7 @@ ARG VERSION
 
 FROM ghcr.io/opentofu/opentofu:${VERSION}-minimal AS tofu
 
-FROM alpine:3.21
+FROM alpine:3.23
 
 COPY --from=tofu /usr/local/bin/tofu /usr/local/bin/tofu
 
