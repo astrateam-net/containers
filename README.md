@@ -14,6 +14,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [actions-runner-synology](apps/actions-runner-synology/) | `ghcr.io/astrateam-net/actions-runner-synology` | `0.1.0` |
 | [agile](apps/agile/) | `ghcr.io/astrateam-net/agile` | `11.3.3` |
 | [atuin-server-sqlite](apps/atuin-server-sqlite/) | `ghcr.io/astrateam-net/atuin-server-sqlite` | `v18.4.0` |
+| [ci-opentofu](apps/ci-opentofu/) | `ghcr.io/astrateam-net/ci-opentofu` | `1.11.5` |
 | [cloudflared](apps/cloudflared/) | `ghcr.io/astrateam-net/cloudflared` | `2026.3.0` |
 | [flowise](apps/flowise/) | `ghcr.io/astrateam-net/flowise` | `3.1.1` |
 | [flowise-worker](apps/flowise-worker/) | `ghcr.io/astrateam-net/flowise-worker` | `3.1.1` |
