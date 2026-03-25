@@ -1,18 +1,16 @@
 ARG VERSION
 
+FROM ghcr.io/opentofu/opentofu:${VERSION}-minimal AS tofu
+
 FROM alpine:3.21
 
-ARG VERSION
+COPY --from=tofu /usr/local/bin/tofu /usr/local/bin/tofu
 
 RUN apk add --no-cache \
     curl \
     jq \
     git \
     openssh-client
-
-RUN curl -fsSL https://get.opentofu.org/install-opentofu.sh | sh -s -- \
-    --install-method standalone \
-    --opentofu-version ${VERSION}
 
 RUN tofu version
 
