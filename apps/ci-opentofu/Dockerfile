@@ -13,5 +13,3 @@ RUN apk add --no-cache \
     openssh-client
 
 RUN tofu version
-
-ENTRYPOINT ["/bin/sh"]
