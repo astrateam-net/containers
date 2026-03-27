@@ -10,7 +10,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 
 | App | Image | Version |
 |-----|-------|---------|
-| [actions-runner](apps/actions-runner/) | `ghcr.io/astrateam-net/actions-runner` | `2.333.0` |
+| [actions-runner](apps/actions-runner/) | `ghcr.io/astrateam-net/actions-runner` | `2.333.1` |
 | [actions-runner-synology](apps/actions-runner-synology/) | `ghcr.io/astrateam-net/actions-runner-synology` | `0.1.0` |
 | [agile](apps/agile/) | `ghcr.io/astrateam-net/agile` | `11.3.3` |
 | [atuin-server-sqlite](apps/atuin-server-sqlite/) | `ghcr.io/astrateam-net/atuin-server-sqlite` | `v18.4.0` |
