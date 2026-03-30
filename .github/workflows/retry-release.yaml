@@ -46,7 +46,7 @@ jobs:
         uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
 
       - name: Install regctl
-        uses: regclient/actions/regctl-installer@7c7e6f032ce752dc58585af38e242635f4e7cd8e # main
+        uses: regclient/actions/regctl-installer@f07124ffba4b0cbf96b2a666d481ed9d44b5e7e4 # main
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
