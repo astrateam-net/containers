@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=docker.io/gotenberg/gotenberg
-  default = "8.27.0"
+  default = "8.29.1"
 }
 
 variable "SOURCE" {
