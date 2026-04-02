@@ -26,10 +26,10 @@ jobs:
         uses: Homebrew/actions/setup-homebrew@master
 
       - name: Setup Workflow Tools
-        run: brew install go-task
+        run: brew install just
 
       - name: Generate App Labels
-        run: task generate-app-labels --force
+        run: just generate-app-labels
 
       - name: Sync Labels
         uses: EndBug/label-sync@52074158190acb45f3077f9099fea818aa43f97a # v2.3.3

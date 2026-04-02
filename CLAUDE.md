@@ -53,16 +53,26 @@ target "image-all" {
 
 ```bash
 # Install test tools (goss/dgoss binaries into .bin/)
-task init
+just init
 
 # Build and test locally (auto-detects goss vs CST)
-task local-build-<app-name>
+just local-build <app-name>
 
 # Trigger remote build only (no publish)
-task remote-build-<app-name>
+just remote-build <app-name>
 
 # Trigger remote build + publish release
-task remote-build-<app-name> RELEASE=true
+just remote-build <app-name> true
+
+# Sync upstream Atlassian assets
+just sync-wiki-upstream
+just sync-agile-upstream
+
+# Generate GitHub labels from apps/
+just generate-app-labels
+
+# Run justfile e2e tests
+just test
 ```
 
 ---

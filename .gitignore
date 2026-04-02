@@ -1,4 +1,5 @@
 .bin
 .private
+.just/local.just
 docker-bake.json
 webstudio/
