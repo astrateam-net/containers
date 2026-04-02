@@ -7,8 +7,6 @@ set dotenv-load := false
 
 mod core '.just/core.just'
 mod build '.just/build.just'
-mod sync '.just/sync.just'
-
 import '.just/test.just'
 import? '.just/local.just'
 
@@ -40,15 +38,3 @@ remote-build app release="false":
 [doc("Generate app labels in the labels config file")]
 generate-app-labels:
   @just core::generate-app-labels
-
-# Sync
-
-[group("sync")]
-[doc("Sync Confluence entrypoints and assets from upstream")]
-sync-wiki-upstream:
-  @just sync::wiki
-
-[group("sync")]
-[doc("Sync Jira entrypoints and assets from upstream")]
-sync-agile-upstream:
-  @just sync::agile

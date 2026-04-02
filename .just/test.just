@@ -23,8 +23,6 @@ test:
   run_test "just --list shows local-build" bash -c 'just --list | grep -q "local-build"'
   run_test "just --list shows remote-build" bash -c 'just --list | grep -q "remote-build"'
   run_test "just --list shows generate-app-labels" bash -c 'just --list | grep -q "generate-app-labels"'
-  run_test "just --list shows sync-wiki-upstream" bash -c 'just --list | grep -q "sync-wiki-upstream"'
-  run_test "just --list shows sync-agile-upstream" bash -c 'just --list | grep -q "sync-agile-upstream"'
   run_test "just --list shows test" bash -c 'just --list | grep -q "test"'
 
   # --- Module listing ---
@@ -32,12 +30,11 @@ test:
   echo "[modules]"
   run_test "core module listed" bash -c 'just --list | grep -q "core"'
   run_test "build module listed" bash -c 'just --list | grep -q "build"'
-  run_test "sync module listed" bash -c 'just --list | grep -q "sync"'
 
   # --- Groups ---
   echo ""
   echo "[groups]"
-  for group in core build ci sync; do
+  for group in core build ci; do
     run_test "group '$group' exists" bash -c "just --list | grep -q '\\[$group\\]'"
   done
 

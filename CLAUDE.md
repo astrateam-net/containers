@@ -64,10 +64,6 @@ just remote-build <app-name>
 # Trigger remote build + publish release
 just remote-build <app-name> true
 
-# Sync upstream Atlassian assets
-just sync-wiki-upstream
-just sync-agile-upstream
-
 # Generate GitHub labels from apps/
 just generate-app-labels
 

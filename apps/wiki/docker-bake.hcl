@@ -11,7 +11,7 @@ variable "AGENT_VERSION" {
 }
 
 variable "SOURCE" {
-  default = "https://bitbucket.org/atlassian-docker/docker-atlassian-confluence-server"
+  default = "https://github.com/astrateam-net/containers"
 }
 
 group "default" {
