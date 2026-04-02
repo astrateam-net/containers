@@ -1,7 +1,11 @@
 target "docker-metadata-action" {}
 
 variable "VERSION" {
-  // Custom version - update manually
+  default = "1.1.0"
+}
+
+variable "OPENTOFU_VERSION" {
+  // renovate: datasource=docker depName=ghcr.io/opentofu/opentofu
   default = "1.11.5"
 }
 
@@ -21,7 +25,7 @@ group "default" {
 target "image" {
   inherits = ["docker-metadata-action"]
   args = {
-    VERSION                  = "${VERSION}"
+    VERSION                  = "${OPENTOFU_VERSION}"
     PROXMOX_PROVIDER_VERSION = "${PROXMOX_PROVIDER_VERSION}"
   }
   labels = {
