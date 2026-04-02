@@ -17,7 +17,7 @@ local-build app:
   done
   docker buildx bake --metadata-file docker-bake.json --load
   trap 'rm -f docker-bake.json' EXIT
-  IMAGE=$(jq --raw-output '."image-local"."image.name"' docker-bake.json)
+  IMAGE=$(jq --raw-output '."image-local"."image.name" // ."image-local"."containerimage.config.digest"' docker-bake.json)
   if yq --exit-status '.schemaVersion' tests.yaml &>/dev/null; then
     container-structure-test test --image "${IMAGE}" --config tests.yaml
   else

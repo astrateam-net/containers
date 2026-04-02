@@ -27,3 +27,11 @@ fileExistenceTests:
   - name: "tofu binary"
     path: /usr/local/bin/tofu
     shouldExist: true
+
+  - name: "tofu config with provider mirror"
+    path: /etc/tofurc
+    shouldExist: true
+
+  - name: "provider mirror directory"
+    path: /usr/share/terraform/providers/registry.opentofu.org/bpg/proxmox
+    shouldExist: true
