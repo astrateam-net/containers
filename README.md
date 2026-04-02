@@ -12,13 +12,11 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 |-----|-------|---------|
 | [actions-runner](apps/actions-runner/) | `ghcr.io/astrateam-net/actions-runner` | `2.333.1` |
 | [actions-runner-synology](apps/actions-runner-synology/) | `ghcr.io/astrateam-net/actions-runner-synology` | `0.1.0` |
-| [agile](apps/agile/) | `ghcr.io/astrateam-net/agile` | `11.3.3` |
 | [ci-opentofu](apps/ci-opentofu/) | `ghcr.io/astrateam-net/ci-opentofu` | `1.11.5` |
 | [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.27.0` |
 | [minio-browser](apps/minio-browser/) | `ghcr.io/astrateam-net/minio-browser` | `v1.7.6` |
 | [postgres-pgbackrest](apps/postgres-pgbackrest/) | `ghcr.io/astrateam-net/postgres-pgbackrest` | `17.8.0` |
 | [vlmcsd](apps/vlmcsd/) | `ghcr.io/astrateam-net/vlmcsd` | `svn1113` |
-| [wiki](apps/wiki/) | `ghcr.io/astrateam-net/wiki` | `10.2.7` |
 
 ---
 
