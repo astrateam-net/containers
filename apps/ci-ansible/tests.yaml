@@ -1,0 +1,79 @@
+---
+schemaVersion: "2.0.0"
+
+commandTests:
+  - name: "ansible is installed"
+    command: "ansible"
+    args: ["--version"]
+    expectedOutput: ["ansible.*core"]
+    exitCode: 0
+
+  - name: "ansible-playbook is installed"
+    command: "ansible-playbook"
+    args: ["--version"]
+    exitCode: 0
+
+  - name: "ansible-galaxy is installed"
+    command: "ansible-galaxy"
+    args: ["--version"]
+    exitCode: 0
+
+  - name: "ansible-lint is installed"
+    command: "ansible-lint"
+    args: ["--version"]
+    exitCode: 0
+
+  - name: "paramiko is installed"
+    command: "python3"
+    args: ["-c", "import paramiko; print(paramiko.__version__)"]
+    exitCode: 0
+
+  - name: "ssh client is installed"
+    command: "ssh"
+    args: ["-V"]
+    exitCode: 0
+
+  - name: "jq is installed"
+    command: "jq"
+    args: ["--version"]
+    exitCode: 0
+
+  - name: "git is installed"
+    command: "git"
+    args: ["--version"]
+    exitCode: 0
+
+  - name: "curl is installed"
+    command: "curl"
+    args: ["--version"]
+    exitCode: 0
+
+  - name: "collection community.proxmox is installed"
+    command: "ansible-galaxy"
+    args: ["collection", "list", "community.proxmox"]
+    expectedOutput: ["community.proxmox"]
+    exitCode: 0
+
+  - name: "collection onepassword.connect is installed"
+    command: "ansible-galaxy"
+    args: ["collection", "list", "onepassword.connect"]
+    expectedOutput: ["onepassword.connect"]
+    exitCode: 0
+
+  - name: "collection ansible.posix is installed"
+    command: "ansible-galaxy"
+    args: ["collection", "list", "ansible.posix"]
+    expectedOutput: ["ansible.posix"]
+    exitCode: 0
+
+  - name: "collection community.general is installed"
+    command: "ansible-galaxy"
+    args: ["collection", "list", "community.general"]
+    expectedOutput: ["community.general"]
+    exitCode: 0
+
+fileExistenceTests:
+  - name: "entrypoint script"
+    path: /entrypoint.sh
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
