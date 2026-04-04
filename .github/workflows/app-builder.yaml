@@ -127,9 +127,8 @@ jobs:
             ${{ inputs.release && format('*.output=type=image,name=ghcr.io/{0}/{1},push-by-digest=true,name-canonical=true,push=true', github.repository_owner, inputs.app) || '*.output=type=docker' }}
             *.platform=${{ matrix.platform }}
             *.tags=
-          source: .
+          source: ./apps/${{ inputs.app }}
           targets: image
-          workdir: ./apps/${{ inputs.app }}
 
       # - if: ${{ ! inputs.release }}
       #   name: Run Application Tests
