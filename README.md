@@ -12,7 +12,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 |-----|-------|---------|
 | [ci-ansible](apps/ci-ansible/) | `ghcr.io/astrateam-net/ci-ansible` | `1.0.0` |
 | [ci-opentofu](apps/ci-opentofu/) | `ghcr.io/astrateam-net/ci-opentofu` | `1.1.0` |
-| [gh-actions-runner](apps/gh-actions-runner/) | `ghcr.io/astrateam-net/gh-actions-runner` | `0.2.1` |
+| [gh-actions-runner](apps/gh-actions-runner/) | `ghcr.io/astrateam-net/gh-actions-runner` | `0.3.0` |
 | [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.29.1` |
 | [minio-browser](apps/minio-browser/) | `ghcr.io/astrateam-net/minio-browser` | `v1.7.6` |
 | [postgres-pgbackrest](apps/postgres-pgbackrest/) | `ghcr.io/astrateam-net/postgres-pgbackrest` | `17.8.0` |
