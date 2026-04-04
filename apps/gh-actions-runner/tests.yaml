@@ -10,7 +10,33 @@ commandTests:
       - "ansible-playbook"
       - "core 2.20"
 
-  - name: community.docker collection is installed
+  - name: op CLI is available
+    command: op
+    args: ["--version"]
+    exitCode: 0
+
+  - name: collection ansible.posix is installed
+    command: ansible-galaxy
+    args: ["collection", "list", "ansible.posix"]
+    exitCode: 0
+    expectedOutput:
+      - "ansible.posix"
+
+  - name: collection onepassword.connect is installed
+    command: ansible-galaxy
+    args: ["collection", "list", "onepassword.connect"]
+    exitCode: 0
+    expectedOutput:
+      - "onepassword.connect"
+
+  - name: collection community.general is installed
+    command: ansible-galaxy
+    args: ["collection", "list", "community.general"]
+    exitCode: 0
+    expectedOutput:
+      - "community.general"
+
+  - name: collection community.docker is installed
     command: ansible-galaxy
     args: ["collection", "list", "community.docker"]
     exitCode: 0
