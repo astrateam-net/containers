@@ -92,7 +92,7 @@ RUN \
     && \
     rm -rf /tmp/* /var/tmp/*
 
-ARG OP_CLI_VERSION=2.34.0-beta.04
+ARG OP_CLI_VERSION=2.33.1
 ARG TARGETARCH
 RUN \
     curl -sSfL "https://cache.agilebits.com/dist/1P/op2/pkg/v${OP_CLI_VERSION}/op_linux_${TARGETARCH}_v${OP_CLI_VERSION}.zip" \

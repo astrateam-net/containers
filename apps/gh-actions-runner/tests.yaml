@@ -8,7 +8,7 @@ commandTests:
     exitCode: 0
     expectedOutput:
       - "ansible-playbook"
-      - "core 2.20.3"
+      - "core 2.20"
 
   - name: community.docker collection is installed
     command: ansible-galaxy

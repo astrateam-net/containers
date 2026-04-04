@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // Custom image version - bump manually when Dockerfile/requirements change.
-  default = "0.2.0"
+  default = "0.2.1"
 }
 
 variable "UBUNTU_VERSION" {
@@ -16,7 +16,7 @@ variable "GH_RUNNER_VERSION" {
 }
 
 variable "OP_CLI_VERSION" {
-  default = "2.34.0-beta.04"
+  default = "2.33.1"
 }
 
 variable "SOURCE" {
