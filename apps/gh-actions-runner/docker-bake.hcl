@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // Custom image version - bump manually when Dockerfile/requirements change.
-  default = "0.1.0"
+  default = "0.2.0"
 }
 
 variable "UBUNTU_VERSION" {
@@ -15,8 +15,12 @@ variable "GH_RUNNER_VERSION" {
   default = "2.333.1"
 }
 
+variable "OP_CLI_VERSION" {
+  default = "2.34.0-beta.04"
+}
+
 variable "SOURCE" {
-  default = "https://github.com/actions/runner"
+  default = "https://github.com/astrateam-net/containers"
 }
 
 group "default" {
@@ -28,6 +32,7 @@ target "image" {
   args = {
     UBUNTU_VERSION = "${UBUNTU_VERSION}"
     GH_RUNNER_VERSION = "${GH_RUNNER_VERSION}"
+    OP_CLI_VERSION = "${OP_CLI_VERSION}"
   }
   labels = {
     "org.opencontainers.image.source" = "${SOURCE}"

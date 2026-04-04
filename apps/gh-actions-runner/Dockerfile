@@ -3,7 +3,7 @@
 ARG UBUNTU_VERSION=24.04
 FROM ubuntu:${UBUNTU_VERSION}
 
-LABEL maintainer="homelab-am"
+LABEL maintainer="astrateam-net"
 
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=en_US.UTF-8 \
@@ -91,6 +91,18 @@ RUN \
     rm -f /tmp/requirements.txt /tmp/ansible-requirements.yml \
     && \
     rm -rf /tmp/* /var/tmp/*
+
+ARG OP_CLI_VERSION=2.34.0-beta.04
+ARG TARGETARCH
+RUN \
+    curl -sSfL "https://cache.agilebits.com/dist/1P/op2/pkg/v${OP_CLI_VERSION}/op_linux_${TARGETARCH}_v${OP_CLI_VERSION}.zip" \
+        -o /tmp/op.zip \
+    && \
+    unzip -o /tmp/op.zip -d /usr/local/bin \
+    && \
+    rm -f /tmp/op.zip \
+    && \
+    chmod +x /usr/local/bin/op
 
 COPY token.sh /token.sh
 COPY app_token.sh /app_token.sh
