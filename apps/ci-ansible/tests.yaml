@@ -72,6 +72,18 @@ commandTests:
     expectedOutput: ["community.general"]
     exitCode: 0
 
+  - name: "collection community.docker is installed"
+    command: "ansible-galaxy"
+    args: ["collection", "list", "community.docker"]
+    expectedOutput: ["community.docker"]
+    exitCode: 0
+
+  - name: "collection community.library_inventory_filtering_v1 is installed"
+    command: "ansible-galaxy"
+    args: ["collection", "list", "community.library_inventory_filtering_v1"]
+    expectedOutput: ["community.library_inventory_filtering_v1"]
+    exitCode: 0
+
 fileExistenceTests:
   - name: "entrypoint script"
     path: /entrypoint.sh

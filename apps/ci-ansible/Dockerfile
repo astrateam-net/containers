@@ -15,11 +15,12 @@ RUN pip install --no-cache-dir \
     paramiko==${PARAMIKO_VERSION} \
     ansible-lint==${ANSIBLE_LINT_VERSION}
 
+COPY ansible-requirements.yml /tmp/ansible-requirements.yml
 RUN ansible-galaxy collection install \
-    community.proxmox \
-    onepassword.connect \
-    ansible.posix \
-    community.general
+    --timeout 180 \
+    -r /tmp/ansible-requirements.yml \
+    -p /usr/share/ansible/collections \
+    && rm -f /tmp/ansible-requirements.yml
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
