@@ -1,11 +1,17 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: ["github>home-operations/renovate-config"],
+  ignorePaths: [".archive/**"],
+  // Limit concurrent PRs to avoid noise
+  prConcurrentLimit: 5,
+  branchConcurrentLimit: 5,
+  // Keep major updates separate for review
+  separateMajorMinor: true,
   customManagers: [
     {
       customType: "regex",
       description: "Process Annotations in Docker Bake",
-      fileMatch: ["(^|/)docker-bake\\.hcl$"],
+      managerFilePatterns: ["(^|/)docker-bake\\.hcl$"],
       matchStrings: [
         "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( versioning=(?<versioning>\\S+))?\\n.+ = \"(?<currentValue>[^\"]+)\"",
       ],
@@ -13,42 +19,41 @@
       versioningTemplate: "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
     },
   ],
-  customDatasources: {
-    qbittorrent: {
-      defaultRegistryUrlTemplate: "https://github.com/userdocs/qbittorrent-nox-static/releases/latest/download/dependency-version.json",
-      format: "json",
-      transformTemplates: ['{"releases":[{"version": qbittorrent}]}'],
-    },
-    servarr: {
-      defaultRegistryUrlTemplate: "https://{{packageName}}.servarr.com/v1/update/develop/changes?os=linux&runtime=netcore",
-      format: "json",
-      transformTemplates: ['{"releases":[{"version": $[0].version}]}'],
-    },
-    sonarr: {
-      defaultRegistryUrlTemplate: "https://services.sonarr.tv/v1/update/develop/changes?os=linux&runtime=netcore&version=4.0",
-      format: "json",
-      transformTemplates: ['{"releases":[{"version": $[0].version}]}'],
-    },
-    plex: {
-      defaultRegistryUrlTemplate: "https://plex.tv/api/downloads/5.json",
-      format: "json",
-      transformTemplates: [
-        '{"releases":[{"version": computer.Linux.version}]}',
-      ],
-    },
-  },
   packageRules: [
     {
-      description: ["Auto-merge Application Updates"],
-      matchFileNames: ["**/docker-bake.hcl"],
+      description: ["Auto-merge minor/patch app updates"],
+      matchFileNames: ["apps/**/docker-bake.hcl"],
+      matchUpdateTypes: ["minor", "patch", "pin", "digest"],
       automerge: true,
       automergeType: "pr",
+      platformAutomerge: true,
       ignoreTests: false,
+    },
+    {
+      description: ["Require review for major app updates"],
+      matchFileNames: ["apps/**/docker-bake.hcl"],
+      matchUpdateTypes: ["major"],
+      automerge: false,
+      labels: ["breaking"],
+    },
+    {
+      description: ["Auto-merge minor/patch GitHub Actions updates"],
+      matchManagers: ["github-actions"],
+      matchUpdateTypes: ["minor", "patch", "pin", "digest"],
+      automerge: true,
+      automergeType: "pr",
+      platformAutomerge: true,
+    },
+    {
+      description: ["Group major GitHub Actions updates"],
+      matchManagers: ["github-actions"],
+      matchUpdateTypes: ["major"],
+      groupName: "GitHub Actions major updates",
     },
     {
       description: ["Assign Application Labels"],
       addLabels: ["app/{{parentDir}}"],
-      matchFileNames: ["**/docker-bake.hcl"],
+      matchFileNames: ["apps/**/docker-bake.hcl"],
     },
     {
       description: ["Allowed Ubuntu Version"],
@@ -56,26 +61,9 @@
       matchPackageNames: ["/ubuntu/"],
       allowedVersions: "/24\\.04/",
     },
-    {
-      description: ["Allowed Python Version for Bazarr"],
-      matchDatasources: ["docker"],
-      matchFileNames: ["apps/bazarr/Dockerfile"],
-      matchPackageNames: ["/python/"],
-      allowedVersions: "/3\\.12/",
-    },
-    {
-      description: ["Allowed Python Version for Beets"],
-      matchDatasources: ["docker"],
-      matchFileNames: ["apps/beets/Dockerfile"],
-      matchPackageNames: ["/python/"],
-      allowedVersions: "/3\\.12/",
-    },
-    {
-      description: ["Allowed Node Version for Beets"],
-      matchDatasources: ["docker"],
-      matchFileNames: ["apps/beets/Dockerfile"],
-      matchPackageNames: ["/node/"],
-      allowedVersions: "/16-alpine3\\.18/",
-    },
   ],
+  vulnerabilityAlerts: {
+    labels: ["security"],
+    automerge: true,
+  },
 }
