@@ -1,0 +1,4 @@
+*
+!Dockerfile
+!jira.jar
+!entrypoint-wrapper.sh

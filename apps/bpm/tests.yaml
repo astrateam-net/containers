@@ -1,0 +1,14 @@
+file:
+  /var/agent/atlassian-agent.jar:
+    exists: true
+    mode: "0444"
+
+addr:
+  tcp://localhost:8080:
+    reachable: true
+    timeout: 60s
+
+http:
+  http://localhost:8080/status:
+    status: 200
+    timeout: 60s
