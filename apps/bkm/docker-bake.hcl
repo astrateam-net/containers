@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=docker.io/atlassian/confluence
-  default = "9.5.4"
+  default = "10.2.7"
 }
 
 variable "SOURCE" {
