@@ -10,8 +10,8 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 
 | App | Image | Version |
 |-----|-------|---------|
-| [bkm](apps/bkm/) | `ghcr.io/astrateam-net/bkm` | `9.5.4` |
-| [bpm](apps/bpm/) | `ghcr.io/astrateam-net/bpm` | `10.7.4` |
+| [bkm](apps/bkm/) | `ghcr.io/astrateam-net/bkm` | `10.2.7` |
+| [bpm](apps/bpm/) | `ghcr.io/astrateam-net/bpm` | `11.3.3` |
 | [ci-ansible](apps/ci-ansible/) | `ghcr.io/astrateam-net/ci-ansible` | `1.1.0` |
 | [ci-opentofu](apps/ci-opentofu/) | `ghcr.io/astrateam-net/ci-opentofu` | `1.1.0` |
 | [gh-actions-runner](apps/gh-actions-runner/) | `ghcr.io/astrateam-net/gh-actions-runner` | `0.3.0` |
