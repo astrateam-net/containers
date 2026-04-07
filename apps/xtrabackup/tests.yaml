@@ -1,0 +1,59 @@
+schemaVersion: "2.0.0"
+
+commandTests:
+  - name: xtrabackup is available
+    command: xtrabackup
+    args: ["--version"]
+    exitCode: 0
+    expectedError:
+      - "xtrabackup"
+
+  - name: xbcloud is available
+    command: xbcloud
+    args: ["--help"]
+    exitCode: 0
+    expectedOutput:
+      - "xbcloud"
+
+  - name: xbstream is available
+    command: xbstream
+    args: ["--help"]
+    exitCode: 0
+    expectedOutput:
+      - "xbstream"
+
+  - name: crond is available
+    command: sh
+    args: ["-lc", "command -v crond"]
+    exitCode: 0
+
+  - name: LSN directory exists
+    command: sh
+    args: ["-lc", "test -d /var/lib/xtrabackup/lsn"]
+    exitCode: 0
+
+fileExistenceTests:
+  - name: entrypoint script
+    path: /usr/local/bin/entrypoint.sh
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
+
+  - name: backup-full script
+    path: /usr/local/bin/backup-full
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
+
+  - name: backup-incr script
+    path: /usr/local/bin/backup-incr
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
+
+  - name: backup-cleanup script
+    path: /usr/local/bin/backup-cleanup
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
+
+  - name: backup-restore script
+    path: /usr/local/bin/backup-restore
+    shouldExist: true
+    permissions: "-rwxr-xr-x"

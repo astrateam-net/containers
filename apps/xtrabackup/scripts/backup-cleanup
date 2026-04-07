@@ -1,0 +1,29 @@
+#!/bin/bash
+set -eu
+
+if [ "${BACKUP_RETENTION_DAYS}" -eq 0 ]; then
+    exit 0
+fi
+
+echo "[$(date -Iseconds)] Cleaning up backups older than ${BACKUP_RETENTION_DAYS} days"
+CUTOFF=$(date -d "-${BACKUP_RETENTION_DAYS} days" +%Y%m%d)
+
+xbcloud get --storage=s3 \
+    --s3-endpoint="${S3_ENDPOINT}" \
+    --s3-access-key="${S3_ACCESS_KEY}" \
+    --s3-secret-key="${S3_SECRET_KEY}" \
+    --s3-bucket="${S3_BUCKET}" \
+    --list "${BACKUP_PREFIX}/" 2>/dev/null | while IFS= read -r name; do
+    backup_date=$(echo "${name}" | grep -oE '[0-9]{8}' | head -1)
+    if [ -n "${backup_date}" ] && [ "${backup_date}" -lt "${CUTOFF}" ]; then
+        echo "  Deleting: ${name}"
+        xbcloud delete --storage=s3 \
+            --s3-endpoint="${S3_ENDPOINT}" \
+            --s3-access-key="${S3_ACCESS_KEY}" \
+            --s3-secret-key="${S3_SECRET_KEY}" \
+            --s3-bucket="${S3_BUCKET}" \
+            "${name}" || true
+    fi
+done
+
+echo "[$(date -Iseconds)] Cleanup completed"
