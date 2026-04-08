@@ -12,6 +12,7 @@ xbcloud get --storage=s3 \
     --s3-access-key="${S3_ACCESS_KEY}" \
     --s3-secret-key="${S3_SECRET_KEY}" \
     --s3-bucket="${S3_BUCKET}" \
+    --s3-bucket-lookup="${S3_BUCKET_LOOKUP}" \
     "${BACKUP_NAME}" | xbstream -xv -C "${TARGET_DIR}"
 
 xtrabackup --prepare --target-dir="${TARGET_DIR}"

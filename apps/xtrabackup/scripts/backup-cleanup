@@ -13,6 +13,7 @@ xbcloud get --storage=s3 \
     --s3-access-key="${S3_ACCESS_KEY}" \
     --s3-secret-key="${S3_SECRET_KEY}" \
     --s3-bucket="${S3_BUCKET}" \
+    --s3-bucket-lookup="${S3_BUCKET_LOOKUP}" \
     --list "${BACKUP_PREFIX}/" 2>/dev/null | while IFS= read -r name; do
     backup_date=$(echo "${name}" | grep -oE '[0-9]{8}' | head -1)
     if [ -n "${backup_date}" ] && [ "${backup_date}" -lt "${CUTOFF}" ]; then
@@ -22,6 +23,7 @@ xbcloud get --storage=s3 \
             --s3-access-key="${S3_ACCESS_KEY}" \
             --s3-secret-key="${S3_SECRET_KEY}" \
             --s3-bucket="${S3_BUCKET}" \
+            --s3-bucket-lookup="${S3_BUCKET_LOOKUP}" \
             "${name}" || true
     fi
 done

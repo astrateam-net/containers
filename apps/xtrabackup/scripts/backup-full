@@ -14,6 +14,7 @@ xtrabackup --backup --stream=xbstream \
         --s3-access-key="${S3_ACCESS_KEY}" \
         --s3-secret-key="${S3_SECRET_KEY}" \
         --s3-bucket="${S3_BUCKET}" \
+        --s3-bucket-lookup="${S3_BUCKET_LOOKUP}" \
         --parallel="${BACKUP_PARALLEL}" \
         "${BACKUP_NAME}"
 

@@ -48,6 +48,7 @@ export BACKUP_PARALLEL="${BACKUP_PARALLEL:-4}"
 export BACKUP_PREFIX="${BACKUP_PREFIX:-xtrabackup}"
 export BACKUP_RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-0}"
 export BACKUP_EXTRA_OPTS="${BACKUP_EXTRA_OPTS:-}"
+export S3_BUCKET_LOOKUP="${S3_BUCKET_LOOKUP:-path}"
 export LSN_DIR=/var/lib/xtrabackup/lsn
 
 # ── Command dispatch ──────────────────────────────────────────────
@@ -77,7 +78,7 @@ if [ -z "${FULL_CRON}" ] && [ -z "${INCR_CRON}" ]; then
 fi
 
 # Export resolved env so cron jobs inherit it
-env | grep -E '^(MYSQL_|S3_|BACKUP_|LSN_DIR=)' > /etc/environment.backup
+env | grep -E '^(MYSQL_|S3_|BACKUP_|LSN_DIR=)' | sort > /etc/environment.backup
 
 {
     echo "SHELL=/bin/bash"
