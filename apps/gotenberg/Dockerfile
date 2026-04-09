@@ -1,4 +1,5 @@
 # syntax=docker/dockerfile:1
+# check=skip=InvalidDefaultArgInFrom
 
 ARG VERSION
 FROM docker.io/gotenberg/gotenberg:${VERSION}

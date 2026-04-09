@@ -1,3 +1,6 @@
+# syntax=docker/dockerfile:1
+# check=skip=InvalidDefaultArgInFrom
+
 ARG VERSION
 
 FROM ghcr.io/opentofu/opentofu:${VERSION}-minimal AS tofu
