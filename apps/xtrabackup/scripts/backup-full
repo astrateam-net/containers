@@ -1,0 +1,21 @@
+#!/bin/bash
+set -eu
+
+BACKUP_NAME="${BACKUP_PREFIX}/$(date +%Y%m%d-%H%M%S)-full"
+echo "[$(date -Iseconds)] Starting full backup: ${BACKUP_NAME}"
+
+xtrabackup --backup --stream=xbstream \
+    --host="${MYSQL_HOST}" --port="${MYSQL_PORT}" \
+    --user="${MYSQL_USER}" --password="${MYSQL_PASSWORD}" \
+    --extra-lsndir="${LSN_DIR}" \
+    --target-dir=/tmp/backup ${BACKUP_EXTRA_OPTS} | \
+    xbcloud put --storage=s3 \
+        --s3-endpoint="${S3_ENDPOINT}" \
+        --s3-access-key="${S3_ACCESS_KEY}" \
+        --s3-secret-key="${S3_SECRET_KEY}" \
+        --s3-bucket="${S3_BUCKET}" \
+        --s3-bucket-lookup="${S3_BUCKET_LOOKUP}" \
+        --parallel="${BACKUP_PARALLEL}" \
+        "${BACKUP_NAME}"
+
+echo "[$(date -Iseconds)] Full backup completed: ${BACKUP_NAME}"

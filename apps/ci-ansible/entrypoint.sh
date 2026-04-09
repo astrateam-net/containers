@@ -1,6 +1,16 @@
 #!/bin/sh
 set -e
 
+# GitLab CI creates build directories with world-writable permissions (0777).
+# Ansible refuses to load ansible.cfg from such directories for security.
+# Fix directory permissions so project ansible.cfg is respected.
+find . -maxdepth 3 -type d -perm /o+w -exec chmod o-w {} + 2>/dev/null || true
+
+# Ensure project-local collections (installed via `ansible-galaxy -p collections`)
+# are discoverable alongside the default system paths.
+: "${ANSIBLE_COLLECTIONS_PATH:=collections:/usr/share/ansible/collections:${HOME}/.ansible/collections}"
+export ANSIBLE_COLLECTIONS_PATH
+
 # Auto-load SSH key from env var or file if available
 if [ -n "${CI_RUNNER_SSH_PRIVATE_KEY}" ]; then
   eval "$(ssh-agent -s)" > /dev/null

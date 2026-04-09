@@ -76,23 +76,16 @@ RUN \
     && \
     /opt/ansible-venv/bin/pip install --no-cache-dir -r /tmp/requirements.txt \
     && \
-    for collection in community.library_inventory_filtering_v1:1.1.5 community.docker:4.8.2; do \
-        for attempt in 1 2 3 4 5 6 7 8; do \
-            /opt/ansible-venv/bin/ansible-galaxy collection install --timeout 180 "${collection}" -p /usr/share/ansible/collections && break; \
-            if [ "$attempt" -eq 8 ]; then \
-                echo "ansible-galaxy collection install failed for ${collection} after 8 attempts" >&2; \
-                exit 1; \
-            fi; \
-            echo "ansible-galaxy timed out for ${collection}, retrying in 15s (attempt ${attempt}/8) ..."; \
-            sleep 15; \
-        done; \
-    done \
+    /opt/ansible-venv/bin/ansible-galaxy collection install \
+        --timeout 180 \
+        -r /tmp/ansible-requirements.yml \
+        -p /usr/share/ansible/collections \
     && \
     rm -f /tmp/requirements.txt /tmp/ansible-requirements.yml \
     && \
     rm -rf /tmp/* /var/tmp/*
 
-ARG OP_CLI_VERSION=2.34.0-beta.04
+ARG OP_CLI_VERSION=2.33.1
 ARG TARGETARCH
 RUN \
     curl -sSfL "https://cache.agilebits.com/dist/1P/op2/pkg/v${OP_CLI_VERSION}/op_linux_${TARGETARCH}_v${OP_CLI_VERSION}.zip" \
