@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 
-ARG PG_VERSION=17.9
+ARG PG_VERSION
 FROM postgres:${PG_VERSION}
 
-ARG PGBACKREST_VERSION=2.58.0
+ARG PGBACKREST_VERSION
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates cron pgbackrest \

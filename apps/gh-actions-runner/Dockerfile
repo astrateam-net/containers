@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG UBUNTU_VERSION=24.04
+ARG UBUNTU_VERSION
 FROM ubuntu:${UBUNTU_VERSION}
 
 LABEL maintainer="astrateam-net"
@@ -16,7 +16,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-ARG GH_RUNNER_VERSION=2.332.0
+ARG GH_RUNNER_VERSION
 ARG TARGETPLATFORM
 
 RUN \
@@ -85,7 +85,7 @@ RUN \
     && \
     rm -rf /tmp/* /var/tmp/*
 
-ARG OP_CLI_VERSION=2.33.1
+ARG OP_CLI_VERSION
 ARG TARGETARCH
 RUN \
     curl -sSfL "https://cache.agilebits.com/dist/1P/op2/pkg/v${OP_CLI_VERSION}/op_linux_${TARGETARCH}_v${OP_CLI_VERSION}.zip" \

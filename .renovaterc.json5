@@ -21,6 +21,16 @@
   ],
   packageRules: [
     {
+      description: [
+        "Versions are sourced from docker-bake.hcl — disable the built-in",
+        "Dockerfile manager on apps/ to prevent drift between bake.hcl and",
+        "Dockerfile ARG defaults.",
+      ],
+      matchManagers: ["dockerfile"],
+      matchFileNames: ["apps/**/Dockerfile"],
+      enabled: false,
+    },
+    {
       description: ["Auto-merge minor/patch app updates"],
       matchFileNames: ["apps/**/docker-bake.hcl"],
       matchUpdateTypes: ["minor", "patch", "pin", "digest"],
