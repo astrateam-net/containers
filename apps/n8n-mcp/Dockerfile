@@ -15,7 +15,7 @@ ARG AGENTS_SDK_VERSION
 WORKDIR /build
 RUN apk add --no-cache git python3 make g++ && \
     git clone --depth 1 --branch v${VERSION} https://github.com/czlonkowski/n8n-mcp.git . && \
-    sed -i "/{ name: '@n8n\/n8n-nodes-langchain'/a\    { name: 'n8n-nodes-agents-sdk', path: 'n8n-nodes-agents-sdk' }," src/loaders/node-loader.ts && \
+    sed -i "/{ name: '@n8n\/n8n-nodes-langchain'/i\    { name: 'n8n-nodes-agents-sdk', path: 'n8n-nodes-agents-sdk' }," src/loaders/node-loader.ts && \
     npm ci && \
     npm install n8n-nodes-agents-sdk@${AGENTS_SDK_VERSION} && \
     npm run build && \
