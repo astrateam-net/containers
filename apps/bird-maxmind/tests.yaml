@@ -1,0 +1,48 @@
+---
+schemaVersion: "2.0.0"
+
+commandTests:
+  # bird/birdc can't be invoked here: the binary has file capabilities
+  # (cap_net_raw,cap_net_admin+ep) that the container-structure-test environment
+  # doesn't grant, so capset fails at exec. Presence/size checks handle this.
+
+  - name: "yq is installed"
+    command: "yq"
+    args: ["--version"]
+    exitCode: 0
+
+  - name: "python3 is installed"
+    command: "python3"
+    args: ["--version"]
+    exitCode: 0
+
+  - name: "bgpq4 is installed"
+    command: "bgpq4"
+    args: ["-h"]
+    exitCode: 1
+
+fileExistenceTests:
+  - name: "bird binary present"
+    path: /usr/sbin/bird
+    shouldExist: true
+  - name: "birdc binary present"
+    path: /usr/sbin/birdc
+    shouldExist: true
+  - name: "entrypoint present"
+    path: /usr/local/bin/entrypoint.sh
+    shouldExist: true
+  - name: "fetcher present"
+    path: /usr/local/bin/fetch-lists.sh
+    shouldExist: true
+  - name: "refresh command present"
+    path: /usr/local/bin/refresh
+    shouldExist: true
+  - name: "status command present"
+    path: /usr/local/bin/status
+    shouldExist: true
+  - name: "webhook server present"
+    path: /usr/local/bin/webhook.py
+    shouldExist: true
+  - name: "maxmind country parser present"
+    path: /usr/local/bin/maxmind-country.py
+    shouldExist: true
