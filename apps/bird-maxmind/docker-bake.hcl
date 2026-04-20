@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=github-releases depName=mrkhachaturov/bird
-  default = "0.1.0"
+  default = "0.1.1"
 }
 
 variable "SOURCE" {
