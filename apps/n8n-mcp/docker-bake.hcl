@@ -7,7 +7,7 @@ variable "VERSION" {
 
 variable "AGENTS_SDK_VERSION" {
   // renovate: datasource=npm depName=n8n-nodes-agents-sdk
-  default = "0.4.0"
+  default = "0.5.0"
 }
 
 variable "SOURCE" {
