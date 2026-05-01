@@ -38,9 +38,10 @@ cmd_setup_uri() {
     local user=${1:-}; local vault=${2:-}
     [ -z "$user" ] && die "usage: obsync setup-uri <user> [shared-vault]"
 
-    local pw passphrase db
-    pw=$(jq -r --arg u "$user" '.users[$u].password // empty' "$CONFIG")
-    [ -z "$pw" ] && die "user '$user' not found in provisioning config"
+    local passphrase db
+    if ! jq -e --arg u "$user" '.users[$u]' "$CONFIG" >/dev/null; then
+        die "user '$user' not found in provisioning config"
+    fi
 
     if [ -z "$vault" ]; then
         db=$(userdb_name "$user")
@@ -59,10 +60,36 @@ cmd_setup_uri() {
         echo "=== shared vault: $user → $db ==="
     fi
 
+    # Prefer JWT mode if the user has a jwt block in the provisioning config;
+    # fall back to HTTP Basic otherwise. JWT setup URIs carry the user's
+    # private key + kid + sub; Basic carries the user's password.
+    local has_jwt
+    has_jwt=$(jq -r --arg u "$user" '.users[$u].jwt // empty | (.private_key // "") | length > 0' "$CONFIG")
+
     echo
-    hostname="$PUBLIC_URL" username="$user" password="$pw" \
-        database="$db" passphrase="$passphrase" \
-        deno run -A --quiet /opt/obsync/generate_setupuri.ts
+    if [ "$has_jwt" = "true" ]; then
+        local alg priv kid exp
+        alg=$(jq -r  --arg u "$user" '.users[$u].jwt.algorithm     // "ES256"' "$CONFIG")
+        priv=$(jq -r --arg u "$user" '.users[$u].jwt.private_key'             "$CONFIG")
+        kid=$(jq -r  --arg u "$user" '.users[$u].jwt.kid             // $u'   "$CONFIG")
+        exp=$(jq -r  --arg u "$user" '.users[$u].jwt.exp_duration_minutes // 60' "$CONFIG")
+        echo "(JWT mode — alg=$alg, kid=$kid, exp=${exp} min)"
+        echo
+        hostname="$PUBLIC_URL" database="$db" passphrase="$passphrase" \
+            auth_mode="jwt" \
+            jwt_algorithm="$alg" jwt_key="$priv" jwt_kid="$kid" \
+            jwt_sub="$user" jwt_exp_duration="$exp" \
+            deno run -A --quiet /opt/obsync/generate_setupuri.ts
+    else
+        local pw
+        pw=$(jq -r --arg u "$user" '.users[$u].password // empty' "$CONFIG")
+        [ -z "$pw" ] && die "user '$user' has neither jwt block nor password set"
+        echo "(HTTP Basic mode)"
+        echo
+        hostname="$PUBLIC_URL" database="$db" passphrase="$passphrase" \
+            auth_mode="basic" username="$user" password="$pw" \
+            deno run -A --quiet /opt/obsync/generate_setupuri.ts
+    fi
     echo
     echo "Hand the URI and the uri_passphrase to the user over DIFFERENT"
     echo "channels (URI via clipboard/email, passphrase typed/spoken)."
