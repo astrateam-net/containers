@@ -8,7 +8,6 @@ ARG VERSION
 FROM docker.io/couchdb:${VERSION}
 
 ARG DENO_VERSION
-ARG OBSIDIAN_LIVESYNC_REF
 ARG TARGETARCH
 
 USER root
@@ -33,24 +32,23 @@ RUN case "${TARGETARCH}" in \
     && rm /tmp/deno.zip \
     && deno --version
 
-# Vendor the upstream LiveSync setup URI generator at build time, and
-# pre-cache its npm/jsr deps so runtime never needs network.
-RUN mkdir -p /opt/obsync \
-    && curl -fsSL "https://raw.githubusercontent.com/vrtmrz/obsidian-livesync/${OBSIDIAN_LIVESYNC_REF}/utils/flyio/generate_setupuri.ts" \
-        -o /opt/obsync/generate_setupuri.ts \
-    && deno cache --allow-import /opt/obsync/generate_setupuri.ts
+RUN mkdir -p /opt/obsync
 
 # Bake LiveSync-tuned CouchDB config into the image.
 COPY local.ini /opt/couchdb/etc/local.ini
 
-# Image scripts.
-COPY entrypoint.sh           /usr/local/bin/obsync-entrypoint.sh
-COPY scripts/provision.sh    /opt/obsync/provision.sh
-COPY scripts/obsync          /usr/local/bin/obsync
+# Image scripts. Custom generate_setupuri.ts (extends upstream with JWT mode)
+# is shipped from this repo rather than fetched at build time, so the URI
+# format stays under our control and reproducible.
+COPY entrypoint.sh                  /usr/local/bin/obsync-entrypoint.sh
+COPY scripts/provision.sh           /opt/obsync/provision.sh
+COPY scripts/obsync                 /usr/local/bin/obsync
+COPY scripts/generate_setupuri.ts   /opt/obsync/generate_setupuri.ts
 RUN chmod +x \
-    /usr/local/bin/obsync-entrypoint.sh \
-    /opt/obsync/provision.sh \
-    /usr/local/bin/obsync
+        /usr/local/bin/obsync-entrypoint.sh \
+        /opt/obsync/provision.sh \
+        /usr/local/bin/obsync \
+    && deno cache --allow-import /opt/obsync/generate_setupuri.ts
 
 # Run as the existing couchdb user (uid 5984) so the image's chown-on-start
 # block is skipped and read-only mounts work.

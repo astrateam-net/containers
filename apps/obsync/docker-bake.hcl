@@ -10,14 +10,6 @@ variable "DENO_VERSION" {
   default = "2.1.4"
 }
 
-variable "OBSIDIAN_LIVESYNC_REF" {
-  # Pin to a specific commit/tag once we want reproducibility.
-  # Tracking 'main' for now — the upstream generate_setupuri.ts changes
-  # rarely and is small enough to manually audit on bumps.
-  // renovate: datasource=github-tags depName=vrtmrz/obsidian-livesync
-  default = "main"
-}
-
 variable "SOURCE" {
   default = "https://github.com/astrateam-net/containers"
 }
@@ -29,9 +21,8 @@ group "default" {
 target "image" {
   inherits = ["docker-metadata-action"]
   args = {
-    VERSION               = "${VERSION}"
-    DENO_VERSION          = "${DENO_VERSION}"
-    OBSIDIAN_LIVESYNC_REF = "${OBSIDIAN_LIVESYNC_REF}"
+    VERSION      = "${VERSION}"
+    DENO_VERSION = "${DENO_VERSION}"
   }
   labels = {
     "org.opencontainers.image.source"      = "${SOURCE}"

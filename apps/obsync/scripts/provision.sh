@@ -6,7 +6,14 @@
 # The config secret JSON shape:
 #   {
 #     "users": {
-#       "alice": { "password": "...", "e2ee_passphrase": "..." },
+#       "alice": {
+#         "password": "...",
+#         "e2ee_passphrase": "...",
+#         "jwt": {                              # optional
+#           "public_key": "-----BEGIN PUBLIC KEY-----\n...\n",
+#           "algorithm":  "ES256"               # or ES512
+#         }
+#       },
 #       ...
 #     },
 #     "shared_vaults": {
@@ -15,9 +22,9 @@
 #     }
 #   }
 #
-# E2EE passphrases are not used by CouchDB itself — they're handed to the
-# `obsync setup-uri` command later. They live in the same config so the
-# image has a single source of truth.
+# E2EE passphrases and `jwt.private_key` (if any) are not consumed here —
+# they're handed to the `obsync setup-uri` command later. They live in the
+# same config so the image has a single source of truth.
 
 set -eu
 
@@ -90,7 +97,39 @@ jq -r '(.users // {}) | to_entries[] | "\(.key)\t\(.value.password)"' "$CONFIG" 
     esac
 done
 
-# 3. Ensure each shared vault exists with declared membership.
+# 3. Install / refresh per-user JWT public keys via REST.
+#    [jwt_keys] ec:<kid> = <public-key-PEM>
+#    The kid we use is the username — keeps things simple, one key per user.
+#    CouchDB's config storage rejects multi-line PEM strings ("Invalid
+#    configuration value"), so newlines must be escaped as the 2-char
+#    sequence \n in the JSON-encoded value (Fauxton uses the same trick).
+jq -c '(.users // {}) | to_entries[]
+       | select(.value.jwt? != null)
+       | {name: .key, alg: .value.jwt.algorithm, key: .value.jwt.public_key}' "$CONFIG" \
+| while IFS= read -r row; do
+    [ -z "$row" ] && continue
+    name=$(printf '%s' "$row" | jq -r '.name')
+    pem=$(printf '%s' "$row"  | jq -r '.key')
+    alg=$(printf '%s' "$row"  | jq -r '.alg // "ES256"')
+
+    case "$alg" in
+        ES256|ES512) family=ec ;;
+        *) log "WARN: user $name has unsupported jwt algorithm '$alg'; skipping"; continue ;;
+    esac
+
+    log "installing JWT public key for '$name' (alg=$alg, kid=$name)"
+    json_body=$(jq -nc --arg p "$pem" '$p | gsub("\n"; "\\n")')
+    code=$(printf '%s' "$json_body" | curl -s -o /dev/null -w '%{http_code}' \
+        -u "$ADMIN_USER:$ADMIN_PASS" -X PUT \
+        -H 'content-type: application/json' \
+        --data-binary @- "$URL/_node/_local/_config/jwt_keys/${family}:${name}")
+    case "$code" in
+        200) ;;
+        *)   log "WARN: PUT jwt_keys/${family}:${name} returned $code" ;;
+    esac
+done
+
+# 4. Ensure each shared vault exists with declared membership.
 jq -r '(.shared_vaults // {}) | to_entries[]
        | "\(.key)\t\(.value.members | join(","))"' "$CONFIG" \
 | while IFS=$'\t' read -r vault members; do
