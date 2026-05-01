@@ -9,6 +9,7 @@ FROM docker.io/couchdb:${VERSION}
 
 ARG DENO_VERSION
 ARG OBSIDIAN_LIVESYNC_REF
+ARG TARGETARCH
 
 USER root
 
@@ -19,8 +20,14 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Deno (static binary) — needed only by the setup-uri command. Pre-cache
-# the encryption npm dep so runtime never needs network access.
-RUN curl -fsSL "https://github.com/denoland/deno/releases/download/v${DENO_VERSION}/deno-x86_64-unknown-linux-gnu.zip" -o /tmp/deno.zip \
+# the encryption npm dep so runtime never needs network access. Pick the
+# binary matching the build platform (amd64 → x86_64-…, arm64 → aarch64-…).
+RUN case "${TARGETARCH}" in \
+        amd64) deno_arch=x86_64-unknown-linux-gnu ;; \
+        arm64) deno_arch=aarch64-unknown-linux-gnu ;; \
+        *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac \
+    && curl -fsSL "https://github.com/denoland/deno/releases/download/v${DENO_VERSION}/deno-${deno_arch}.zip" -o /tmp/deno.zip \
     && unzip /tmp/deno.zip -d /usr/local/bin \
     && chmod +x /usr/local/bin/deno \
     && rm /tmp/deno.zip \
