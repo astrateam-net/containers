@@ -1,0 +1,166 @@
+#!/bin/bash
+# obsync — operator CLI for the obsync image.
+# Usage: obsync <subcommand> [args]
+#
+# Designed to run via `docker exec obsync_app obsync <...>`. Reads admin
+# credentials from /run/secrets and the provisioning config (users, vaults,
+# passphrases) from the same source the boot provisioner uses.
+
+set -eu
+
+URL=http://localhost:5984
+CONFIG=/run/secrets/obsync_provisioning_config
+
+# Public hostname embedded in setup URIs. Set in compose:
+#   environment:
+#     - OBSYNC_PUBLIC_URL=https://obsync.example.com
+PUBLIC_URL=${OBSYNC_PUBLIC_URL:-https://localhost:5984}
+
+die()  { echo "ERROR: $*" >&2; exit 1; }
+need() { [ -f "$CONFIG" ] || die "provisioning config not mounted at $CONFIG"; }
+
+# Lazy admin-cred load — only read when a subcommand needs them. Lets `help`
+# and similar work in environments without secrets mounted (e.g. CI tests).
+load_admin_creds() {
+    [ -f /run/secrets/obsync_admin_user ] || die "admin user secret not mounted"
+    [ -f /run/secrets/obsync_admin_password ] || die "admin password secret not mounted"
+    ADMIN_USER=$(cat /run/secrets/obsync_admin_user)
+    ADMIN_PASS=$(cat /run/secrets/obsync_admin_password)
+}
+
+userdb_name() {
+    # CouchDB couch_peruser convention: userdb-<hex(utf8(name))>
+    printf 'userdb-%s' "$(printf '%s' "$1" | xxd -p | tr -d '\n')"
+}
+
+cmd_setup_uri() {
+    need
+    local user=${1:-}; local vault=${2:-}
+    [ -z "$user" ] && die "usage: obsync setup-uri <user> [shared-vault]"
+
+    local pw passphrase db
+    pw=$(jq -r --arg u "$user" '.users[$u].password // empty' "$CONFIG")
+    [ -z "$pw" ] && die "user '$user' not found in provisioning config"
+
+    if [ -z "$vault" ]; then
+        db=$(userdb_name "$user")
+        passphrase=$(jq -r --arg u "$user" '.users[$u].e2ee_passphrase // empty' "$CONFIG")
+        [ -z "$passphrase" ] && die "user '$user' has no e2ee_passphrase set"
+        echo "=== private vault: $user → $db ==="
+    else
+        db=$vault
+        passphrase=$(jq -r --arg v "$vault" '.shared_vaults[$v].e2ee_passphrase // empty' "$CONFIG")
+        [ -z "$passphrase" ] && die "shared vault '$vault' not in provisioning config"
+        if ! jq -e --arg u "$user" --arg v "$vault" \
+                '.shared_vaults[$v].members | index($u) != null' "$CONFIG" >/dev/null
+        then
+            die "user '$user' is not a member of '$vault' (per provisioning config)"
+        fi
+        echo "=== shared vault: $user → $db ==="
+    fi
+
+    echo
+    hostname="$PUBLIC_URL" username="$user" password="$pw" \
+        database="$db" passphrase="$passphrase" \
+        deno run -A --quiet /opt/obsync/generate_setupuri.ts
+    echo
+    echo "Hand the URI and the uri_passphrase to the user over DIFFERENT"
+    echo "channels (URI via clipboard/email, passphrase typed/spoken)."
+}
+
+cmd_user_list() {
+    need
+    local users
+    users=$(jq -r '(.users // {}) | keys[]' "$CONFIG")
+    [ -z "$users" ] && { echo "(no users in provisioning config)"; return; }
+    while IFS= read -r u; do
+        local in_vaults
+        in_vaults=$(jq -r --arg u "$u" \
+            '[(.shared_vaults // {}) | to_entries[]
+              | select(.value.members | index($u)) | .key] | join(", ")' \
+            "$CONFIG")
+        if [ -n "$in_vaults" ]; then
+            printf '%-20s  private + %s\n' "$u" "$in_vaults"
+        else
+            printf '%-20s  private only\n' "$u"
+        fi
+    done <<< "$users"
+}
+
+cmd_vault_list() {
+    need
+    jq -r '(.shared_vaults // {}) | to_entries[]
+           | "\(.key)\t\(.value.members | join(", "))"' "$CONFIG" \
+    | while IFS=$'\t' read -r v m; do
+        printf '%-30s  members: %s\n' "$v" "${m:-<none>}"
+    done
+}
+
+cmd_user_purge() {
+    local user=${1:-}
+    [ -z "$user" ] && die "usage: obsync user-purge <user>"
+    load_admin_creds
+
+    printf 'DELETE user %s AND their userdb? [type "yes" to confirm]: ' "$user"
+    read -r confirm
+    [ "$confirm" = yes ] || die "aborted"
+
+    local rev
+    rev=$(curl -sS -u "$ADMIN_USER:$ADMIN_PASS" \
+        "$URL/_users/org.couchdb.user:$user" | jq -r '._rev // empty')
+    if [ -n "$rev" ]; then
+        curl -sf -u "$ADMIN_USER:$ADMIN_PASS" -X DELETE \
+            "$URL/_users/org.couchdb.user:$user?rev=$rev" >/dev/null
+        echo "deleted user $user"
+    else
+        echo "user $user not found in /_users (skipping)"
+    fi
+
+    local db; db=$(userdb_name "$user")
+    if curl -sf -u "$ADMIN_USER:$ADMIN_PASS" "$URL/$db" >/dev/null 2>&1; then
+        curl -sf -u "$ADMIN_USER:$ADMIN_PASS" -X DELETE "$URL/$db" >/dev/null
+        echo "deleted database $db"
+    else
+        echo "database $db not found (skipping)"
+    fi
+
+    echo "NOTE: any shared-vault membership remains in those vaults' _security"
+    echo "      docs. Remove the user from topology.yaml + redeploy to clean up."
+}
+
+cmd_provision_now() {
+    /opt/obsync/provision.sh
+}
+
+cmd_help() {
+    cat <<'EOF'
+obsync — Obsidian LiveSync CouchDB ops CLI
+
+Usage: obsync <subcommand> [args]
+
+  setup-uri <user>                  Generate setup URI for user's private vault
+  setup-uri <user> <shared-vault>   Generate setup URI for a shared vault
+  user-list                         List managed users + their vault memberships
+  vault-list                        List shared vaults + members
+  user-purge <user>                 Delete user account + private DB (interactive)
+  provision-now                     Re-run the boot provisioner immediately
+  help                              This message
+
+The CLI reads admin creds from /run/secrets/obsync_admin_*  and the
+provisioning config (users, vaults, passphrases) from
+/run/secrets/obsync_provisioning_config. Set OBSYNC_PUBLIC_URL in compose
+to the public hostname embedded in setup URIs.
+EOF
+}
+
+cmd=${1:-help}
+shift || true
+case "$cmd" in
+    setup-uri)     cmd_setup_uri "$@" ;;
+    user-list)     cmd_user_list ;;
+    vault-list)    cmd_vault_list ;;
+    user-purge)    cmd_user_purge "$@" ;;
+    provision-now) cmd_provision_now ;;
+    help|-h|--help) cmd_help ;;
+    *) echo "unknown subcommand: $cmd" >&2; cmd_help; exit 2 ;;
+esac

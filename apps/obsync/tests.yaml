@@ -1,0 +1,66 @@
+---
+schemaVersion: "2.0.0"
+
+commandTests:
+  - name: "couchdb binary present"
+    command: "/opt/couchdb/bin/couchdb"
+    args: ["-version"]
+    exitCode: 0
+
+  - name: "deno installed"
+    command: "deno"
+    args: ["--version"]
+    exitCode: 0
+
+  - name: "jq installed"
+    command: "jq"
+    args: ["--version"]
+    exitCode: 0
+
+  - name: "curl installed"
+    command: "curl"
+    args: ["--version"]
+    exitCode: 0
+
+  - name: "xxd installed (used to compute userdb-<hex> name)"
+    command: "xxd"
+    args: ["-v"]
+    exitCode: 0
+
+  - name: "obsync CLI prints help"
+    command: "/usr/local/bin/obsync"
+    args: ["help"]
+    exitCode: 0
+
+fileExistenceTests:
+  - name: "baked local.ini"
+    path: /opt/couchdb/etc/local.ini
+    shouldExist: true
+
+  - name: "entrypoint script"
+    path: /usr/local/bin/obsync-entrypoint.sh
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
+
+  - name: "provisioner"
+    path: /opt/obsync/provision.sh
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
+
+  - name: "obsync CLI on PATH"
+    path: /usr/local/bin/obsync
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
+
+  - name: "vendored generate_setupuri.ts"
+    path: /opt/obsync/generate_setupuri.ts
+    shouldExist: true
+
+fileContentTests:
+  - name: "local.ini has couch_peruser enabled"
+    path: /opt/couchdb/etc/local.ini
+    expectedContents: ['enable = true']
+
+  - name: "local.ini has require_valid_user_except_for_up"
+    path: /opt/couchdb/etc/local.ini
+    expectedContents: ['require_valid_user_except_for_up = true']
