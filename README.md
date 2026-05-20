@@ -11,8 +11,8 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | App | Image | Version |
 |-----|-------|---------|
 | [bird-maxmind](apps/bird-maxmind/) | `ghcr.io/astrateam-net/bird-maxmind` | `0.1.2` |
-| [bkm](apps/bkm/) | `ghcr.io/astrateam-net/bkm` | `10.2.7` |
-| [bpm](apps/bpm/) | `ghcr.io/astrateam-net/bpm` | `11.3.3` |
+| [bkm](apps/bkm/) | `ghcr.io/astrateam-net/bkm` | `10.2.11` |
+| [bpm](apps/bpm/) | `ghcr.io/astrateam-net/bpm` | `11.3.6` |
 | [ci-ansible](apps/ci-ansible/) | `ghcr.io/astrateam-net/ci-ansible` | `1.1.0` |
 | [ci-opentofu](apps/ci-opentofu/) | `ghcr.io/astrateam-net/ci-opentofu` | `1.1.0` |
 | [gh-actions-runner](apps/gh-actions-runner/) | `ghcr.io/astrateam-net/gh-actions-runner` | `0.3.0` |
