@@ -16,7 +16,7 @@ variable "VERSION" {
 # known-good release; the dev-based branch on the fork is for the upstream PR
 # only. Bump this SHA when rebasing onto a newer upstream tag.
 variable "SOURCE_REF" {
-  default = "c0058d936fcd2f17c8b34ae04b1cd7c315d41447"
+  default = "a9e1a242130fdbd877eff183786c17cf1ed7d74d"
 }
 
 variable "SOURCE" {
