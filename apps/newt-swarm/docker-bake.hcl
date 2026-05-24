@@ -1,10 +1,13 @@
 target "docker-metadata-action" {}
 
-# VERSION drives the image tag (passed to docker-metadata-action and to the
-# Newt binary via -ldflags). Bump on each rebuild we want a new tag for.
-# Format: <upstream-version>-swarm.<n> until upstream merges the feature.
+# VERSION must match the upstream Newt release this image is built on top of
+# (currently 1.12.5). Used for both the image tag and the binary's internal
+# version string. Suffixes like -swarm.0 fail upstream's strict X.Y.Z parser
+# in updates/updates.go and would print an error on every start; the
+# patched-build provenance lives in the image name (newt-swarm) and the OCI
+# labels (org.opencontainers.image.revision = SOURCE_REF below) instead.
 variable "VERSION" {
-  default = "1.12.5-swarm.0"
+  default = "1.12.5"
 }
 
 # SOURCE_REF is the git ref (branch, tag, or SHA) on the fork to build from.
