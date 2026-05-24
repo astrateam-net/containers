@@ -1,0 +1,13 @@
+file:
+  /usr/local/bin/newt:
+    exists: true
+    mode: "0755"
+  /entrypoint.sh:
+    exists: true
+    mode: "0755"
+
+command:
+  newt-version:
+    exec: "newt --version"
+    exit-status: 0
+    timeout: 5000
