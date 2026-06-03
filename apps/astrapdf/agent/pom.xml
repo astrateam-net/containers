@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>net.astrateam</groupId>
+  <artifactId>astrapdf-agent</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+
+  <!--
+    Java agent that forces the application's license tier to ENTERPRISE at
+    runtime. Mirrors the javaagent overlay pattern already used by apps/bpm and
+    apps/bkm (Atlassian). No upstream source is rebuilt; the agent instruments
+    two methods in the already-compiled application classes on class load.
+
+    Byte Buddy is NOT bundled — it is declared 'provided' (compile-only) and
+    supplied at runtime from the copy the fat image already ships in /app/lib
+    (see Dockerfile). The agent manifest's Boot-Class-Path makes that jar visible
+    to the agent at premain time. This keeps the agent jar tiny (~a few KB) and
+    always uses the same Byte Buddy version the application itself was built with.
+  -->
+
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Match the version bundled in the stirling-pdf fat image (/app/lib). -->
+    <bytebuddy.version>1.17.8</bytebuddy.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy</artifactId>
+      <version>${bytebuddy.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>astrapdf-agent</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.1</version>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Premain-Class>net.astrateam.astrapdf.AstraPdfAgent</Premain-Class>
+              <Agent-Class>net.astrateam.astrapdf.AstraPdfAgent</Agent-Class>
+              <Can-Redefine-Classes>true</Can-Redefine-Classes>
+              <Can-Retransform-Classes>true</Can-Retransform-Classes>
+              <!-- Resolved relative to this jar's directory (/var/agent). -->
+              <Boot-Class-Path>byte-buddy.jar</Boot-Class-Path>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
