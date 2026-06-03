@@ -2,6 +2,16 @@ file:
   /var/agent/astrapdf-agent.jar:
     exists: true
     mode: "0444"
+  /var/agent/byte-buddy.jar:
+    exists: true
+    mode: "0444"
+  /scripts/secrets-entrypoint.sh:
+    exists: true
+  # Russian OCR baked in alongside the stock English data
+  /usr/share/tesseract-ocr/5/tessdata/rus.traineddata:
+    exists: true
+  /usr/share/tesseract-ocr/5/tessdata/eng.traineddata:
+    exists: true
 
 addr:
   tcp://localhost:8080:

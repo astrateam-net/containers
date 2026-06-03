@@ -25,7 +25,19 @@ COPY --from=agent /build/target/astrapdf-agent.jar ${AGENT_PATH}/astrapdf-agent.
 RUN cp /app/lib/byte-buddy-*.jar ${AGENT_PATH}/byte-buddy.jar && \
     chmod 444 ${AGENT_PATH}/astrapdf-agent.jar ${AGENT_PATH}/byte-buddy.jar
 
+# The fat image ships only English tessdata; bake in Russian OCR (fast variant,
+# matching upstream's eng choice) so OCR ru/en works offline with no startup pull.
+RUN curl -fsSL -o /usr/share/tesseract-ocr/5/tessdata/rus.traineddata \
+      https://github.com/tesseract-ocr/tessdata_fast/raw/main/rus.traineddata && \
+    chmod 444 /usr/share/tesseract-ocr/5/tessdata/rus.traineddata
+
 # JDK_JAVA_OPTIONS is honoured by the java launcher itself, independent of the
 # image entrypoint and of JAVA_CUSTOM_OPTS (left free for the operator's heap
 # settings in the stack).
 ENV JDK_JAVA_OPTIONS="-javaagent:${AGENT_PATH}/astrapdf-agent.jar"
+
+# Generic "secrets via *_FILE" support (Stirling has none upstream), then chain
+# into the stock init. Lets any setting come from a Docker/Swarm secret file.
+COPY secrets-entrypoint.sh /scripts/secrets-entrypoint.sh
+RUN chmod 555 /scripts/secrets-entrypoint.sh
+ENTRYPOINT ["tini", "--", "/scripts/secrets-entrypoint.sh"]
