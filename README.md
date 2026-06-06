@@ -17,6 +17,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [bpm](apps/bpm/) | `ghcr.io/astrateam-net/bpm` | `11.3.6` |
 | [ci-ansible](apps/ci-ansible/) | `ghcr.io/astrateam-net/ci-ansible` | `1.1.0` |
 | [ci-opentofu](apps/ci-opentofu/) | `ghcr.io/astrateam-net/ci-opentofu` | `1.1.0` |
+| [coder](apps/coder/) | `ghcr.io/astrateam-net/coder` | `v2.34.0` |
 | [gh-actions-runner](apps/gh-actions-runner/) | `ghcr.io/astrateam-net/gh-actions-runner` | `0.3.0` |
 | [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.30.1` |
 | [n8n-mcp](apps/n8n-mcp/) | `ghcr.io/astrateam-net/n8n-mcp` | `2.47.12` |
