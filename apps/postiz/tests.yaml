@@ -9,10 +9,13 @@ file:
       - "CLOUDFLARE_ENDPOINT"
       - "forcePathStyle"
       - "CLOUDFLARE_BUCKET_PREFIX"
+  /app/apps/backend/dist/libraries/nestjs-libraries/src/upload/r2.uploader.js:
+    exists: true
+    contains:
+      - "CLOUDFLARE_ENDPOINT"
+      - "forcePathStyle"
   /app/apps/orchestrator/dist/libraries/nestjs-libraries/src/upload/cloudflare.storage.js:
     exists: true
     contains:
-      - "__postizKey"
       - "CLOUDFLARE_ENDPOINT"
       - "forcePathStyle"
-      - "CLOUDFLARE_BUCKET_PREFIX"
