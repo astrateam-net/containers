@@ -23,6 +23,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [newt-swarm](apps/newt-swarm/) | `ghcr.io/astrateam-net/newt-swarm` | `1.12.5` |
 | [obsync](apps/obsync/) | `ghcr.io/astrateam-net/obsync` | `3.5.1` |
 | [postgres-pgbackrest](apps/postgres-pgbackrest/) | `ghcr.io/astrateam-net/postgres-pgbackrest` | `17.8.0` |
+| [postiz](apps/postiz/) | `ghcr.io/astrateam-net/postiz` | `v2.21.8` |
 | [vlmcsd](apps/vlmcsd/) | `ghcr.io/astrateam-net/vlmcsd` | `svn1113` |
 | [xtrabackup](apps/xtrabackup/) | `ghcr.io/astrateam-net/xtrabackup` | `8.4.0-2` |
 
