@@ -1,0 +1,25 @@
+schemaVersion: "2.0.0"
+
+# Structural test only — the coder server needs PostgreSQL to run, so we verify
+# the overlay (binary present + capability persisted) rather than booting the app.
+
+fileExistenceTests:
+  - name: coder binary
+    path: /opt/coder
+    shouldExist: true
+
+commandTests:
+  - name: coder binary is executable
+    command: sh
+    args: ["-lc", "test -x /opt/coder"]
+    exitCode: 0
+
+  # The setcap'd security.capability xattr must survive into the final layer.
+  # getcap (from libcap) prints the binary only when a capability is attached,
+  # so grepping for cap_net_bind_service proves the overlay took effect.
+  - name: cap_net_bind_service attached to binary
+    command: sh
+    args:
+      - "-lc"
+      - "getcap /opt/coder | grep -q cap_net_bind_service"
+    exitCode: 0
