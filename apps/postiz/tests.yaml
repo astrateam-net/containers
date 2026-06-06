@@ -1,0 +1,18 @@
+# Verify the MinIO/S3 overlay patch landed in both compiled bundles. Booting the
+# full app needs Postgres + Redis + Temporal, so we assert on the patched files
+# rather than runtime behaviour.
+file:
+  /app/apps/backend/dist/libraries/nestjs-libraries/src/upload/cloudflare.storage.js:
+    exists: true
+    contains:
+      - "__postizKey"
+      - "CLOUDFLARE_ENDPOINT"
+      - "forcePathStyle"
+      - "CLOUDFLARE_BUCKET_PREFIX"
+  /app/apps/orchestrator/dist/libraries/nestjs-libraries/src/upload/cloudflare.storage.js:
+    exists: true
+    contains:
+      - "__postizKey"
+      - "CLOUDFLARE_ENDPOINT"
+      - "forcePathStyle"
+      - "CLOUDFLARE_BUCKET_PREFIX"
