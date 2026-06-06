@@ -1,7 +1,8 @@
 schemaVersion: "2.0.0"
 
 # Structural test only — the coder server needs PostgreSQL to run, so we verify
-# the overlay (binary present + capability persisted) rather than booting the app.
+# the build (patched binary present, executable, correctly version-stamped)
+# rather than booting the app.
 
 fileExistenceTests:
   - name: coder binary
@@ -12,6 +13,15 @@ commandTests:
   - name: coder binary is executable
     command: sh
     args: ["-lc", "test -x /opt/coder"]
+    exitCode: 0
+
+  # Confirms the from-source build produced a working binary stamped with the
+  # stable version (buildinfo.tag), not a "devel" fallback.
+  - name: coder reports the stable version
+    command: sh
+    args:
+      - "-lc"
+      - "/opt/coder version | grep -q 2.34.0"
     exitCode: 0
 
   # The setcap'd security.capability xattr must survive into the final layer.

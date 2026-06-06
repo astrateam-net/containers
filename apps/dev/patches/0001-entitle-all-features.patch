@@ -1,0 +1,73 @@
+diff --git a/enterprise/coderd/coderd.go b/enterprise/coderd/coderd.go
+index 82fdd4d27f..1600750320 100644
+--- a/enterprise/coderd/coderd.go
++++ b/enterprise/coderd/coderd.go
+@@ -856,24 +856,25 @@ func (api *API) updateEntitlements(ctx context.Context) error {
+ 			agedReplicas = append(agedReplicas, replica)
+ 		}
+ 
++		enablements := map[codersdk.FeatureName]bool{
++			codersdk.FeatureAuditLog:                   api.AuditLogging,
++			codersdk.FeatureConnectionLog:              api.ConnectionLogging,
++			codersdk.FeatureBrowserOnly:                api.BrowserOnly,
++			codersdk.FeatureSCIM:                       len(api.SCIMAPIKey) != 0,
++			codersdk.FeatureMultipleExternalAuth:       len(api.ExternalAuthConfigs) > 1,
++			codersdk.FeatureTemplateRBAC:               api.RBAC,
++			codersdk.FeatureExternalTokenEncryption:    len(api.ExternalTokenEncryption) > 0,
++			codersdk.FeatureExternalProvisionerDaemons: true,
++			codersdk.FeatureAdvancedTemplateScheduling: true,
++			codersdk.FeatureWorkspaceProxy:             true,
++			codersdk.FeatureUserRoleManagement:         true,
++			codersdk.FeatureAccessControl:              true,
++			codersdk.FeatureControlSharedPorts:         true,
++			codersdk.FeatureAIBridge:                   api.DeploymentValues.AI.BridgeConfig.Enabled.Value(),
++		}
+ 		reloadedEntitlements, err := license.Entitlements(
+ 			ctx, api.Database,
+-			len(agedReplicas), len(api.ExternalAuthConfigs), api.LicenseKeys, map[codersdk.FeatureName]bool{
+-				codersdk.FeatureAuditLog:                   api.AuditLogging,
+-				codersdk.FeatureConnectionLog:              api.ConnectionLogging,
+-				codersdk.FeatureBrowserOnly:                api.BrowserOnly,
+-				codersdk.FeatureSCIM:                       len(api.SCIMAPIKey) != 0,
+-				codersdk.FeatureMultipleExternalAuth:       len(api.ExternalAuthConfigs) > 1,
+-				codersdk.FeatureTemplateRBAC:               api.RBAC,
+-				codersdk.FeatureExternalTokenEncryption:    len(api.ExternalTokenEncryption) > 0,
+-				codersdk.FeatureExternalProvisionerDaemons: true,
+-				codersdk.FeatureAdvancedTemplateScheduling: true,
+-				codersdk.FeatureWorkspaceProxy:             true,
+-				codersdk.FeatureUserRoleManagement:         true,
+-				codersdk.FeatureAccessControl:              true,
+-				codersdk.FeatureControlSharedPorts:         true,
+-				codersdk.FeatureAIBridge:                   api.DeploymentValues.AI.BridgeConfig.Enabled.Value(),
+-			})
++			len(agedReplicas), len(api.ExternalAuthConfigs), api.LicenseKeys, enablements)
+ 		if err != nil {
+ 			return codersdk.Entitlements{}, err
+ 		}
+@@ -883,6 +884,26 @@ func (api *API) updateEntitlements(ctx context.Context) error {
+ 			return codersdk.Entitlements{}, entitlements.ErrLicenseRequiresTelemetry
+ 		}
+ 
++		// Locally entitle every feature. The enterprise code paths are all
++		// compiled into this binary; this removes the entitlement barrier and
++		// leaves the on/off decision to deployment config (and AlwaysEnable
++		// features). Limit features are given an effectively unlimited cap so
++		// usage checks pass.
++		reloadedEntitlements.HasLicense = true
++		reloadedEntitlements.Errors = []string{}
++		for _, name := range codersdk.FeatureNames {
++			f := reloadedEntitlements.Features[name]
++			f.Entitlement = codersdk.EntitlementEntitled
++			if name.UsesLimit() {
++				unlimited := int64(1) << 40
++				f.Enabled = true
++				f.Limit = &unlimited
++			} else {
++				f.Enabled = enablements[name] || name.AlwaysEnable()
++			}
++			reloadedEntitlements.Features[name] = f
++		}
++
+ 		featureChanged := func(featureName codersdk.FeatureName) (initial, changed, enabled bool) {
+ 			return api.Entitlements.FeatureChanged(featureName, reloadedEntitlements.Features[featureName])
+ 		}
