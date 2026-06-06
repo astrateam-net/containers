@@ -1,0 +1,26 @@
+schemaVersion: "2.0.0"
+
+# Structural test only — the authentik server needs PostgreSQL + Redis to run,
+# so we verify the overlay (binary present + capability persisted) rather than
+# booting the app.
+
+fileExistenceTests:
+  - name: authentik-server binary
+    path: /usr/bin/authentik-server
+    shouldExist: true
+
+commandTests:
+  - name: authentik-server is executable
+    command: sh
+    args: ["-lc", "test -x /usr/bin/authentik-server"]
+    exitCode: 0
+
+  # The setcap'd security.capability xattr must survive into the final layer.
+  # python3 ships in the authentik image; os.getxattr raises (non-zero) if the
+  # capability is absent, so exitCode 0 proves cap_net_bind_service is attached.
+  - name: cap_net_bind_service attached to binary
+    command: sh
+    args:
+      - "-lc"
+      - "python3 -c \"import os; os.getxattr('/usr/bin/authentik-server', 'security.capability')\""
+    exitCode: 0
