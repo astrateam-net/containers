@@ -5,18 +5,35 @@
 # removes the license entitlement gate (patches/0001-entitle-all-features.patch,
 # touching enterprise/coderd/coderd.go: updateEntitlements).
 #
-# No fork: upstream coder/coder is fetched by tag (${VERSION}) at build time and
-# the patch is applied on top. The frontend is built unchanged from upstream,
-# because the UI shows/hides features purely from what the API reports as
-# entitled, which the patch flips on. The result is assembled onto the upstream
-# pre-built base image, which supplies terraform, the entrypoint, and the
-# non-root uid 1000 user.
+# The build mirrors upstream's own pipeline (scripts/build_go.sh + the Makefile
+# build-slim packaging), so the result is equivalent to the published image
+# except for the patch:
+#   - the React frontend is built from the pinned tag,
+#   - the slim agent/CLI binaries are compiled and packed into
+#     site/out/bin/{coder.tar.zst,coder.sha1} (this is what the /bin/ endpoint
+#     and the `coder` CLI/agent downloads serve; site/bin.go reads them),
+#   - the server binary embeds all of that via `//go:embed all:out`.
+# Only amd64 agents are built (no ARM), matching the deployment target.
 #
-# The frontend builder is pinned to $BUILDPLATFORM (built natively; the SPA is
-# arch-independent) and the Go binary is cross-compiled to $TARGETARCH, so
-# multi-arch (amd64 + arm64) builds never fall back to QEMU.
+# Assembled onto the upstream runtime base image (FROM ghcr.io/coder/coder),
+# which supplies terraform, the entrypoint, and the non-root uid 1000 user, so
+# everything outside /opt/coder is byte-identical to upstream. libcap is added
+# and cap_net_bind_service granted on the binary so the uid-1000 process can
+# bind privileged ports (e.g. 80/443) directly, without root or a port-forwarder.
+#
+# The frontend builder is pinned to $BUILDPLATFORM (the SPA is arch-independent)
+# and the Go binary is built for $TARGETARCH, so the (amd64-only) build never
+# falls back to QEMU.
 
 ARG VERSION
+
+# Go build flags kept in sync with upstream scripts/build_go.sh. ts_omit_* trims
+# unused Tailscale features (notably the AWS SDK), matching upstream binary size.
+ARG GO_TAGS_COMMON="ts_omit_aws,ts_omit_bird,ts_omit_tap,ts_omit_kube"
+
+# Slim agent/CLI platforms to embed, amd64 only (upstream also ships the arm64
+# and armv7 variants). Space-separated os:arch entries.
+ARG SLIM_OSARCHES="linux:amd64 darwin:amd64 windows:amd64"
 
 # --- Stage 1: build the React frontend from pristine upstream ---------------
 FROM --platform=$BUILDPLATFORM docker.io/library/node:22.19.0-bookworm AS site
@@ -31,17 +48,16 @@ WORKDIR /src/site
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 RUN NODE_ENV=production pnpm build
-# vite empties out/ on build; recreate out/bin so the Go embed (all:out/bin/*)
-# has at least one file to match.
-RUN mkdir -p /src/site/out/bin && touch /src/site/out/bin/.gitkeep
 
-# --- Stage 2: patch + cross-compile the server binary -----------------------
+# --- Stage 2: patch + build slim agents + cross-compile the server ----------
 FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.26.4-bookworm AS build
 ARG VERSION
 ARG TARGETOS
 ARG TARGETARCH
+ARG GO_TAGS_COMMON
+ARG SLIM_OSARCHES
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git ca-certificates \
+    && apt-get install -y --no-install-recommends git ca-certificates zstd \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 RUN git init -q . \
@@ -53,20 +69,41 @@ RUN git init -q . \
 COPY patches/ /patches/
 RUN for p in /patches/*.patch; do echo "applying $p"; git apply --verbose "$p"; done
 COPY --from=site /src/site/out ./site/out
+
+# Build the slim agent/CLI binaries the server serves at /bin/, then pack them
+# into site/out/bin exactly as upstream's `make build-slim` does:
+#   coder.sha1     "<sha1> *<file>" manifest (sha1sum -b), parsed by site/bin.go
+#   coder.tar.zst  zstd-compressed tar of the coder-<os>-<arch> binaries
+# The raw binaries are then removed, so only the archive + manifest get embedded.
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    version="${VERSION#v}"; \
+    for osarch in ${SLIM_OSARCHES}; do \
+      os="${osarch%%:*}"; arch="${osarch##*:}"; ext=""; \
+      [ "$os" = windows ] && ext=".exe"; \
+      echo ">> building slim coder-$os-$arch$ext"; \
+      CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" \
+        go build -tags "slim,${GO_TAGS_COMMON}" \
+        -ldflags "-s -w -X github.com/coder/coder/v2/buildinfo.tag=${version}" \
+        -o "site/out/bin/coder-$os-$arch$ext" ./enterprise/cmd/coder || exit 1; \
+    done; \
+    cd site/out/bin \
+    && sha1sum -b coder-* | tee coder.sha1 \
+    && tar cf coder.tar coder-* \
+    && zstd -19 --long -T0 --no-progress --force --rm -o coder.tar.zst coder.tar \
+    && rm -f coder-*
+
+# Build the server ("fat") binary. -tags embed pulls site/out (frontend +
+# coder.tar.zst + coder.sha1) into the binary via //go:embed all:out.
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     version="${VERSION#v}" \
     && CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" \
-       go build -tags embed -trimpath \
+       go build -tags "embed,${GO_TAGS_COMMON}" \
        -ldflags "-s -w -X github.com/coder/coder/v2/buildinfo.tag=${version}" \
        -o /opt/coder ./enterprise/cmd/coder
 
 # --- Stage 3: assemble onto the upstream runtime base -----------------------
-# Also grant cap_net_bind_service on the binary so the non-root (uid 1000)
-# process can bind privileged ports (e.g. 80/443) directly, without running as
-# root or relying on an external port-forwarder. libcap is kept in the final
-# image so getcap can verify the capability (the Alpine base ships no
-# python3/xattr reader for the test).
 FROM ghcr.io/coder/coder:${VERSION}
 
 USER root
