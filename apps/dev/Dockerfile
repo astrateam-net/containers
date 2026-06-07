@@ -1,13 +1,14 @@
 # syntax=docker/dockerfile:1
 # check=skip=InvalidDefaultArgInFrom
 
-# Coder server built from pristine upstream with a small local patch that
-# removes the license entitlement gate (patches/0001-entitle-all-features.patch,
-# touching enterprise/coderd/coderd.go: updateEntitlements).
+# Custom Coder build that grants cap_net_bind_service on the server binary, so
+# the non-root (uid 1000) process can bind privileged ports (e.g. 80/443)
+# directly, without root or an external port-forwarder.
 #
-# The build mirrors upstream's own pipeline (scripts/build_go.sh + the Makefile
-# build-slim packaging), so the result is equivalent to the published image
-# except for the patch:
+# The server is rebuilt from the pinned upstream tag with the local patch series
+# in patches/ applied. The build mirrors upstream's own pipeline
+# (scripts/build_go.sh + the Makefile build-slim packaging), so the result
+# matches the published image:
 #   - the React frontend is built from the pinned tag,
 #   - the slim agent/CLI binaries are compiled and packed into
 #     site/out/bin/{coder.tar.zst,coder.sha1} (this is what the /bin/ endpoint
@@ -17,9 +18,7 @@
 #
 # Assembled onto the upstream runtime base image (FROM ghcr.io/coder/coder),
 # which supplies terraform, the entrypoint, and the non-root uid 1000 user, so
-# everything outside /opt/coder is byte-identical to upstream. libcap is added
-# and cap_net_bind_service granted on the binary so the uid-1000 process can
-# bind privileged ports (e.g. 80/443) directly, without root or a port-forwarder.
+# everything outside /opt/coder matches upstream.
 #
 # The frontend builder is pinned to $BUILDPLATFORM (the SPA is arch-independent)
 # and the Go binary is built for $TARGETARCH, so the (amd64-only) build never
