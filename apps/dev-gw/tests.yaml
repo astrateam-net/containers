@@ -1,0 +1,40 @@
+schemaVersion: "2.0.0"
+
+# Structural test only — the gateway needs runtime config (TLS, provisioner public
+# key, gateway.json, a gateway id) to boot, so we verify the build LAYOUT: our
+# patched webapp swapped into the stock image + our entrypoint in place. If the
+# from-source SPA build had failed, the image build itself would have failed.
+
+fileExistenceTests:
+  - name: patched webapp client served
+    path: /opt/devolutions/gateway/webapp/client/index.html
+    shouldExist: true
+  - name: devget entrypoint present
+    path: /usr/local/bin/entrypoint.ps1
+    shouldExist: true
+
+commandTests:
+  # Proves OUR entrypoint (not the stock one) is in place: it sets a fixed GATEWAY_ID
+  # so the authority's jet_gw_id binds to this instance.
+  - name: entrypoint is the devget edition
+    command: sh
+    args: ["-lc", "grep -q GATEWAY_ID /usr/local/bin/entrypoint.ps1"]
+    exitCode: 0
+
+  # Proves our patched route compiled into the SPA (stock gateway-ui has no /launch
+  # route). The route path string survives minification in the built bundle.
+  - name: launch route bundled into the webapp
+    command: sh
+    args:
+      - "-lc"
+      - "grep -rqE '\"launch\"|/launch' /opt/devolutions/gateway/webapp/client/*.js"
+    exitCode: 0
+
+  # Proves the real @devolutions/icons were harvested into the build (not the empty
+  # stub) — the toolbar glyph font is present in the bundled assets.
+  - name: real devolutions-icons font bundled
+    command: sh
+    args:
+      - "-lc"
+      - "find /opt/devolutions/gateway/webapp/client -iname '*devolutions-icons*' | grep -q ."
+    exitCode: 0

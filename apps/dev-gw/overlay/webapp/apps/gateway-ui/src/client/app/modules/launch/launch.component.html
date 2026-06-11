@@ -1,0 +1,53 @@
+<div class="launch-container" #sessionContainer>
+  <!-- The <iron-remote-desktop> element is created PROGRAMMATICALLY in
+       ngAfterViewInit, NOT declared here. The svelte custom element mounts in a
+       microtask queued at DOM connection, captures its `module` prop once, and
+       dispatches 'ready' exactly once. On this route Angular's template phases
+       (node creation → property bindings → lifecycle hooks) are split across
+       tasks, so a template-declared element races that microtask — measured
+       live: 'ready' fired at 220ms vs ngAfterViewInit at 237ms, and `module`
+       was still undefined at mount ("reading 'SessionBuilder'" crash).
+       Creating the element by hand lets us set `module` and the 'ready'
+       listener BEFORE appendChild — the mount microtask cannot win anymore. -->
+
+
+  <!-- The gateway's native floating session toolbar — identical to the stock RDP
+       tab: Windows key, session info, Ctrl+Alt+Del, screen modes, clipboard
+       actions, dynamic resize, unicode keyboard, crosshair cursor. -->
+  @if (status === 'connected' && remoteClient) {
+    <div class="toolbar-overlay-anchor">
+      <rdp-toolbar-wrapper
+        [remoteClient]="remoteClient"
+        [actions]="clipboardActionButtons"
+        [sessionInfo]="sessionInfo"
+        [dynamicResizeSupported]="dynamicResizeSupported"
+        [initialState]="{ dynamicResize: true, unicodeKeyboard: true, cursorCrosshair: false }"
+        (sessionClose)="startTerminationProcess()"
+        (screenModeChange)="handleScreenModeChange($event)"
+        (dynamicResizeChange)="onDynamicResizeChange($event)"
+        (cursorCrosshairChange)="onCursorCrosshairChange($event)">
+      </rdp-toolbar-wrapper>
+    </div>
+  }
+
+  @if (status === 'connecting') {
+    <div class="launch-overlay" role="status">
+      <div class="launch-spinner"></div>
+      <p>Connecting…</p>
+    </div>
+  } @else if (status === 'terminated') {
+    <div class="launch-overlay" role="status">
+      <p>Session terminated.</p>
+      @if (message) {
+        <p class="launch-detail">{{ message }}</p>
+      }
+    </div>
+  } @else if (status === 'error') {
+    <div class="launch-overlay launch-error" role="alert">
+      <p>Connection failed.</p>
+      @if (message) {
+        <p class="launch-detail">{{ message }}</p>
+      }
+    </div>
+  }
+</div>
