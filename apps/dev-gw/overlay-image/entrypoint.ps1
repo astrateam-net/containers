@@ -5,9 +5,48 @@
 #   - ENABLE_UNSTABLE / kerberos : credential-injection Kerberos path for DOMAIN targets
 #                   (added in a later step; NTLM/domainless targets don't need it)
 #
+# Sensitive inputs (provisioner keys, TLS cert/key, cert + webapp passwords) accept a
+# <NAME>_FILE variant pointing at a Docker secret (/run/secrets/<n>) or a bind-mounted
+# file (e.g. an acme.sh-managed cert), on top of the legacy <NAME>_B64 / <NAME> env.
+# _FILE wins, so secrets never have to live in the environment. See Resolve-Secret* below.
+#
 # Everything else is byte-for-byte the stock entrypoint logic.
 
 Import-Module DevolutionsGateway -ErrorAction Stop
+
+# --- Secret resolution: Docker secrets / bind-mounted files (the _FILE convention) ---
+# Priority for any sensitive input NAME: NAME_FILE (a file path) > NAME_B64 > NAME (raw).
+
+# Resolve a sensitive STRING (passwords). Reads NAME_FILE if set (trimming the trailing
+# newline a secret file usually carries), else the raw NAME env. Returns $null if neither.
+function Resolve-SecretString {
+    param([Parameter(Mandatory)][string]$Name)
+    $path = [Environment]::GetEnvironmentVariable("${Name}_FILE")
+    if ($path) {
+        if (-not (Test-Path $path)) { throw "${Name}_FILE points at '$path' which does not exist" }
+        return ([IO.File]::ReadAllText($path)).TrimEnd("`r", "`n")
+    }
+    return [Environment]::GetEnvironmentVariable($Name)
+}
+
+# Resolve a sensitive FILE (PEM keys/certs). Returns @{ Path; Temp } or $null:
+#   NAME_FILE -> used in place (Temp=$false; a mounted secret/cert — never deleted).
+#   NAME_B64  -> decoded to $TmpPath (Temp=$true; cleaned up after import).
+function Resolve-SecretFile {
+    param([Parameter(Mandatory)][string]$Name, [Parameter(Mandatory)][string]$TmpPath)
+    $path = [Environment]::GetEnvironmentVariable("${Name}_FILE")
+    if ($path) {
+        if (-not (Test-Path $path)) { throw "${Name}_FILE points at '$path' which does not exist" }
+        return @{ Path = $path; Temp = $false }
+    }
+    $b64 = [Environment]::GetEnvironmentVariable("${Name}_B64")
+    if ($b64) {
+        try { [IO.File]::WriteAllBytes($TmpPath, [Convert]::FromBase64String($b64)) }
+        catch { throw "Failed to decode ${Name}_B64: $_" }
+        return @{ Path = $TmpPath; Temp = $true }
+    }
+    return $null
+}
 
 $Hostname = 'localhost'
 $WebPort = 7171
@@ -43,7 +82,11 @@ if (Test-Path Env:EXTERNAL_TCP_PORT) { $ExternalTcpPort = $Env:EXTERNAL_TCP_PORT
 $TcpHostname = '*'
 if (Test-Path Env:TCP_HOSTNAME) { $TcpHostname = $Env:TCP_HOSTNAME }
 
-if ($Env:WEB_APP_USERNAME -and $Env:WEB_APP_PASSWORD) { $WebAppAuthentication = 'Custom' }
+# Webapp Custom-auth credentials: username plain, password via the _FILE convention
+# (so it can come from a Docker secret). Resolved once, reused for Set-DGatewayUser below.
+$WebAppUsername = Resolve-SecretString 'WEB_APP_USERNAME'
+$WebAppPassword = Resolve-SecretString 'WEB_APP_PASSWORD'
+if ($WebAppUsername -and $WebAppPassword) { $WebAppAuthentication = 'Custom' }
 if ($Env:WEB_APP_AUTHENTICATION) { $WebAppAuthentication = $Env:WEB_APP_AUTHENTICATION }
 
 $WebListener = New-DGatewayListener "$WebScheme`://*:$WebPort" "$ExternalWebScheme`://*:$ExternalWebPort"
@@ -67,62 +110,46 @@ if (Test-Path Env:GATEWAY_ID) {
 Set-DGatewayConfig @ConfigParams
 
 if ($WebAppAuthentication -eq 'Custom') {
-    if ($Env:WEB_APP_USERNAME -and $Env:WEB_APP_PASSWORD) {
-        Set-DGatewayUser -Username $Env:WEB_APP_USERNAME -Password $Env:WEB_APP_PASSWORD
+    if ($WebAppUsername -and $WebAppPassword) {
+        Set-DGatewayUser -Username $WebAppUsername -Password $WebAppPassword
     }
 }
 
 if (Test-Path Env:RECORDING_PATH) { Set-DGatewayRecordingPath -RecordingPath $Env:RECORDING_PATH }
 if (Test-Path Env:VERBOSITY_PROFILE) { Set-DGatewayConfig -VerbosityProfile $Env:VERBOSITY_PROFILE }
 
-$ProvisionerPublicKeyFile = $null
-if ($Env:PROVISIONER_PUBLIC_KEY_B64) {
-    try {
-        $ProvisionerPublicKeyFile = "/tmp/provisioner.pem"
-        [IO.File]::WriteAllBytes($ProvisionerPublicKeyFile, [Convert]::FromBase64String($Env:PROVISIONER_PUBLIC_KEY_B64))
-    } catch { throw "Failed to decode PROVISIONER_PUBLIC_KEY_B64: $_" }
-}
+$ProvisionerPublic = Resolve-SecretFile 'PROVISIONER_PUBLIC_KEY' '/tmp/provisioner.pem'
+$ProvisionerPrivate = Resolve-SecretFile 'PROVISIONER_PRIVATE_KEY' '/tmp/provisioner.key'
 
-$ProvisionerPrivateKeyFile = $null
-if ($Env:PROVISIONER_PRIVATE_KEY_B64) {
-    try {
-        $ProvisionerPrivateKeyFile = "/tmp/provisioner.key"
-        [IO.File]::WriteAllBytes($ProvisionerPrivateKeyFile, [Convert]::FromBase64String($Env:PROVISIONER_PRIVATE_KEY_B64))
-    } catch { throw "Failed to decode PROVISIONER_PRIVATE_KEY_B64: $_" }
-}
-
-if ($ProvisionerPublicKeyFile -or $ProvisionerPrivateKeyFile) {
+if ($ProvisionerPublic -or $ProvisionerPrivate) {
     Write-Host "Importing provisioner keys..."
-    Import-DGatewayProvisionerKey -PublicKeyFile $ProvisionerPublicKeyFile -PrivateKeyFile $ProvisionerPrivateKeyFile
-    Remove-Item @($ProvisionerPublicKeyFile, $ProvisionerPrivateKeyFile) -ErrorAction SilentlyContinue | Out-Null
+    $pubPath = if ($ProvisionerPublic) { $ProvisionerPublic.Path } else { $null }
+    $privPath = if ($ProvisionerPrivate) { $ProvisionerPrivate.Path } else { $null }
+    Import-DGatewayProvisionerKey -PublicKeyFile $pubPath -PrivateKeyFile $privPath
+    foreach ($s in @($ProvisionerPublic, $ProvisionerPrivate)) {
+        if ($s -and $s.Temp) { Remove-Item $s.Path -ErrorAction SilentlyContinue | Out-Null }
+    }
 } else {
     Write-Host "Generating provisioner keys..."
     New-DGatewayProvisionerKeyPair -Force
 }
 
-$TlsCertificateFile = $null
-if ($Env:TLS_CERTIFICATE_B64) {
-    try {
-        $TlsCertificateFile = "/tmp/tls-certificate.pem"
-        [IO.File]::WriteAllBytes($TlsCertificateFile, [Convert]::FromBase64String($Env:TLS_CERTIFICATE_B64))
-    } catch { throw "Failed to decode TLS_CERTIFICATE_B64: $_" }
-}
+# TLS cert/key: prefer a bind-mounted file (e.g. the acme.sh-managed wildcard the host
+# already maintains) or a Docker secret via _FILE; fall back to _B64. NOTE: the gateway
+# IMPORTS the cert into its config store at startup, so a renewed cert on the mount is
+# picked up on the next container restart.
+$TlsCert = Resolve-SecretFile 'TLS_CERTIFICATE' '/tmp/tls-certificate.pem'
+$TlsKey = Resolve-SecretFile 'TLS_PRIVATE_KEY' '/tmp/tls-private-key.pem'
+$TlsCertificatePassword = Resolve-SecretString 'TLS_CERTIFICATE_PASSWORD'
 
-$TlsPrivateKeyFile = $null
-if ($Env:TLS_PRIVATE_KEY_B64) {
-    try {
-        $TlsPrivateKeyFile = "/tmp/tls-private-key.pem"
-        [IO.File]::WriteAllBytes($TlsPrivateKeyFile, [Convert]::FromBase64String($Env:TLS_PRIVATE_KEY_B64))
-    } catch { throw "Failed to decode TLS_PRIVATE_KEY_B64: $_" }
-}
-
-$TlsCertificatePassword = $null
-if ($Env:TLS_CERTIFICATE_PASSWORD) { $TlsCertificatePassword = $Env:TLS_CERTIFICATE_PASSWORD }
-
-if ($TlsCertificateFile -or $TlsPrivateKeyFile) {
+if ($TlsCert -or $TlsKey) {
     Write-Host "Importing TLS certificate..."
-    Import-DGatewayCertificate -CertificateFile $TlsCertificateFile -PrivateKeyFile $TlsPrivateKeyFile -Password $TlsCertificatePassword
-    Remove-Item @($TlsCertificateFile, $TlsPrivateKeyFile) -ErrorAction SilentlyContinue | Out-Null
+    $certPath = if ($TlsCert) { $TlsCert.Path } else { $null }
+    $keyPath = if ($TlsKey) { $TlsKey.Path } else { $null }
+    Import-DGatewayCertificate -CertificateFile $certPath -PrivateKeyFile $keyPath -Password $TlsCertificatePassword
+    foreach ($s in @($TlsCert, $TlsKey)) {
+        if ($s -and $s.Temp) { Remove-Item $s.Path -ErrorAction SilentlyContinue | Out-Null }
+    }
 }
 
 $Config = Get-DGatewayConfig -NullProperties
