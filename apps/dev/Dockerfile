@@ -67,6 +67,16 @@ RUN git init -q . \
 # build loudly if a patch does not match the pinned VERSION.
 COPY patches/ /patches/
 RUN for p in /patches/*.patch; do echo "applying $p"; git apply --verbose "$p"; done
+
+# Browser-RDP authority: the coderd adapters + launch endpoint (package coderd,
+# version-robust new files) backing the dev-kit jetbroker core, plus the module
+# dependency. The route registration itself rides in patches/ (version-coupled).
+ARG DEV_KIT_VERSION=v0.2.0
+COPY overlay/coderd/ ./coderd/
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go get "github.com/astrateam-net/dev-kit@${DEV_KIT_VERSION}" \
+    && go mod tidy
+
 COPY --from=site /src/site/out ./site/out
 
 # Build the slim agent/CLI binaries the server serves at /bin/, then pack them

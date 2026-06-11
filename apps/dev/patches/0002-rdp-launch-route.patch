@@ -1,0 +1,12 @@
+diff --git a/coderd/coderd.go b/coderd/coderd.go
+index 0000000..0000001 100644
+--- a/coderd/coderd.go
++++ b/coderd/coderd.go
+@@ -1811,6 +1811,7 @@
+ 				)
+ 				r.Get("/", api.workspace)
+ 				r.Patch("/", api.patchWorkspace)
++				r.Get("/rdp", api.workspaceRDP)
+ 				r.Route("/builds", func(r chi.Router) {
+ 					r.Get("/", api.workspaceBuilds)
+ 					r.Post("/", api.postWorkspaceBuilds)
