@@ -1,0 +1,8 @@
+{
+  "name": "@devolutions/iron-remote-desktop-vnc",
+  "version": "0.7.1",
+  "description": "devget build-only stub — real package is on Devolutions' private registry",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts"
+}

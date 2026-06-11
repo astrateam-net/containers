@@ -1,0 +1,25 @@
+Replace Devolutions' private npm packages with build-time stubs.
+
+@devolutions/{terminal-shared,web-ssh-gui,web-telnet-gui,iron-remote-desktop-vnc,icons}
+live on Devolutions' private Artifactory (auth required; upstream CI injects
+ARTIFACTORY_NPM_TOKEN — see .github/workflows/ci.yml) and are NOT on npmjs, so a
+plain `pnpm install` 404s and the stock webapp is unbuildable outside Devolutions.
+devget ships the RDP launch path only, whose deps (iron-remote-desktop[-rdp]) are
+public. The stubs (overlay: webapp/stubs/) export exactly the symbols/files
+gateway-ui imports. SSH/Telnet/VNC/ARD web sessions and icon glyphs are inert in
+this edition; RDP — the point of the fork — is fully functional.
+
+--- a/webapp/pnpm-workspace.yaml
++++ b/webapp/pnpm-workspace.yaml
+@@ -8,3 +8,11 @@ allowBuilds:
+   esbuild: true
+   lmdb: true
+   msgpackr-extract: true
++# devget: private Artifactory-only packages swapped for build stubs (stubs/README.md).
++# RDP-only edition — stock SSH/Telnet/VNC/ARD sessions and icon glyphs are inert.
++overrides:
++  '@devolutions/terminal-shared': 'file:./stubs/terminal-shared'
++  '@devolutions/web-ssh-gui': 'file:./stubs/web-ssh-gui'
++  '@devolutions/web-telnet-gui': 'file:./stubs/web-telnet-gui'
++  '@devolutions/iron-remote-desktop-vnc': 'file:./stubs/iron-remote-desktop-vnc'
++  '@devolutions/icons': 'file:./stubs/icons'

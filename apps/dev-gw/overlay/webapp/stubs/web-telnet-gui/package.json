@@ -1,0 +1,8 @@
+{
+  "name": "@devolutions/web-telnet-gui",
+  "version": "0.4.4",
+  "description": "devget build-only stub — real package is on Devolutions' private registry",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts"
+}

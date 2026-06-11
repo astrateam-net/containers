@@ -1,0 +1,20 @@
+Add the programmatic "launch" route (no authGuard, no login form).
+
+Drives the LaunchComponent (overlay) that the coderd authority redirects to with
+the session descriptor in the URL fragment. Lazy-loaded so the IronRDP player
+stack stays out of the initial bundle. Everything else in gateway-ui is untouched.
+
+--- a/webapp/apps/gateway-ui/src/client/app/app.routes.ts
++++ b/webapp/apps/gateway-ui/src/client/app/app.routes.ts
+@@ -22,6 +22,11 @@ export const routes: Routes = [
+       },
+     ],
+   },
++  // devget: programmatic token launch (coderd authority). No authGuard, no login form.
++  {
++    path: 'launch',
++    loadComponent: () => import('@gateway/modules/launch/launch.component').then((m) => m.LaunchComponent),
++  },
+   { path: 'login', component: LoginComponent },
+   { path: '**', redirectTo: 'session' },
+ ];
