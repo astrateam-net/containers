@@ -3,3 +3,7 @@
 .just/local.just
 docker-bake.json
 webstudio/
+
+# Local-only mise workbench (decompilation toolchain — see mise.local.toml)
+mise.local.toml
+mise.lock
