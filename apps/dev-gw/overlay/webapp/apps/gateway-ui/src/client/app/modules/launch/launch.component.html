@@ -1,27 +1,22 @@
 <div class="launch-container" #sessionContainer>
   <!-- The <iron-remote-desktop> element is created PROGRAMMATICALLY in
-       ngAfterViewInit, NOT declared here. The svelte custom element mounts in a
-       microtask queued at DOM connection, captures its `module` prop once, and
-       dispatches 'ready' exactly once. On this route Angular's template phases
-       (node creation → property bindings → lifecycle hooks) are split across
-       tasks, so a template-declared element races that microtask — measured
-       live: 'ready' fired at 220ms vs ngAfterViewInit at 237ms, and `module`
-       was still undefined at mount ("reading 'SessionBuilder'" crash).
-       Creating the element by hand lets us set `module` and the 'ready'
-       listener BEFORE appendChild — the mount microtask cannot win anymore. -->
+       initiateRemoteClientListener(), NOT declared here: the svelte custom element
+       mounts in a microtask queued at DOM connection and dispatches 'ready' once,
+       which on this route races Angular's lifecycle. Creating it by hand lets us
+       attach the 'ready' listener BEFORE appendChild. Everything the session does
+       afterwards is the inherited Devolutions WebClientRdpComponent — only the
+       authentication (credential injection) and this wiring are ours. -->
 
-
-  <!-- The gateway's native floating session toolbar — identical to the stock RDP
-       tab: Windows key, session info, Ctrl+Alt+Del, screen modes, clipboard
-       actions, dynamic resize, unicode keyboard, crosshair cursor. -->
-  @if (status === 'connected' && remoteClient) {
+  <!-- The gateway's native floating session toolbar — identical bindings to the
+       stock RDP tab; every handler is inherited from WebClientRdpComponent. -->
+  @if (!loading && !currentStatus.isDisabled) {
     <div class="toolbar-overlay-anchor">
       <rdp-toolbar-wrapper
         [remoteClient]="remoteClient"
         [actions]="clipboardActionButtons"
         [sessionInfo]="sessionInfo"
         [dynamicResizeSupported]="dynamicResizeSupported"
-        [initialState]="{ dynamicResize: true, unicodeKeyboard: true, cursorCrosshair: false }"
+        [initialState]="{ dynamicResize: dynamicResizeEnabled, unicodeKeyboard: useUnicodeKeyboard, cursorCrosshair: cursorOverrideActive }"
         (sessionClose)="startTerminationProcess()"
         (screenModeChange)="handleScreenModeChange($event)"
         (dynamicResizeChange)="onDynamicResizeChange($event)"
@@ -30,23 +25,20 @@
     </div>
   }
 
-  @if (status === 'connecting') {
+  <!-- Status overlays driven by the inherited session lifecycle state. -->
+  @if (loading && !currentStatus.isDisabled) {
     <div class="launch-overlay" role="status">
       <div class="launch-spinner"></div>
       <p>Connecting…</p>
     </div>
-  } @else if (status === 'terminated') {
-    <div class="launch-overlay" role="status">
-      <p>Session terminated.</p>
-      @if (message) {
-        <p class="launch-detail">{{ message }}</p>
-      }
-    </div>
-  } @else if (status === 'error') {
-    <div class="launch-overlay launch-error" role="alert">
-      <p>Connection failed.</p>
-      @if (message) {
-        <p class="launch-detail">{{ message }}</p>
+  } @else if (currentStatus.isDisabled) {
+    <div
+      class="launch-overlay"
+      [class.launch-error]="sessionTerminationMessage?.severity === 'error'"
+      role="status">
+      <p>{{ sessionTerminationMessage?.summary ?? 'Session ended' }}</p>
+      @if (sessionTerminationMessage?.detail) {
+        <p class="launch-detail">{{ sessionTerminationMessage?.detail }}</p>
       }
     </div>
   }
