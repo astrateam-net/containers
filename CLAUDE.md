@@ -71,6 +71,8 @@ just generate-app-labels
 just test
 ```
 
+> **Local build tagging gotcha.** `just local-build <app>` runs `docker buildx bake --load`, but the `docker-bake.hcl` targets define **no `tags`**, so each local build is loaded as a **dangling image** (`<none>:<none>`). The recipe runs the structure tests against that fresh image **by digest** — it does **not** create or update any `:local` tag. So a tag like `dev-gw:local` does **not** auto-update and may point at a previous build. To use the image you just built (e.g. in a compose stand), find it with `docker images -a` (newest `<none>` by `CreatedAt`) and tag it yourself: `docker tag <fresh-image-id> dev-gw:local`. Confirm freshness by `Created` time and image content, not by assuming the existing tag is current.
+
 ---
 
 ## App Structure
