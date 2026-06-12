@@ -1,0 +1,52 @@
+diff --git a/coderd/coderd.go b/coderd/coderd.go
+index c87adc5647..9e9303635b 100644
+--- a/coderd/coderd.go
++++ b/coderd/coderd.go
+@@ -930,6 +930,9 @@ func New(options *Options) *API {
+ 		DisablePathApps:          options.DeploymentValues.DisablePathApps.Value(),
+ 		CookiesConfig:            options.DeploymentValues.HTTPCookies,
+ 		APIKeyEncryptionKeycache: options.AppEncryptionKeyCache,
++
++		RDPGatewayAppPrefix:   rdpGatewayAppPrefix(),
++		RDPGatewayTLSInsecure: rdpGatewayTLSInsecure(),
+ 	})
+ 
+ 	api.workspaceAgentConnWatcher = workspaceconnwatcher.New(api.ctx, options.Logger, options.Pubsub, options.Database)
+diff --git a/coderd/workspaceapps/proxy.go b/coderd/workspaceapps/proxy.go
+index 86ec757f31..37cedf1582 100644
+--- a/coderd/workspaceapps/proxy.go
++++ b/coderd/workspaceapps/proxy.go
+@@ -112,6 +112,17 @@ type ServerOptions struct {
+ 
+ 	AgentProvider  AgentProvider
+ 	StatsCollector *StatsCollector
++
++	// RDPGatewayAppPrefix, when non-empty, makes a subdomain app whose slug starts
++	// with this prefix proxy DIRECTLY to the app's own URL (an external Devolutions
++	// Gateway published on the swarm) instead of through the workspace agent's
++	// tailnet. The browser-RDP authority selects which farm gateway to use and
++	// encodes it as that app's URL; the agent (and its localhost) is not on the RDP
++	// path. Empty disables this branch entirely (pure upstream behavior).
++	RDPGatewayAppPrefix string
++	// RDPGatewayTLSInsecure skips TLS verification when proxying to the gateway.
++	// For a private-CA test stand only; farm gateways carry the trusted wildcard cert.
++	RDPGatewayTLSInsecure bool
+ }
+ 
+ // Server serves workspace apps endpoints, including:
+@@ -636,7 +647,14 @@ func (s *Server) proxyWorkspaceApp(rw http.ResponseWriter, r *http.Request, appT
+ 		appURL.Scheme = protocol
+ 	}
+ 
+-	proxy := s.AgentProvider.ReverseProxy(appURL, s.DashboardURL, appToken.AgentID, app, s.Hostname)
++	var proxy *httputil.ReverseProxy
++	if s.RDPGatewayAppPrefix != "" && strings.HasPrefix(appToken.Request.AppSlugOrPort, s.RDPGatewayAppPrefix) {
++		// Browser-RDP gateway app: proxy straight to the chosen farm gateway (appURL),
++		// dialing the published port directly. Never rewrite to the agent's tailnet IP.
++		proxy = rdpGatewayDirectProxy(appURL, s.DashboardURL, s.RDPGatewayTLSInsecure, s.Logger)
++	} else {
++		proxy = s.AgentProvider.ReverseProxy(appURL, s.DashboardURL, appToken.AgentID, app, s.Hostname)
++	}
+ 
+ 	proxy.ModifyResponse = func(r *http.Response) error {
+ 		// If passthru behavior is set, disable our CORS header stripping.

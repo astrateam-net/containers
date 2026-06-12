@@ -73,6 +73,9 @@ RUN for p in /patches/*.patch; do echo "applying $p"; git apply --verbose "$p"; 
 # dependency. The route registration itself rides in patches/ (version-coupled).
 ARG DEV_KIT_VERSION=v0.2.0
 COPY overlay/coderd/ ./coderd/
+# Browser-RDP gateway direct-proxy helper (package workspaceapps; called by the
+# proxy branch in patches/0003). Version-robust, no new module deps.
+COPY overlay/workspaceapps/ ./coderd/workspaceapps/
 RUN --mount=type=cache,target=/go/pkg/mod \
     go get "github.com/astrateam-net/dev-kit@${DEV_KIT_VERSION}" \
     && go mod tidy
