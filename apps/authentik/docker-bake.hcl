@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=ghcr.io/goauthentik/server
-  default = "2026.5.2"
+  default = "2026.5.3"
 }
 
 variable "SOURCE" {
