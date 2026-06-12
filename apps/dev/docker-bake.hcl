@@ -6,7 +6,7 @@ target "docker-metadata-action" {}
 # tag (git apply fails the build if a patch no longer matches).
 variable "VERSION" {
   // renovate: datasource=docker depName=ghcr.io/coder/coder
-  default = "v2.34.0"
+  default = "v2.34.1"
 }
 
 variable "SOURCE" {
