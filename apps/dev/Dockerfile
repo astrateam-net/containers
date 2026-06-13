@@ -46,6 +46,27 @@ RUN git init -q . \
 WORKDIR /src/site
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
+
+# --- i18n (optional): Russian localization via the dev-kit coder-i18n factory -
+# Pulls the published factory and runs its DETERMINISTIC steps against this
+# checkout: the codemod wraps UI literals into Tolgee shapes, then bake injects
+# the provider + a language switcher + the pre-translated catalogs the factory
+# ships in dist/. Translation (Tolgee/OpenAI) is NOT run here — it happens
+# offline when strings change. Build the stock English frontend with
+# `--set image-local.args.I18N=` (empty).
+ARG DEV_KIT_VERSION=v0.3.0
+ARG I18N=ru
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    if [ -n "$I18N" ]; then \
+      git clone --depth 1 --branch "${DEV_KIT_VERSION}" \
+        https://github.com/astrateam-net/dev-kit.git /factory \
+      && ( cd /factory/coder-i18n \
+           && mkdir -p .upstream && ln -s /src .upstream/coder \
+           && pnpm install --frozen-lockfile \
+           && pnpm exec tsx codemod/wrap.ts \
+           && pnpm exec tsx codemod/inject-runtime.ts ) \
+      && pnpm add @tolgee/react@latest @tolgee/format-icu@latest ; \
+    fi
 RUN NODE_ENV=production pnpm build
 
 # --- Stage 2: patch + build slim agents + cross-compile the server ----------
@@ -71,7 +92,7 @@ RUN for p in /patches/*.patch; do echo "applying $p"; git apply --verbose "$p"; 
 # Browser-RDP authority: the coderd adapters + launch endpoint (package coderd,
 # version-robust new files) backing the dev-kit jetbroker core, plus the module
 # dependency. The route registration itself rides in patches/ (version-coupled).
-ARG DEV_KIT_VERSION=v0.2.0
+ARG DEV_KIT_VERSION=v0.3.0
 COPY overlay/coderd/ ./coderd/
 # Browser-RDP gateway direct-proxy helper (package workspaceapps; called by the
 # proxy branch in patches/0003). Version-robust, no new module deps.
