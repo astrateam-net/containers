@@ -128,6 +128,10 @@ export class LaunchComponent extends WebClientRdpComponent implements OnInit, On
       return;
     }
     this.descriptor = descriptor;
+    // devget: name the browser tab after the RDP host so multiple gateway tabs
+    // are distinguishable (favicon untouched). descriptor.target is host-only;
+    // strip any explicit :port defensively.
+    document.title = descriptor.target.replace(/:\d+$/, '');
     this.webSessionId = this.extractAssociationId(descriptor.association_token) ?? 'launch';
     this.webSessionIcon = DVL_RDP_ICON;
     this.seedWebAppSession(descriptor);
