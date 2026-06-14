@@ -13,15 +13,27 @@ setup_pgbackrest_cron() {
     stanza="${PG_SCHEDULE_BACKUP_STANZA:-nas}"
     backup_opts="${PG_SCHEDULE_BACKUP_OPTIONS:-}"
 
+    # cron runs jobs with a sanitized environment, so the PGBACKREST_* variables
+    # injected into the container — notably repo1-s3-key / repo1-s3-key-secret,
+    # which live ONLY in the env, not in pgbackrest.conf — are invisible to the
+    # scheduled jobs and every run dies with "backup command requires option:
+    # repo1-s3-key". Snapshot that runtime env to a 0600 file the cron wrappers
+    # source before invoking pgbackrest.
+    env_file=/etc/pgbackrest/pgbackrest.env
+    ( umask 077; export -p | grep -E '(^| )PGBACKREST_' > "$env_file" ) || true
+    chown postgres:postgres "$env_file" 2>/dev/null || true
+
     cat > /usr/local/bin/pgbackrest-backup-full <<EOF
 #!/bin/sh
 set -eu
+[ -f ${env_file} ] && . ${env_file}
 exec gosu postgres pgbackrest --stanza=${stanza} backup --type=full ${backup_opts}
 EOF
 
     cat > /usr/local/bin/pgbackrest-backup-incr <<EOF
 #!/bin/sh
 set -eu
+[ -f ${env_file} ] && . ${env_file}
 exec gosu postgres pgbackrest --stanza=${stanza} backup --type=incr ${backup_opts}
 EOF
 
