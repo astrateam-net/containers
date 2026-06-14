@@ -1,0 +1,24 @@
+Name the browser tab after the RDP host.
+
+Stock gateway-ui leaves the tab title hardcoded to "Devolutions Gateway"
+(index.html) and never calls setTitle, so every open session tab is
+indistinguishable. We set document.title to the connection hostname once the
+web-session form data is loaded. This touches text only; the favicon
+(<link rel="icon">) is untouched, so the logo stays.
+
+Set directly on document.title rather than via Angular's Title service to keep
+this a one-line additive patch (no constructor/DI change). No TitleStrategy is
+configured upstream, so nothing resets the title on navigation.
+
+--- a/webapp/apps/gateway-ui/src/client/app/modules/web-client/rdp/web-client-rdp.component.ts
++++ b/webapp/apps/gateway-ui/src/client/app/modules/web-client/rdp/web-client-rdp.component.ts
+@@ -153,6 +153,8 @@ export class WebClientRdpComponent extends DesktopWebClientBaseComponent impleme
+   private getFormData(): Observable<void> {
+     return from(this.webSessionService.getWebSession(this.webSessionId)).pipe(
+       map((currentWebSession) => {
+         this.formData = currentWebSession.data as RdpFormDataInput;
++        // devget: name the browser tab after the RDP host (favicon untouched).
++        document.title = this.formData.hostname;
+         this.sessionInfoUsername = this.formData.username;
+         this.refreshSessionInfo();
+       }),
