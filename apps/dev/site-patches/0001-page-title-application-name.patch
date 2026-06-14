@@ -1,0 +1,21 @@
+Use the configured application name in browser tab titles.
+
+pageTitle() hardcoded "Coder" as the suffix, so every post-login tab read
+"<crumb> - Coder" regardless of the Appearance "Application name" setting (which
+upstream only applies to the login page + logo alt). Use getApplicationName(),
+which reads the application-name meta tag at runtime and falls back to "Coder"
+when unset. Independent of i18n: the crumb itself is not translated.
+
+diff --git a/site/src/utils/page.ts b/site/src/utils/page.ts
+index 2dca4aec28..a971487301 100644
+--- a/site/src/utils/page.ts
++++ b/site/src/utils/page.ts
+@@ -1,5 +1,7 @@
++import { getApplicationName } from "#/utils/appearance";
++
+ export const pageTitle = (
+ 	...crumbs: Array<string | boolean | undefined | null>
+ ): string => {
+-	return [...crumbs, "Coder"].filter(Boolean).join(" - ");
++	return [...crumbs, getApplicationName()].filter(Boolean).join(" - ");
+ };

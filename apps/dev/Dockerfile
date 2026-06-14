@@ -43,6 +43,15 @@ RUN git init -q . \
     && git remote add origin https://github.com/coder/coder.git \
     && git fetch --depth 1 origin "refs/tags/${VERSION}" \
     && git checkout -q FETCH_HEAD
+
+# Frontend source patches, applied to the pristine tag BEFORE the SPA is built.
+# These must live in stage 1: stage 2 embeds the already-built site/out, so a
+# stage-2 patch (patches/) never reaches the bundle. Applied unconditionally,
+# independent of the I18N gate, so the stock English build gets them too. git
+# apply fails the build loudly on version drift, same as the Go patch series.
+COPY site-patches/ /site-patches/
+RUN for p in /site-patches/*.patch; do echo "applying $p"; git apply --verbose "$p"; done
+
 WORKDIR /src/site
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile

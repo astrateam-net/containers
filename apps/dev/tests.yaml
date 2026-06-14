@@ -15,13 +15,15 @@ commandTests:
     args: ["-lc", "test -x /opt/coder"]
     exitCode: 0
 
-  # Confirms the from-source build produced a working binary stamped with the
-  # stable version (buildinfo.tag), not a "devel" fallback.
+  # Confirms the from-source build produced a working binary stamped with a
+  # stable semver version (buildinfo.tag), not a "devel" fallback. Matches any
+  # vX.Y.Z so a VERSION bump does not require touching this test; the negative
+  # grep rejects the "devel" stamp an unstamped build would emit.
   - name: coder reports the stable version
     command: sh
     args:
       - "-lc"
-      - "/opt/coder version | grep -q 2.34.0"
+      - "/opt/coder version | grep -qE 'v[0-9]+\\.[0-9]+\\.[0-9]+' && ! /opt/coder version | grep -q devel"
     exitCode: 0
 
   # The setcap'd security.capability xattr must survive into the final layer.
