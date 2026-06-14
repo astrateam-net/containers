@@ -1,0 +1,104 @@
+Render <iframe> embeds in the template README.
+
+The template README is rendered by the shared Markdown component, which uses
+react-markdown with no rehype-raw plugin, so any raw HTML (e.g. an <iframe>
+interactive-guide embed) in README.md is silently dropped. Add an opt-in
+`allowEmbeds` prop, enabled only by TemplateDocsPage, that turns on a scoped
+raw-HTML pipeline: rehype-raw parses the HTML, then rehype-sanitize strips
+everything not described by embedSchema (the defaults plus a tightly scoped
+<iframe> and the inline style responsive wrappers need).
+
+Which iframe hosts may actually load is enforced by the browser via Coder's
+existing frame-src CSP (set per deployment with CODER_ADDITIONAL_CSP_POLICY),
+so no separate host allowlist is maintained in the frontend. Every other
+Markdown consumer keeps the strict, no-raw-HTML default.
+
+diff --git a/site/src/components/Markdown/Markdown.tsx b/site/src/components/Markdown/Markdown.tsx
+index c76d062d1c..c0bb7a147e 100644
+--- a/site/src/components/Markdown/Markdown.tsx
++++ b/site/src/components/Markdown/Markdown.tsx
+@@ -13,6 +13,8 @@ import {
+ import ReactMarkdown, { type Options } from "react-markdown";
+ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+ import { dracula } from "react-syntax-highlighter/dist/cjs/styles/prism";
++import rehypeRaw from "rehype-raw";
++import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
+ import gfm from "remark-gfm";
+ import {
+ 	Table,
+@@ -24,6 +26,36 @@ import {
+ import colors from "#/theme/tailwindColors";
+ import { cn } from "#/utils/cn";
+ 
++// Sanitize schema for README embeds: the defaults plus a tightly scoped
++// <iframe> and the inline `style` responsive-embed wrappers need. Which hosts
++// may actually load is enforced by the browser via Coder's frame-src CSP
++// (set with CODER_ADDITIONAL_CSP_POLICY), so no host allowlist is kept here.
++const embedSchema = {
++	...defaultSchema,
++	tagNames: [...(defaultSchema.tagNames ?? []), "iframe"],
++	attributes: {
++		...defaultSchema.attributes,
++		iframe: [
++			"src",
++			"width",
++			"height",
++			"title",
++			"loading",
++			"allow",
++			"allowFullScreen",
++			"frameBorder",
++			"referrerPolicy",
++			"style",
++		],
++		div: [...(defaultSchema.attributes?.div ?? []), "style"],
++	},
++};
++
++const embedRehypePlugins: Options["rehypePlugins"] = [
++	rehypeRaw,
++	[rehypeSanitize, embedSchema],
++];
++
+ interface MarkdownProps {
+ 	/**
+ 	 * The Markdown text to parse and render
+@@ -36,16 +68,24 @@ interface MarkdownProps {
+ 	 * Can override the behavior of the generated elements
+ 	 */
+ 	components?: Options["components"];
++
++	/**
++	 * Render raw HTML embeds (<iframe>) from the markdown. Off by default:
++	 * only trusted surfaces like the template README opt in. The set of hosts
++	 * that can actually load is enforced by Coder's frame-src CSP, not here.
++	 */
++	allowEmbeds?: boolean;
+ }
+ 
+ export const Markdown: FC<MarkdownProps> = (props) => {
+-	const { children, className, components = {} } = props;
++	const { children, className, components = {}, allowEmbeds = false } = props;
+ 
+ 	return (
+ 		<ReactMarkdown
+ 			css={markdownStyles}
+ 			className={className}
+ 			remarkPlugins={[gfm]}
++			rehypePlugins={allowEmbeds ? embedRehypePlugins : undefined}
+ 			components={{
+ 				a: ({ href, children }) => {
+ 					const isExternal = href?.startsWith("http");
+diff --git a/site/src/pages/TemplatePage/TemplateDocsPage/TemplateDocsPage.tsx b/site/src/pages/TemplatePage/TemplateDocsPage/TemplateDocsPage.tsx
+index d8e5cfe1d4..ee5874b40c 100644
+--- a/site/src/pages/TemplatePage/TemplateDocsPage/TemplateDocsPage.tsx
++++ b/site/src/pages/TemplatePage/TemplateDocsPage/TemplateDocsPage.tsx
+@@ -18,7 +18,7 @@ export default function TemplateDocsPage() {
+ 					README.md
+ 				</div>
+ 				<div className="px-8 pt-2 pb-12 max-w-[860px]">
+-					<MemoizedMarkdown>{readme.body}</MemoizedMarkdown>
++					<MemoizedMarkdown allowEmbeds>{readme.body}</MemoizedMarkdown>
+ 				</div>
+ 			</div>
+ 		</>

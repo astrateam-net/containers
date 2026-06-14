@@ -76,6 +76,14 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
            && pnpm exec tsx codemod/inject-runtime.ts ) \
       && pnpm add @tolgee/react@latest @tolgee/format-icu@latest ; \
     fi
+
+# README embeds: the site-patches/0002 README iframe support needs rehype-raw +
+# rehype-sanitize (not in upstream's lockfile). Pinned to the unified-11 line
+# that react-markdown 9 uses. Which iframe hosts may actually load is enforced
+# at runtime by Coder's frame-src CSP (CODER_ADDITIONAL_CSP_POLICY), so there is
+# no build-time host allowlist here.
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm add rehype-raw@7.0.0 rehype-sanitize@6.0.0
 RUN NODE_ENV=production pnpm build
 
 # --- Stage 2: patch + build slim agents + cross-compile the server ----------
