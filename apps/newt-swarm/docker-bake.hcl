@@ -1,22 +1,23 @@
 target "docker-metadata-action" {}
 
 # VERSION must match the upstream Newt release this image is built on top of
-# (currently 1.12.5). Used for both the image tag and the binary's internal
+# (currently 1.13.0). Used for both the image tag and the binary's internal
 # version string. Suffixes like -swarm.0 fail upstream's strict X.Y.Z parser
 # in updates/updates.go and would print an error on every start; the
 # patched-build provenance lives in the image name (newt-swarm) and the OCI
 # labels (org.opencontainers.image.revision = SOURCE_REF below) instead.
 variable "VERSION" {
-  default = "1.12.5"
+  default = "1.13.0"
 }
 
 # SOURCE_REF is the git ref (branch, tag, or SHA) on the fork to build from.
-# Pinned to a SHA on swarm-discovery-stable (= upstream tag 1.12.5 + our
-# single feature commit). This isolates the swarm-discovery change against a
-# known-good release; the dev-based branch on the fork is for the upstream PR
-# only. Bump this SHA when rebasing onto a newer upstream tag.
+# Pinned to a SHA on swarm-discovery-stable (= upstream tag 1.13.0 + our
+# single feature commit, ported to the moby/moby Docker SDK). This isolates
+# the swarm-discovery change against a known-good release; the dev-based
+# branch on the fork is for the upstream PR only. Bump this SHA when rebasing
+# onto a newer upstream tag.
 variable "SOURCE_REF" {
-  default = "8c805bd9f3c957ee04a53567a81252ccefeb4a5c"
+  default = "9ca94f1d164c135ec6561580e47243c8c9adcd07"
 }
 
 variable "SOURCE" {
