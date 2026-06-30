@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>net.astrateam</groupId>
+  <artifactId>astrai18n-agent</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+
+  <!--
+    Java agent that configures the platform's active feature set at runtime.
+    Mirrors the javaagent overlay pattern used by apps/astrapdf: no upstream source
+    is rebuilt; the agent instruments the feature-provider's get() method in the
+    already-compiled application classes on class load.
+
+    Byte Buddy is NOT bundled — it is declared 'provided' (compile-only) and supplied
+    at runtime from the copy the upstream tolgee/tolgee image already ships in /app/lib
+    (Hibernate's bytecode provider). The agent manifest's Boot-Class-Path makes that
+    jar visible at premain time. This keeps the agent jar tiny (a few KB), always uses
+    the exact Byte Buddy the application itself runs, and avoids shading the multi-release
+    byte-buddy jar (whose Java 24 entries break maven-shade's ASM).
+  -->
+
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Match the version bundled in the tolgee/tolgee image (/app/lib). -->
+    <bytebuddy.version>1.17.8</bytebuddy.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy</artifactId>
+      <version>${bytebuddy.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>astrai18n-agent</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.1</version>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Premain-Class>net.astrateam.astrai18n.Astrai18nAgent</Premain-Class>
+              <Agent-Class>net.astrateam.astrai18n.Astrai18nAgent</Agent-Class>
+              <Can-Redefine-Classes>true</Can-Redefine-Classes>
+              <Can-Retransform-Classes>true</Can-Retransform-Classes>
+              <!-- Resolved relative to this jar's directory (/var/agent). -->
+              <Boot-Class-Path>byte-buddy.jar</Boot-Class-Path>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

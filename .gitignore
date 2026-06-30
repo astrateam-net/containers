@@ -4,6 +4,12 @@
 docker-bake.json
 webstudio/
 
+# macOS Finder metadata
+.DS_Store
+
+# Maven build output (e.g. apps/*/agent/target from local/IDE builds)
+target/
+
 # Local-only mise workbench (decompilation toolchain — see mise.local.toml)
 mise.local.toml
 mise.lock

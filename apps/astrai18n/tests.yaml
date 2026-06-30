@@ -1,0 +1,19 @@
+file:
+  /var/agent/astrai18n-agent.jar:
+    exists: true
+    mode: "0444"
+  /var/agent/byte-buddy.jar:
+    exists: true
+    mode: "0444"
+
+addr:
+  tcp://localhost:8080:
+    reachable: true
+    timeout: 300s
+
+# The all-in-one image boots its own PostgreSQL + runs migrations on first start,
+# so allow a generous window before the app reports healthy.
+http:
+  http://localhost:8080/actuator/health:
+    status: 200
+    timeout: 300s
