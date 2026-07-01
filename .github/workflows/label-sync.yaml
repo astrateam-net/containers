@@ -22,14 +22,13 @@ jobs:
           app-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
 
-      - name: Setup Homebrew
-        uses: Homebrew/actions/setup-homebrew@a84a03efc108f7d05469800fd48890c1cd34a6ad # master
-
-      - name: Setup Workflow Tools
-        run: brew install just
+      - name: Set up mise toolchain
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
+        with:
+          cache: true
 
       - name: Generate App Labels
-        run: just generate-app-labels
+        run: mise run generate-app-labels
 
       - name: Sync Labels
         uses: EndBug/label-sync@52074158190acb45f3077f9099fea818aa43f97a # v2.3.3

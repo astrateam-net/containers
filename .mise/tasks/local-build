@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#MISE description="Build and test an app locally via Docker Buildx (goss or container-structure-test)"
+#MISE dir="{{config_root}}"
+#USAGE arg "<app>" help="App directory under apps/"
+#USAGE complete "app" run="ls -d apps/*/ | xargs -n1 basename"
+set -euo pipefail
+
+app="${usage_app:?}"
+cd "apps/${app}"
+
+for f in docker-bake.hcl tests.yaml Dockerfile; do
+  [[ -f "$f" ]] || { echo "ERROR: missing apps/${app}/$f" >&2; exit 1; }
+done
+for cmd in docker jq yq; do
+  command -v "$cmd" >/dev/null || { echo "ERROR: $cmd not found in PATH" >&2; exit 1; }
+done
+
+docker buildx bake --metadata-file docker-bake.json --load
+trap 'rm -f docker-bake.json' EXIT
+
+IMAGE="$(jq --raw-output '."image-local"."image.name" // ."image-local"."containerimage.config.digest"' docker-bake.json)"
+
+if yq --exit-status '.schemaVersion' tests.yaml &>/dev/null; then
+  container-structure-test test --image "${IMAGE}" --config tests.yaml
+else
+  command -v dgoss >/dev/null || { echo "ERROR: dgoss missing — run 'mise run setup'" >&2; exit 1; }
+  GOSS_FILE=tests.yaml \
+  GOSS_OPTS="--retry-timeout 300s --sleep 2s" \
+  GOSS_PATH="$(command -v goss)" \
+    dgoss run "${IMAGE}"
+fi

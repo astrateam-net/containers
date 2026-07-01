@@ -106,5 +106,5 @@ PostgreSQL to boot). It verifies the patched binary is present, executable, and
 stamped with a real semver version (not a `devel` fallback).
 
 ```sh
-just local-build dev    # build + run structure tests
+mise run local-build dev    # build + run structure tests
 ```

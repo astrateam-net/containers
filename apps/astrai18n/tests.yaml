@@ -5,15 +5,34 @@ file:
   /var/agent/byte-buddy.jar:
     exists: true
     mode: "0444"
+  /app/astrai18n-entrypoint.sh:
+    exists: true
+    mode: "0555"
+  /app/astrai18n-file-secrets.sh:
+    exists: true
+    mode: "0555"
 
+command:
+  # Prove the <VAR>_FILE → <VAR> secret expansion actually works: write a probe
+  # secret to a file, source the helper with PROBE_FILE pointing at it, and assert
+  # the resolved PROBE value is exported. (Container boot itself also runs the
+  # wrapper, so a healthy app below proves it doesn't break the stock launch.)
+  astrai18n-file-secret-expansion:
+    exec: "printf 'sup3r-s3cret' > /tmp/secret_probe && PROBE_FILE=/tmp/secret_probe sh -c '. /app/astrai18n-file-secrets.sh; expand_file_secrets; printf %s \"$PROBE\"'"
+    exit-status: 0
+    stdout:
+      - "sup3r-s3cret"
+
+# goss timeouts are integer milliseconds (per single attempt); the overall boot-wait
+# window is governed by dgoss's --retry-timeout (see the local-build / CI test opts).
+# The all-in-one image boots its own PostgreSQL + runs migrations on first start, so
+# the retry window must be generous.
 addr:
   tcp://localhost:8080:
     reachable: true
-    timeout: 300s
+    timeout: 10000
 
-# The all-in-one image boots its own PostgreSQL + runs migrations on first start,
-# so allow a generous window before the app reports healthy.
 http:
   http://localhost:8080/actuator/health:
     status: 200
-    timeout: 300s
+    timeout: 10000

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#MISE description="Generate GitHub app labels from apps/ into .github/labels.yaml"
+#MISE dir="{{config_root}}"
+set -euo pipefail
+
+for dir in apps/*/; do
+  app="$(basename "$dir")"
+  yq --inplace '. += [{"name": "app/'"$app"'", "color": "0e8a16"}]' .github/labels.yaml
+done

@@ -51,27 +51,32 @@ target "image-all" {
 
 ## Common Commands
 
+Tooling is managed by **mise** (`mise.toml` + tasks in `.mise/tasks/`). Entering the
+repo (`mise install`, or `jdx/mise-action` in CI) provisions the toolchain — jq, yq,
+goss, container-structure-test — and the `postinstall` hook fetches the matching dgoss
+into `.bin/`. No manual tool install step.
+
 ```bash
-# Install test tools (goss/dgoss binaries into .bin/)
-just init
+# Provision toolchain + dgoss (usually automatic on `cd` into the repo)
+mise install
 
 # Build and test locally (auto-detects goss vs CST)
-just local-build <app-name>
+mise run local-build <app-name>
 
 # Trigger remote build only (no publish)
-just remote-build <app-name>
+mise run remote-build <app-name>
 
 # Trigger remote build + publish release
-just remote-build <app-name> true
+mise run remote-build <app-name> --release
 
 # Generate GitHub labels from apps/
-just generate-app-labels
+mise run generate-app-labels
 
-# Run justfile e2e tests
-just test
+# Run mise-task e2e tests
+mise run test
 ```
 
-> **Local build tagging gotcha.** `just local-build <app>` runs `docker buildx bake --load`, but the `docker-bake.hcl` targets define **no `tags`**, so each local build is loaded as a **dangling image** (`<none>:<none>`). The recipe runs the structure tests against that fresh image **by digest** — it does **not** create or update any `:local` tag. So a tag like `dev-gw:local` does **not** auto-update and may point at a previous build. To use the image you just built (e.g. in a compose stand), find it with `docker images -a` (newest `<none>` by `CreatedAt`) and tag it yourself: `docker tag <fresh-image-id> dev-gw:local`. Confirm freshness by `Created` time and image content, not by assuming the existing tag is current.
+> **Local build tagging gotcha.** `mise run local-build <app>` runs `docker buildx bake --load`, but the `docker-bake.hcl` targets define **no `tags`**, so each local build is loaded as a **dangling image** (`<none>:<none>`). The recipe runs the structure tests against that fresh image **by digest** — it does **not** create or update any `:local` tag. So a tag like `dev-gw:local` does **not** auto-update and may point at a previous build. To use the image you just built (e.g. in a compose stand), find it with `docker images -a` (newest `<none>` by `CreatedAt`) and tag it yourself: `docker tag <fresh-image-id> dev-gw:local`. Confirm freshness by `Created` time and image content, not by assuming the existing tag is current.
 
 ---
 

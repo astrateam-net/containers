@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+#MISE description="Run mise-task e2e checks (task listing, app layout, label generation)"
+#MISE dir="{{config_root}}"
+set -uo pipefail
+
+PASS=0
+FAIL=0
+run_test() {
+  local name="$1"
+  shift
+  if "$@" >/dev/null 2>&1; then
+    echo "  PASS  $name"
+    PASS=$((PASS + 1))
+  else
+    echo "  FAIL  $name"
+    FAIL=$((FAIL + 1))
+  fi
+}
+
+echo "=== mise task e2e tests ==="
+echo ""
+
+echo "[tasks]"
+run_test "mise tasks succeeds" mise tasks
+for t in local-build remote-build generate-app-labels setup test; do
+  run_test "task '$t' listed" bash -c "mise tasks --no-header | grep -qw '$t'"
+done
+
+echo ""
+echo "[app layout]"
+for dir in apps/*/; do
+  app="$(basename "$dir")"
+  run_test "$app has Dockerfile" test -f "apps/$app/Dockerfile"
+  run_test "$app has docker-bake.hcl" test -f "apps/$app/docker-bake.hcl"
+  run_test "$app has tests.yaml" test -f "apps/$app/tests.yaml"
+done
+
+echo ""
+echo "[local-build preconditions]"
+run_test "local-build rejects nonexistent app" bash -c '! mise run local-build nonexistent-app-xyz 2>&1'
+
+echo ""
+echo "[remote-build preconditions]"
+run_test "gh cli available" command -v gh
+if gh auth status >/dev/null 2>&1; then
+  echo "  PASS  gh auth active"
+  PASS=$((PASS + 1))
+else
+  echo "  SKIP  gh auth active (run 'gh auth login' to enable remote-build)"
+fi
+
+echo ""
+echo "[generate-app-labels]"
+TMPDIR="$(mktemp -d)"
+trap 'rm -rf "$TMPDIR"' EXIT
+cp .github/labels.yaml "$TMPDIR/labels-backup.yaml"
+echo '[]' >.github/labels.yaml
+mise run generate-app-labels
+# shellcheck disable=SC2012  # app dir names are controlled; ls is fine here
+APP_COUNT="$(ls -d apps/*/ | wc -l | tr -d ' ')"
+LABEL_COUNT="$(yq 'length' .github/labels.yaml)"
+run_test "generated $APP_COUNT app labels" bash -c "[[ $LABEL_COUNT -eq $APP_COUNT ]]"
+run_test "labels have correct color" bash -c 'yq -e "all_c(.color == \"0e8a16\")" .github/labels.yaml'
+run_test "labels have app/ prefix" bash -c 'yq -e "all_c(.name | test(\"^app/\"))" .github/labels.yaml'
+cp "$TMPDIR/labels-backup.yaml" .github/labels.yaml
+
+echo ""
+TOTAL=$((PASS + FAIL))
+echo "=== $PASS/$TOTAL passed ==="
+[[ $FAIL -eq 0 ]] || exit 1
