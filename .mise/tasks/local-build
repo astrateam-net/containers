@@ -21,6 +21,10 @@ trap 'rm -f docker-bake.json' EXIT
 IMAGE="$(jq --raw-output '."image-local"."image.name" // ."image-local"."containerimage.config.digest"' docker-bake.json)"
 
 if yq --exit-status '.schemaVersion' tests.yaml &>/dev/null; then
+  # container-structure-test talks to the docker socket directly (unlike dgoss, which
+  # uses the docker CLI), so honor the active docker context — e.g. OrbStack's socket —
+  # when DOCKER_HOST isn't already set. In CI this resolves to the default socket.
+  export DOCKER_HOST="${DOCKER_HOST:-$(docker context inspect --format '{{.Endpoints.docker.Host}}' 2>/dev/null || true)}"
   container-structure-test test --image "${IMAGE}" --config tests.yaml
 else
   command -v dgoss >/dev/null || { echo "ERROR: dgoss missing — run 'mise run setup'" >&2; exit 1; }

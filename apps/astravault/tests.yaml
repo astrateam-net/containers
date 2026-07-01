@@ -1,0 +1,36 @@
+# Container Structure Test — the server needs an external PostgreSQL + Redis to boot,
+# so these are structural checks (image contents + isolated commands), not a live run.
+schemaVersion: "2.0.0"
+
+fileExistenceTests:
+  - name: entrypoint wrapper
+    path: /backend/astravault-entrypoint.sh
+    shouldExist: true
+    permissions: "-r-xr-xr-x"
+  - name: file-secrets helper
+    path: /backend/astravault-file-secrets.sh
+    shouldExist: true
+    permissions: "-r-xr-xr-x"
+
+commandTests:
+  # Prove the entitlement patch took: representative EE flags must read true, and no
+  # stale disabled copy remains. Paths are inlined (no shell $vars — container-structure-test
+  # substitutes $-tokens in args, which would clobber them). These keys occur only in
+  # getDefaultOnPremFeatures within this module, so the checks are precise.
+  - name: on-prem feature set entitled
+    command: sh
+    args:
+      - -c
+      - 'grep -q "samlSSO: true" /backend/dist/ee/services/license/license-fns.mjs && grep -q "oidcSSO: true" /backend/dist/ee/services/license/license-fns.mjs && grep -q "auditLogs: true" /backend/dist/ee/services/license/license-fns.mjs && ! grep -q "samlSSO: false" /backend/dist/ee/services/license/license-fns.mjs'
+    exitCode: 0
+
+  # Prove the <VAR>_FILE secret expansion resolves: write a probe secret to a file,
+  # source the helper with PROBE_FILE pointing at it, and assert PROBE is exported
+  # (checked via `env` so the test command carries no $var for CST to substitute).
+  - name: file-secret expansion resolves
+    command: sh
+    args:
+      - -c
+      - "printf sup3r-s3cret > /tmp/probe && PROBE_FILE=/tmp/probe sh -c '. /backend/astravault-file-secrets.sh; expand_file_secrets; env'"
+    expectedOutput:
+      - "PROBE=sup3r-s3cret"
