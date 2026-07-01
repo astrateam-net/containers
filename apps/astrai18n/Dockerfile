@@ -37,6 +37,14 @@ RUN set -eux; \
 # agent always loads regardless of runtime env overrides.
 ENV JAVA_TOOL_OPTIONS="-javaagent:${AGENT_PATH}/astrai18n-agent.jar"
 
+# Wrap the stock entrypoint to resolve <VAR>_FILE secrets (Docker/Swarm secrets in
+# /run/secrets) into the environment before launch; the wrapper ends with
+# `exec /app/cmd.sh`, so the upstream Java launch — and JAVA_TOOL_OPTIONS above — is
+# preserved verbatim. The upstream image has no native file-secret support.
+COPY --chmod=555 file-secrets.sh /app/astrai18n-file-secrets.sh
+COPY --chmod=555 entrypoint.sh /app/astrai18n-entrypoint.sh
+ENTRYPOINT ["/app/astrai18n-entrypoint.sh"]
+
 LABEL org.opencontainers.image.title="astrai18n" \
       org.opencontainers.image.description="Self-hosted localization platform for AstraTeam" \
       org.opencontainers.image.vendor="astrateam-net" \
