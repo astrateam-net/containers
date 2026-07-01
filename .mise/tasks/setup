@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#MISE description="Fetch the linux goss binary + matching dgoss wrapper into .bin/"
+#MISE dir="{{config_root}}"
+set -euo pipefail
+
+# dgoss runs goss INSIDE the container under test, so goss must be a linux binary
+# matching the container's arch (image-local builds host-native). Fetch both goss
+# and its dgoss wrapper at the pinned GOSS_VERSION and cache them in .bin/
+# (gitignored, on PATH via mise env). Re-runs only when version or arch changes.
+: "${GOSS_VERSION:?GOSS_VERSION not set (mise.toml [env])}"
+
+case "$(uname -m)" in
+  arm64 | aarch64) arch=arm64 ;;
+  x86_64 | amd64) arch=amd64 ;;
+  *) echo "ERROR: unsupported arch $(uname -m)" >&2; exit 1 ;;
+esac
+
+marker=".bin/.goss-version"
+want="${GOSS_VERSION}-${arch}"
+if [[ -x .bin/goss && -x .bin/dgoss && "$(cat "$marker" 2>/dev/null)" == "$want" ]]; then
+  echo "goss v${GOSS_VERSION} (linux/${arch}) + dgoss already installed"
+  exit 0
+fi
+
+mkdir -p .bin
+base="https://github.com/goss-org/goss/releases/download/v${GOSS_VERSION}"
+echo "→ fetching goss v${GOSS_VERSION} (linux/${arch}) + dgoss"
+curl -fsSL "${base}/goss-linux-${arch}" -o .bin/goss
+curl -fsSL "${base}/dgoss" -o .bin/dgoss
+chmod +x .bin/goss .bin/dgoss
+echo "$want" >"$marker"

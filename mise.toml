@@ -1,0 +1,25 @@
+min_version = "2026.6.1"
+
+# Host toolchain for building and testing app images. Pinned here instead of the
+# old `just init` / `gh release download` dance — `mise install` (or jdx/mise-action
+# in CI) provisions everything. Docker itself is provided by the host.
+#
+# NOTE: goss is deliberately NOT a mise tool. dgoss injects the goss binary INTO the
+# Linux container under test, so it needs a linux/<arch> goss, not a host-native one.
+# The `setup` task fetches the correct linux goss + the dgoss wrapper into .bin/.
+[tools]
+jq = "latest"
+yq = "latest"
+container-structure-test = "latest" # structure tests (tests.yaml with schemaVersion)
+
+[env]
+# goss version fetched by the `setup` task (linux binary + matching dgoss wrapper).
+GOSS_VERSION = "0.4.9"
+# .bin (gitignored) holds the fetched goss/dgoss; put it on PATH so tasks find them.
+_.path = [".bin"]
+
+# "Open the repo → everything ready." Entering the project installs the toolchain,
+# and postinstall fetches goss+dgoss (also fires under jdx/mise-action in CI).
+[hooks]
+enter = ["mise install"]
+postinstall = { task = "setup" }

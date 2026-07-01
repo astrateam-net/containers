@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+#MISE description="Trigger a remote build (optionally a release) via GitHub Actions"
+#MISE dir="{{config_root}}"
+#USAGE arg "<app>" help="App directory under apps/"
+#USAGE complete "app" run="ls -d apps/*/ | xargs -n1 basename"
+#USAGE flag "--release" help="Also build and publish a release"
+set -euo pipefail
+
+gh auth status
+gh workflow run release.yaml \
+  -f app="${usage_app:?}" \
+  -f release="${usage_release:-false}"
