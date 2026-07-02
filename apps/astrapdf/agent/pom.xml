@@ -26,7 +26,7 @@
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- Match the version bundled in the stirling-pdf fat image (/app/lib). -->
-    <bytebuddy.version>1.17.8</bytebuddy.version>
+    <bytebuddy.version>1.18.11-jdk5</bytebuddy.version>
   </properties>
 
   <dependencies>
