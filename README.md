@@ -25,7 +25,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [gh-actions-runner](apps/gh-actions-runner/) | `ghcr.io/astrateam-net/gh-actions-runner` | `0.3.0` |
 | [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.30.1` |
 | [n8n-mcp](apps/n8n-mcp/) | `ghcr.io/astrateam-net/n8n-mcp` | `2.47.12` |
-| [newt-swarm](apps/newt-swarm/) | `ghcr.io/astrateam-net/newt-swarm` | `1.13.0` |
+| [newt-swarm](apps/newt-swarm/) | `ghcr.io/astrateam-net/newt-swarm` | `1.14.0` |
 | [obsync](apps/obsync/) | `ghcr.io/astrateam-net/obsync` | `3.5.1` |
 | [pangolin](apps/pangolin/) | `ghcr.io/astrateam-net/pangolin` | `1.19.4` |
 | [postgres-pgbackrest](apps/postgres-pgbackrest/) | `ghcr.io/astrateam-net/postgres-pgbackrest` | `17.8.0` |
