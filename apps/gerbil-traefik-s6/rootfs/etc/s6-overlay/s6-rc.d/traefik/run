@@ -1,0 +1,6 @@
+#!/command/with-contenv sh
+# Traefik runs in this container's netns (== Gerbil's wg0). Its config is
+# mounted at /etc/traefik, exactly as in the standalone reference stack, so it
+# is NOT baked into the image. Env like CLOUDFLARE_DNS_API_TOKEN is inherited
+# via with-contenv.
+exec /usr/local/bin/traefik --configFile="${TRAEFIK_CONFIG_FILE:-/etc/traefik/traefik_config.yml}"
