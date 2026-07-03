@@ -1,0 +1,9 @@
+#!/command/with-contenv sh
+# Gerbil is configured entirely by its own environment variables (INTERFACE,
+# REMOTE_CONFIG, REACHABLE_AT, GENERATE_AND_SAVE_KEY_TO, MTU, LOG_LEVEL,
+# SNI_PORT, PROXY_PROTOCOL, ...). Gerbil's precedence is env > CLI flag > default,
+# and it only registers a flag when the matching env var is empty — so passing
+# flags here would collide with an env override and crash. Defaults for the three
+# essentials are set via ENV in the Dockerfile; override any option by setting its
+# env var on the service.
+exec /usr/local/bin/gerbil
