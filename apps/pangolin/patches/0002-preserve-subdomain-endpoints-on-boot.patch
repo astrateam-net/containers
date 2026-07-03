@@ -1,0 +1,34 @@
+diff --git a/server/setup/copyInConfig.ts b/server/setup/copyInConfig.ts
+index be37681..f57db5b 100644
+--- a/server/setup/copyInConfig.ts
++++ b/server/setup/copyInConfig.ts
+@@ -20,16 +20,24 @@ export async function copyInConfig() {
+     }
+ 
+     const exitNodeName = config.getRawConfig().gerbil.exit_node_name;
+-    if (exitNodeName) {
++    // FORK (astrateam): with use_subdomain the per-exit-node endpoints
++    // (<label>.base_endpoint, derived from reachableAt in createExitNode) are
++    // intentional and MUST survive restarts. copyInConfig runs on every boot,
++    // so we must NOT reset those endpoints back to base_endpoint here. listenPort
++    // is still normalized uniformly.
++    const useSubdomain = config.getRawConfig().gerbil.use_subdomain;
++    if (exitNodeName && !useSubdomain) {
+         await db
+             .update(exitNodes)
+             .set({ endpoint, listenPort })
+             .where(eq(exitNodes.name, exitNodeName));
+     } else {
+-        await db
+-            .update(exitNodes)
+-            .set({ endpoint })
+-            .where(ne(exitNodes.endpoint, endpoint));
++        if (!useSubdomain) {
++            await db
++                .update(exitNodes)
++                .set({ endpoint })
++                .where(ne(exitNodes.endpoint, endpoint));
++        }
+         await db
+             .update(exitNodes)
+             .set({ listenPort })

@@ -1,0 +1,42 @@
+# Container Structure Test (schemaVersion present => CST, not GOSS).
+# Structural only: the runtime needs a live Postgres + config, absent in the CI
+# build sandbox, so we assert the EE build produced the expected artifacts (the
+# patched server bundle, migrations, CLI, static assets) rather than booting it.
+schemaVersion: "2.0.0"
+
+fileExistenceTests:
+  - name: server bundle
+    path: /app/dist/server.mjs
+    shouldExist: true
+  - name: migrations bundle
+    path: /app/dist/migrations.mjs
+    shouldExist: true
+  - name: cli bundle
+    path: /app/dist/cli.mjs
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
+  - name: pangctl wrapper
+    path: /usr/local/bin/pangctl
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
+  - name: next standalone server
+    path: /app/server.js
+    shouldExist: true
+  - name: node_modules
+    path: /app/node_modules
+    shouldExist: true
+  - name: public assets
+    path: /app/public
+    shouldExist: true
+
+commandTests:
+  - name: node runtime present
+    command: node
+    args: ["--version"]
+    exitCode: 0
+  - name: patched enterprise build marker
+    # The enterprise build writes server/build.ts => build == "enterprise";
+    # confirm the deterministic-subdomain helper made it into the bundle.
+    command: sh
+    args: ["-c", "grep -q deterministicExitNodeLabel /app/dist/server.mjs"]
+    exitCode: 0

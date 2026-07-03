@@ -1,0 +1,40 @@
+diff --git a/server/private/routers/gerbil/createExitNode.ts b/server/private/routers/gerbil/createExitNode.ts
+index 818c5f0..c8a9200 100644
+--- a/server/private/routers/gerbil/createExitNode.ts
++++ b/server/private/routers/gerbil/createExitNode.ts
+@@ -18,6 +18,21 @@ import { getNextAvailableSubnet } from "@server/lib/exitNodes";
+ import logger from "@server/logger";
+ import { eq } from "drizzle-orm";
+ 
++// FORK (astrateam): derive a deterministic exit-node subdomain label from the
++// gerbil's reachableAt host (e.g. http://png01:3004 -> "png01"), so operators
++// can pre-create static DNS records instead of relying on random labels served
++// by a dynamic authoritative DNS. Returns "" when reachableAt is missing or
++// unparseable, so the caller falls back to the upstream random generator.
++function deterministicExitNodeLabel(reachableAt: string | undefined): string {
++    if (!reachableAt) return "";
++    try {
++        const host = new URL(reachableAt).hostname;
++        return host.split(".")[0].toLowerCase().replace(/[^a-z0-9-]/g, "");
++    } catch {
++        return "";
++    }
++}
++
+ export async function createExitNode(
+     publicKey: string,
+     reachableAt: string | undefined
+@@ -35,7 +50,12 @@ export async function createExitNode(
+         const listenPort = config.getRawConfig().gerbil.start_port;
+         let subEndpoint = "";
+         if (config.getRawConfig().gerbil.use_subdomain) {
+-            subEndpoint = await getUniqueExitNodeEndpointName();
++            // FORK (astrateam): prefer the deterministic label derived from
++            // reachableAt; fall back to the upstream random adjective-animal
++            // name only when reachableAt is absent/unparseable.
++            subEndpoint =
++                deterministicExitNodeLabel(reachableAt) ||
++                (await getUniqueExitNodeEndpointName());
+         }
+ 
+         const exitNodeName =
