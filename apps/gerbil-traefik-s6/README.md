@@ -54,12 +54,14 @@ services under [`rootfs/etc/s6-overlay/s6-rc.d/`](rootfs/etc/s6-overlay/s6-rc.d/
 | `gerbil` | `gerbil` (no flags) | Creates `wg0`, pulls peer config from Pangolin. Configured purely by its own env vars (see below); the three essentials have defaults baked as `ENV` in the Dockerfile. |
 | `traefik` | `traefik --configFile=/etc/traefik/traefik_config.yml` | Config is **mounted**, not baked. Inherits env (e.g. `CLOUDFLARE_DNS_API_TOKEN`) via `with-contenv`. |
 
-The two are **independent siblings** — no `dependencies` between them. Neither
-talks to the other directly; they only need the shared netns so Traefik's
-`:80/:443` land where `wg0` lives. Both simply retry until the external Pangolin
-answers, so no readiness gate is needed. If either dies, s6 restarts just that
-one. The `HEALTHCHECK` ([`healthcheck.sh`](rootfs/usr/bin/healthcheck.sh)) is
-green only when **both** report `up`.
+The two are **independent siblings** — no `dependencies` on each other, only on
+the s6 `base` bundle (`dependencies.d/base`, per upstream guidance) so each
+starts after container init, not racing it. Neither talks to the other directly;
+they only need the shared netns so Traefik's `:80/:443` land where `wg0` lives.
+Both simply retry until the external Pangolin answers, so no readiness gate is
+needed. If either dies, s6 restarts just that one. The `HEALTHCHECK`
+([`healthcheck.sh`](rootfs/usr/bin/healthcheck.sh)) is green only when **both**
+report `up`.
 
 ## Configuration: where the two services' settings go
 
