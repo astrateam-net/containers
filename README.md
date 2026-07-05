@@ -14,6 +14,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [astrai18n](apps/astrai18n/) | `ghcr.io/astrateam-net/astrai18n` | `3.207.0` |
 | [astrapdf](apps/astrapdf/) | `ghcr.io/astrateam-net/astrapdf` | `2.12.0` |
 | [astravault](apps/astravault/) | `ghcr.io/astrateam-net/astravault` | `0.161.10` |
+| [astravaultnet](apps/astravaultnet/) | `ghcr.io/astrateam-net/astravaultnet` | `0.43.100` |
 | [bird-maxmind](apps/bird-maxmind/) | `ghcr.io/astrateam-net/bird-maxmind` | `0.1.2` |
 | [bkm](apps/bkm/) | `ghcr.io/astrateam-net/bkm` | `10.2.11` |
 | [bpm](apps/bpm/) | `ghcr.io/astrateam-net/bpm` | `11.3.6` |
