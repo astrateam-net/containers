@@ -12,12 +12,13 @@ variable "VERSION" {
 
 # SOURCE_REF is the git ref (branch, tag, or SHA) on the fork to build from.
 # Pinned to a SHA on swarm-discovery-stable (= upstream tag 1.14.0 + our
-# single feature commit, ported to the moby/moby Docker SDK). This isolates
-# the swarm-discovery change against a known-good release; the dev-based
-# branch on the fork is for the upstream PR only. Bump this SHA when rebasing
-# onto a newer upstream tag.
+# feature commits: cluster-wide Swarm discovery, ported to the moby/moby
+# Docker SDK, plus PREFER_ENDPOINT env-var support). This isolates our changes
+# against a known-good release; the dev-based branch on the fork is for the
+# upstream PR only. Bump this SHA when rebasing onto a newer upstream tag or
+# adding fork commits.
 variable "SOURCE_REF" {
-  default = "64e6146bb74fe71e9da2aa39c5aa74a513f041fe"
+  default = "f7e4fc2db15fab70125d0483e7ba7e76267318da"
 }
 
 variable "SOURCE" {
