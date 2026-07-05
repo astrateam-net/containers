@@ -1,14 +1,14 @@
 schemaVersion: "2.0.0"
 
-# Structural test only — authentik needs PostgreSQL + Redis to boot, so we verify the
-# two overlays (privileged-bind capability + Enterprise unlock) rather than running the app.
+# Structural only — authentik needs PostgreSQL + Redis to boot, so we verify the two
+# overlays (privileged-bind capability + Enterprise fix) rather than running the app.
 
 fileExistenceTests:
   - name: authentik-server binary
     path: /usr/bin/authentik-server
     shouldExist: true
-  - name: enterprise license model present
-    path: /authentik/enterprise/models.py
+  - name: enterprise license module present
+    path: /authentik/enterprise/license.py
     shouldExist: true
 
 commandTests:
@@ -17,8 +17,7 @@ commandTests:
     args: ["-lc", "test -x /usr/bin/authentik-server"]
     exitCode: 0
 
-  # cap_net_bind_service xattr must survive into the final layer. os.getxattr raises
-  # (non-zero) if the capability is absent, so exitCode 0 proves it is attached.
+  # cap_net_bind_service must survive into the final layer (os.getxattr raises if absent).
   - name: cap_net_bind_service attached to binary
     command: sh
     args:
@@ -26,18 +25,18 @@ commandTests:
       - "python3 -c \"import os; os.getxattr('/usr/bin/authentik-server', 'security.capability')\""
     exitCode: 0
 
-  # Enterprise unlock applied: is_valid returns True unconditionally.
-  - name: enterprise unlock present
+  # Enterprise fix: status() short-circuits to VALID.
+  - name: status forced valid
     command: sh
     args:
       - "-lc"
-      - "grep -A2 'def is_valid' /authentik/enterprise/models.py | grep -q 'return True'"
+      - "grep -A1 'def status(self) -> LicenseUsageStatus:' /authentik/enterprise/license.py | grep -q 'return LicenseUsageStatus.VALID'"
     exitCode: 0
 
-  # ...and the original license gate is gone (guards against a partial/failed patch).
-  - name: enterprise gate removed
+  # Enterprise fix: cached_summary() returns a forged VALID summary.
+  - name: cached_summary forged valid
     command: sh
     args:
       - "-lc"
-      - "! grep -q 'return self in \\[LicenseUsageStatus.VALID' /authentik/enterprise/models.py"
+      - "grep -q 'internal_users=999999' /authentik/enterprise/license.py"
     exitCode: 0
