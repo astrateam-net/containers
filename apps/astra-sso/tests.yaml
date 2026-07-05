@@ -1,0 +1,43 @@
+schemaVersion: "2.0.0"
+
+# Structural test only — authentik needs PostgreSQL + Redis to boot, so we verify the
+# two overlays (privileged-bind capability + Enterprise unlock) rather than running the app.
+
+fileExistenceTests:
+  - name: authentik-server binary
+    path: /usr/bin/authentik-server
+    shouldExist: true
+  - name: enterprise license model present
+    path: /authentik/enterprise/models.py
+    shouldExist: true
+
+commandTests:
+  - name: authentik-server is executable
+    command: sh
+    args: ["-lc", "test -x /usr/bin/authentik-server"]
+    exitCode: 0
+
+  # cap_net_bind_service xattr must survive into the final layer. os.getxattr raises
+  # (non-zero) if the capability is absent, so exitCode 0 proves it is attached.
+  - name: cap_net_bind_service attached to binary
+    command: sh
+    args:
+      - "-lc"
+      - "python3 -c \"import os; os.getxattr('/usr/bin/authentik-server', 'security.capability')\""
+    exitCode: 0
+
+  # Enterprise unlock applied: is_valid returns True unconditionally.
+  - name: enterprise unlock present
+    command: sh
+    args:
+      - "-lc"
+      - "grep -A2 'def is_valid' /authentik/enterprise/models.py | grep -q 'return True'"
+    exitCode: 0
+
+  # ...and the original license gate is gone (guards against a partial/failed patch).
+  - name: enterprise gate removed
+    command: sh
+    args:
+      - "-lc"
+      - "! grep -q 'return self in \\[LicenseUsageStatus.VALID' /authentik/enterprise/models.py"
+    exitCode: 0
