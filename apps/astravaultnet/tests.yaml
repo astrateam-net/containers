@@ -1,0 +1,81 @@
+schemaVersion: "2.0.0"
+
+# Structural + behavioural tests for the wrapper. We can't run a real gateway /
+# relay (they need a live Infisical instance and a one-time enrollment token),
+# so we exercise the entrypoint's argv-building via its dry-run mode
+# (INFISICAL_ENTRYPOINT_DEBUG=1) and verify the runtime building blocks.
+
+fileExistenceTests:
+  - name: infisical binary (from base image)
+    path: /bin/infisical
+    shouldExist: true
+  - name: tini init (from base image)
+    path: /sbin/tini
+    shouldExist: true
+  - name: entrypoint wrapper
+    path: /usr/local/bin/entrypoint.sh
+    shouldExist: true
+  - name: healthcheck script
+    path: /usr/local/bin/healthcheck.sh
+    shouldExist: true
+
+commandTests:
+  - name: infisical is runnable
+    command: infisical
+    args: ["--version"]
+    exitCode: 0
+
+  - name: healthcheck deps present (nc, pgrep)
+    command: sh
+    args: ["-lc", "command -v nc && command -v pgrep"]
+    exitCode: 0
+
+  # gateway dispatch: name is positional, token/domain become flags.
+  - name: gateway argv is built correctly
+    command: sh
+    args:
+      - "-lc"
+      - "ASTRAVAULT_NET=gateway ASTRAVAULT_GATEWAY_NAME=gw1 ASTRAVAULT_DOMAIN=https://vault.example.com ASTRAVAULT_ENROLL_METHOD=token ASTRAVAULT_TOKEN=secret-enroll ASTRAVAULT_NET_DEBUG=1 /usr/local/bin/entrypoint.sh 2>/dev/null"
+    expectedOutput:
+      - "infisical gateway start gw1 .*--domain=https://vault.example.com.*--enroll-method=token.*--token=\\*\\*\\*"
+    excludedOutput:
+      - "secret-enroll"
+
+  # relay dispatch: name/host/type become flags.
+  - name: relay argv is built correctly
+    command: sh
+    args:
+      - "-lc"
+      - "ASTRAVAULT_NET=relay ASTRAVAULT_RELAY_NAME=r1 ASTRAVAULT_RELAY_HOST=relay.example.com ASTRAVAULT_DOMAIN=https://vault.example.com ASTRAVAULT_NET_DEBUG=1 /usr/local/bin/entrypoint.sh 2>/dev/null"
+    expectedOutput:
+      - "infisical relay start .*--name=r1.*--host=relay.example.com"
+
+  # Docker/Swarm secret: VAR_FILE is read into VAR (using a non-secret var so we
+  # can assert the resolved value made it into the argv).
+  - name: _FILE secret resolution works
+    command: sh
+    args:
+      - "-lc"
+      - "printf 'https://vault.example.com' > /tmp/domain && ASTRAVAULT_NET=relay ASTRAVAULT_RELAY_NAME=r1 ASTRAVAULT_DOMAIN_FILE=/tmp/domain ASTRAVAULT_NET_DEBUG=1 /usr/local/bin/entrypoint.sh 2>/dev/null"
+    expectedOutput:
+      - "--domain=https://vault.example.com"
+
+  # %h in a name is expanded to the container hostname.
+  - name: hostname substitution in name
+    command: sh
+    args:
+      - "-lc"
+      - "ASTRAVAULT_NET=gateway ASTRAVAULT_GATEWAY_NAME=gw-%h ASTRAVAULT_NET_DEBUG=1 /usr/local/bin/entrypoint.sh 2>/dev/null | grep -q \"gw-$(hostname)\""
+    exitCode: 0
+
+  # No role and no args is a usage error.
+  - name: missing role fails
+    command: sh
+    args: ["-lc", "ASTRAVAULT_NET= /usr/local/bin/entrypoint.sh"]
+    exitCode: 1
+
+  # Escape hatch: no role but args -> raw infisical passthrough.
+  - name: raw passthrough without role
+    command: sh
+    args: ["-lc", "ASTRAVAULT_NET= /usr/local/bin/entrypoint.sh --version"]
+    exitCode: 0

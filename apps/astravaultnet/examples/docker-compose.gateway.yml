@@ -1,0 +1,76 @@
+# astravaultnet — GATEWAY example
+# ---------------------------------------------------------------------------
+# A gateway runs INSIDE your private network, next to the resources astravault
+# needs to reach (databases, internal APIs, hosts). It only makes OUTBOUND
+# connections — it dials a relay over an SSH reverse tunnel — so it publishes
+# NO ports and needs no inbound firewall rules.
+#
+# Deploy: docker compose -f docker-compose.gateway.yml up -d
+# ---------------------------------------------------------------------------
+
+services:
+  gateway:
+    image: ghcr.io/astrateam-net/astravaultnet:0.43.100
+    restart: unless-stopped
+
+    environment:
+      # --- role selector (required) -------------------------------------
+      # Picks which networking component this container runs. Here: gateway.
+      ASTRAVAULT_NET: gateway
+
+      # --- who to talk to ------------------------------------------------
+      # URL of your self-hosted astravault (Infisical) instance. The gateway
+      # reaches its API on 443 for certificates and control.
+      ASTRAVAULT_DOMAIN: https://vault.astrateam.net
+
+      # --- identity of THIS gateway --------------------------------------
+      # Unique name — the gateway's credentials are stored on disk scoped by
+      # this name, so every gateway must have its own. `%h` expands to the
+      # container hostname if you want it derived automatically.
+      ASTRAVAULT_GATEWAY_NAME: gw-01
+
+      # --- which relay to route through ----------------------------------
+      # OPTIONAL. Omit to auto-select the lowest-latency healthy relay and get
+      # automatic failover. Set it to pin one specific relay (failover off).
+      # ASTRAVAULT_TARGET_RELAY_NAME: relay-01
+
+      # --- enrollment (bootstrap auth) -----------------------------------
+      # `token` = one-time enrollment token from the astravault UI
+      # (Networking > Gateways > Show deploy command). It is SINGLE-USE and
+      # expires in 1h; on first start it's exchanged for a long-lived access
+      # token that is written to /etc/infisical (persisted by the volume below,
+      # so restarts reuse it and re-running with the same token is a no-op).
+      ASTRAVAULT_ENROLL_METHOD: token
+      # The token itself comes from a Docker secret, never inline. Any variable
+      # can be sourced from a file by appending _FILE (Docker/Swarm secret).
+      ASTRAVAULT_TOKEN_FILE: /run/secrets/gw_enroll_token
+
+      # --- STATELESS alternative (instead of the two lines above) --------
+      # Supply a long-lived access token directly and drop the volume: nothing
+      # is written to disk, so a rescheduled/replicated task just reconnects.
+      # ASTRAVAULT_GATEWAY_ACCESS_TOKEN_FILE: /run/secrets/gw_access_token
+      #
+      # --- MACHINE-IDENTITY alternative (non-single-use, re-auth each start)
+      # ASTRAVAULT_AUTH_METHOD: universal-auth
+      # ASTRAVAULT_CLIENT_ID_FILE: /run/secrets/gw_client_id
+      # ASTRAVAULT_CLIENT_SECRET_FILE: /run/secrets/gw_client_secret
+
+    secrets:
+      - gw_enroll_token
+
+    volumes:
+      # Persists the exchanged access token across restarts. Required for the
+      # token method (the enrollment token is single-use). Omit this volume if
+      # you use the STATELESS or MACHINE-IDENTITY path above.
+      - gw_state:/etc/infisical
+
+    # No `ports:` — the gateway is outbound-only.
+
+# One-time enrollment token, created out-of-band, e.g.:
+#   printf '<token-from-ui>' | docker secret create gw_enroll_token -
+secrets:
+  gw_enroll_token:
+    external: true
+
+volumes:
+  gw_state:

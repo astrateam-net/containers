@@ -1,0 +1,84 @@
+# astravaultnet — RELAY example
+# ---------------------------------------------------------------------------
+# A relay is the public rendezvous point between the astravault platform and
+# your gateways. It runs on a host with a STATIC IP / DNS name and, unlike the
+# gateway, it LISTENS for inbound connections:
+#
+#   2222  <-  gateways dial in       (SSH reverse tunnel)
+#   8443  <-  astravault platform    (TLS control channel)
+#   443   ->  relay dials OUT to the astravault API   (not published)
+#
+# So the relay container must PUBLISH 2222 and 8443. The relay never decrypts
+# traffic — it only routes it.
+#
+# Deploy: docker compose -f docker-compose.relay.yml up -d
+# ---------------------------------------------------------------------------
+
+services:
+  relay:
+    image: ghcr.io/astrateam-net/astravaultnet:0.43.100
+    restart: unless-stopped
+
+    environment:
+      # --- role selector (required) -------------------------------------
+      # Picks which networking component this container runs. Here: relay.
+      ASTRAVAULT_NET: relay
+
+      # --- who to talk to ------------------------------------------------
+      # URL of your self-hosted astravault (Infisical) instance. The relay
+      # reaches its API on 443 (outbound) for certificates and registration.
+      ASTRAVAULT_DOMAIN: https://vault.astrateam.net
+
+      # --- identity of THIS relay ----------------------------------------
+      # Must match the name you gave the relay in the astravault UI
+      # (Networking > Relays > Create Relay). `%h` expands to the container
+      # hostname if you prefer it derived automatically.
+      ASTRAVAULT_RELAY_NAME: relay-01
+
+      # The static IP or DNS name this relay is reachable at — the SAME value
+      # registered server-side in the UI. Gateways and the platform use it to
+      # connect in on 2222 / 8443.
+      ASTRAVAULT_RELAY_HOST: relay.astrateam.net
+
+      # Relay type. `org` (default) = an organization relay you deploy. Leave
+      # unset unless you are running an instance-type relay.
+      # ASTRAVAULT_RELAY_TYPE: org
+
+      # --- enrollment (bootstrap auth) -----------------------------------
+      # One-time enrollment token from the relay detail page (Show deploy
+      # command). SINGLE-USE, 1h expiry; exchanged on first start for a
+      # long-lived access token written to /etc/infisical (kept by the volume
+      # below so restarts reuse it).
+      ASTRAVAULT_ENROLL_METHOD: token
+      # Sourced from a Docker secret via the _FILE convention, never inline.
+      ASTRAVAULT_TOKEN_FILE: /run/secrets/relay_enroll_token
+
+      # --- STATELESS alternative (instead of the two lines above) --------
+      # Supply a long-lived access token directly and drop the volume.
+      # ASTRAVAULT_RELAY_ACCESS_TOKEN_FILE: /run/secrets/relay_access_token
+
+      # --- healthcheck tuning (optional) ---------------------------------
+      # The image's HEALTHCHECK probes this TCP port; defaults to 2222.
+      # ASTRAVAULT_RELAY_SSH_PORT: 2222
+
+    secrets:
+      - relay_enroll_token
+
+    ports:
+      - "2222:2222"    # gateways dial in (SSH reverse tunnel)
+      - "8443:8443"    # astravault platform dials in (TLS control channel)
+      # 443 is NOT published — that is the relay's OUTBOUND path to astravault.
+
+    volumes:
+      # Persists the exchanged access token across restarts (token method).
+      # Omit if you use the STATELESS path above.
+      - relay_state:/etc/infisical
+
+# One-time enrollment token, created out-of-band, e.g.:
+#   printf '<token-from-ui>' | docker secret create relay_enroll_token -
+secrets:
+  relay_enroll_token:
+    external: true
+
+volumes:
+  relay_state:
