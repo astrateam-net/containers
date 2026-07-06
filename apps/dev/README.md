@@ -60,7 +60,7 @@ diffs against upstream lines and are regenerated on a `VERSION` bump.
 
 | Arg | Default | Purpose |
 |-----|---------|---------|
-| `VERSION` | `v2.34.1` | Upstream tag fetched, patched, and used as the runtime base. Tracked by Renovate against `ghcr.io/coder/coder`. |
+| `VERSION` | `v2.34.5` | Upstream tag fetched, patched, and used as the runtime base. Tracked by Renovate against `ghcr.io/coder/coder`. |
 | `I18N` | `ru` | Localization to bake in. Set empty (`--set image-local.args.I18N=`) for the stock English build. |
 | `DEV_KIT_VERSION` | `v0.3.0` | [`dev-kit`](https://github.com/astrateam-net/dev-kit) tag for the i18n factory and the `jetbroker` module. |
 | `GO_TAGS_COMMON` | `ts_omit_*` | Tailscale feature trims, kept in sync with upstream. |
