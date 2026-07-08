@@ -1,15 +1,18 @@
 #!/usr/bin/env node
-// Force n8n Enterprise on: License.isLicensed() -> return true. Every feature
-// check (old isXEnabled + new LicenseState, which delegates to it) funnels
-// through this method, and the frontend derives its flags from the backend.
-// So this one edit opens all Enterprise features. Throws if the anchor moves.
+// Force n8n Enterprise on: License.isLicensed() -> true for every feature EXCEPT
+// two inverted flags where licensed==true is a restriction, not a perk:
+//   feat:showNonProdBanner -> shows the "not licensed for production" nag banner
+//   feat:apiDisabled       -> disables the public REST API (isApiEnabled checks it)
+// Every check (old isXEnabled + new LicenseState) funnels through isLicensed and the
+// frontend derives from the backend, so this one edit is enough. Throws if anchor moves.
 
 const fs = require("fs");
 const path = require("path");
 
 const ROOT = "/usr/local/lib/node_modules/n8n";
 const NEEDLE = "return this.manager?.hasFeatureEnabled(feature) ?? false;";
-const PATCH = "return true;";
+const PATCH =
+  "return feature!=='feat:showNonProdBanner'&&feature!=='feat:apiDisabled';";
 
 function licenseJsFiles(dir, out) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {

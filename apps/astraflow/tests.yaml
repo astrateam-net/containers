@@ -9,10 +9,18 @@ commandTests:
     args: ["-lc", "test -d /usr/local/lib/node_modules/n8n"]
     exitCode: 0
 
-  # The license gate must be gone (agent replaced it with `return true`).
+  # The license gate must be gone (agent replaced it).
   - name: enterprise gate removed
     command: sh
     args:
       - "-lc"
       - "! grep -rqF 'hasFeatureEnabled(feature) ?? false' /usr/local/lib/node_modules/n8n"
+    exitCode: 0
+
+  # ...and the two inverted flags stay off (nag banner + public-API kill switch).
+  - name: inverted flags excluded
+    command: sh
+    args:
+      - "-lc"
+      - "grep -rqF 'feat:showNonProdBanner' /usr/local/lib/node_modules/n8n && grep -rqF 'feat:apiDisabled' /usr/local/lib/node_modules/n8n"
     exitCode: 0
