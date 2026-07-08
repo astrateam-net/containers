@@ -23,6 +23,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [ci-opentofu](apps/ci-opentofu/) | `ghcr.io/astrateam-net/ci-opentofu` | `1.1.0` |
 | [dev](apps/dev/) | `ghcr.io/astrateam-net/dev` | `v2.34.5` |
 | [dev-gw](apps/dev-gw/) | `ghcr.io/astrateam-net/dev-gw` | `2026.2.2` |
+| [flowrunner](apps/flowrunner/) | `ghcr.io/astrateam-net/flowrunner` | `2.30.1` |
 | [gerbil-traefik-s6](apps/gerbil-traefik-s6/) | `ghcr.io/astrateam-net/gerbil-traefik-s6` | `1.4.2` |
 | [gh-actions-runner](apps/gh-actions-runner/) | `ghcr.io/astrateam-net/gh-actions-runner` | `0.3.0` |
 | [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.30.1` |
