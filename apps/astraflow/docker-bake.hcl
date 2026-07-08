@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=docker.io/n8nio/n8n
-  default = "2.29.8"
+  default = "2.30.1"
 }
 
 # Our patched image (Enterprise opened), not stock n8n — point the source label at us.
