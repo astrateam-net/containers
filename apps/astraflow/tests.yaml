@@ -1,0 +1,18 @@
+schemaVersion: "2.0.0"
+
+# Structural only — n8n needs a DB to boot, so we verify the Enterprise fix was
+# applied to the installed package rather than running the app.
+
+commandTests:
+  - name: n8n package present
+    command: sh
+    args: ["-lc", "test -d /usr/local/lib/node_modules/n8n"]
+    exitCode: 0
+
+  # The license gate must be gone (agent replaced it with `return true`).
+  - name: enterprise gate removed
+    command: sh
+    args:
+      - "-lc"
+      - "! grep -rqF 'hasFeatureEnabled(feature) ?? false' /usr/local/lib/node_modules/n8n"
+    exitCode: 0

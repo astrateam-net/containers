@@ -1,0 +1,34 @@
+#!/usr/bin/env node
+// Force n8n Enterprise on: License.isLicensed() -> return true. Every feature
+// check (old isXEnabled + new LicenseState, which delegates to it) funnels
+// through this method, and the frontend derives its flags from the backend.
+// So this one edit opens all Enterprise features. Throws if the anchor moves.
+
+const fs = require("fs");
+const path = require("path");
+
+const ROOT = "/usr/local/lib/node_modules/n8n";
+const NEEDLE = "return this.manager?.hasFeatureEnabled(feature) ?? false;";
+const PATCH = "return true;";
+
+function licenseJsFiles(dir, out) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) licenseJsFiles(p, out);
+    else if (e.name.endsWith(".js") && e.name.includes("license")) out.push(p);
+  }
+  return out;
+}
+
+let patched = 0;
+for (const f of licenseJsFiles(ROOT, [])) {
+  const src = fs.readFileSync(f, "utf8");
+  if (!src.includes(NEEDLE)) continue;
+  fs.writeFileSync(f, src.split(NEEDLE).join(PATCH));
+  patched++;
+}
+
+if (patched === 0) {
+  throw new Error("astraflow: License.isLicensed anchor not found");
+}
+console.log(`astraflow: enterprise fix applied to ${patched} file(s)`);
