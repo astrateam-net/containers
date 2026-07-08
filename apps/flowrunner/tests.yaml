@@ -1,0 +1,45 @@
+schemaVersion: "2.0.0"
+
+# The launcher needs a live broker to do real work, so we verify the pieces are
+# in place and that the _FILE bridge actually resolves a secret file into env.
+
+commandTests:
+  - name: entrypoint present and executable
+    command: sh
+    args: ["-lc", "test -x /docker-entrypoint.sh"]
+    exitCode: 0
+
+  - name: launcher present
+    command: sh
+    args: ["-lc", "test -x /usr/local/bin/task-runner-launcher"]
+    exitCode: 0
+
+  - name: tini present
+    command: sh
+    args: ["-lc", "test -x /sbin/tini"]
+    exitCode: 0
+
+  # Run the real entrypoint with a FOO_FILE set and a check command as CMD:
+  # it must export FOO from the file before exec'ing "$@".
+  - name: _FILE bridge resolves secret into env
+    setup:
+      - ["sh", "-lc", "printf topsecret > /tmp/tok"]
+    envVars:
+      - key: FOO_FILE
+        value: /tmp/tok
+    command: /docker-entrypoint.sh
+    args: ["sh", "-lc", "test \"$FOO\" = topsecret"]
+    exitCode: 0
+
+  # An already-set plain var must win over its _FILE sibling.
+  - name: explicit env overrides _FILE
+    setup:
+      - ["sh", "-lc", "printf fromfile > /tmp/tok2"]
+    envVars:
+      - key: BAR_FILE
+        value: /tmp/tok2
+      - key: BAR
+        value: direct
+    command: /docker-entrypoint.sh
+    args: ["sh", "-lc", "test \"$BAR\" = direct"]
+    exitCode: 0
