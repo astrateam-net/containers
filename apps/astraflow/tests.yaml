@@ -24,3 +24,11 @@ commandTests:
       - "-lc"
       - "grep -rqF 'feat:showNonProdBanner' /usr/local/lib/node_modules/n8n && grep -rqF 'feat:apiDisabled' /usr/local/lib/node_modules/n8n"
     exitCode: 0
+
+  # Quota seam patched: getValue returns -1 (unlimited) for quota:* (projects, users, ...).
+  - name: quota gate removed
+    command: sh
+    args:
+      - "-lc"
+      - "! grep -rqF 'return this.manager?.getFeatureValue(feature);' /usr/local/lib/node_modules/n8n/dist/license.js && grep -rqF \"startsWith('quota:')\" /usr/local/lib/node_modules/n8n/dist/license.js"
+    exitCode: 0

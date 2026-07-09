@@ -1,18 +1,38 @@
 #!/usr/bin/env node
-// Force n8n Enterprise on: License.isLicensed() -> true for every feature EXCEPT
-// two inverted flags where licensed==true is a restriction, not a perk:
-//   feat:showNonProdBanner -> shows the "not licensed for production" nag banner
-//   feat:apiDisabled       -> disables the public REST API (isApiEnabled checks it)
-// Every check (old isXEnabled + new LicenseState) funnels through isLicensed and the
-// frontend derives from the backend, so this one edit is enough. Throws if anchor moves.
+// Force n8n Enterprise on. Two seams on the License class (compiled dist/license.js);
+// LicenseState delegates to both, and the frontend derives its flags/limits from the
+// backend, so patching these two covers everything.
+//
+//   1. isLicensed(feature)  -> boolean features. Return true for all EXCEPT two inverted
+//      flags where licensed==true is a restriction:
+//        feat:showNonProdBanner -> the "not licensed for production" nag banner
+//        feat:apiDisabled       -> disables the public REST API (isApiEnabled checks it)
+//   2. getValue(feature)    -> numeric quotas. Return -1 (n8n's UNLIMITED_LICENSE_QUOTA)
+//      for every 'quota:*' key so limits default to unlimited instead of 0/blocked
+//      (maxTeamProjects=0 => Projects locked, aiCredits=0, evaluations, insights, ...).
+//      Non-quota getValue (e.g. 'planName') passes through untouched.
+//
+// Each patch asserts it matched at least once -> build fails loud if an anchor moves.
 
 const fs = require("fs");
 const path = require("path");
 
 const ROOT = "/usr/local/lib/node_modules/n8n";
-const NEEDLE = "return this.manager?.hasFeatureEnabled(feature) ?? false;";
-const PATCH =
-  "return feature!=='feat:showNonProdBanner'&&feature!=='feat:apiDisabled';";
+
+const PATCHES = [
+  {
+    name: "isLicensed",
+    needle: "return this.manager?.hasFeatureEnabled(feature) ?? false;",
+    replacement:
+      "return feature!=='feat:showNonProdBanner'&&feature!=='feat:apiDisabled';",
+  },
+  {
+    name: "getValue",
+    needle: "return this.manager?.getFeatureValue(feature);",
+    replacement:
+      "return (typeof feature==='string'&&feature.startsWith('quota:'))?-1:this.manager?.getFeatureValue(feature);",
+  },
+];
 
 function licenseJsFiles(dir, out) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -23,15 +43,17 @@ function licenseJsFiles(dir, out) {
   return out;
 }
 
-let patched = 0;
-for (const f of licenseJsFiles(ROOT, [])) {
-  const src = fs.readFileSync(f, "utf8");
-  if (!src.includes(NEEDLE)) continue;
-  fs.writeFileSync(f, src.split(NEEDLE).join(PATCH));
-  patched++;
+const files = licenseJsFiles(ROOT, []);
+for (const patch of PATCHES) {
+  let hits = 0;
+  for (const f of files) {
+    const src = fs.readFileSync(f, "utf8");
+    if (!src.includes(patch.needle)) continue;
+    fs.writeFileSync(f, src.split(patch.needle).join(patch.replacement));
+    hits++;
+  }
+  if (hits === 0) {
+    throw new Error(`astraflow: anchor for ${patch.name} not found`);
+  }
+  console.log(`astraflow: ${patch.name} patched in ${hits} file(s)`);
 }
-
-if (patched === 0) {
-  throw new Error("astraflow: License.isLicensed anchor not found");
-}
-console.log(`astraflow: enterprise fix applied to ${patched} file(s)`);
