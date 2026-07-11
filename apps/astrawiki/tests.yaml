@@ -1,0 +1,51 @@
+schemaVersion: "2.0.0"
+
+# Structural only — Docmost needs Postgres + Redis to boot, so we verify the
+# Enterprise patch was applied to the compiled EE LicenseService rather than
+# running the app. Runtime proof (POST /workspace/entitlements -> tier:enterprise
+# + full features) is done separately with a throwaway compose stand.
+
+commandTests:
+  - name: docmost server dist present
+    command: sh
+    args: ["-lc", "test -f /app/apps/server/dist/ee/licence/license.service.js"]
+    exitCode: 0
+
+  # All four license read-methods must now force-return before their gate logic.
+  - name: isValidEELicense forced true
+    command: sh
+    args:
+      - "-lc"
+      - "grep -qF 'isValidEELicense(licenseKey) { return true;' /app/apps/server/dist/ee/licence/license.service.js"
+    exitCode: 0
+
+  - name: hasFeature forced true
+    command: sh
+    args:
+      - "-lc"
+      - "grep -qF 'hasFeature(licenseKey, feature) { return true;' /app/apps/server/dist/ee/licence/license.service.js"
+    exitCode: 0
+
+  - name: getFeatures forced enterprise set
+    command: sh
+    args:
+      - "-lc"
+      - "grep -qF 'getFeaturesForLicenseType(\"enterprise\")' /app/apps/server/dist/ee/licence/license.service.js"
+    exitCode: 0
+
+  - name: getLicenseType forced enterprise
+    command: sh
+    args:
+      - "-lc"
+      - "grep -qF 'getLicenseType(licenseKey) { return \"enterprise\";' /app/apps/server/dist/ee/licence/license.service.js"
+    exitCode: 0
+
+  # Docker/Swarm secrets: <NAME>_FILE must be resolved into <NAME> before the
+  # app command runs. Write a temp secret file and confirm the entrypoint
+  # exports its contents, then execs the passed command.
+  - name: _FILE secret resolution works
+    command: sh
+    args:
+      - "-lc"
+      - "printf topsecret > /tmp/s && DEMO_SECRET_FILE=/tmp/s /usr/local/bin/astrawiki-entrypoint.sh env | grep -qx 'DEMO_SECRET=topsecret'"
+    exitCode: 0
