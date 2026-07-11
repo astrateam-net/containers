@@ -1,0 +1,69 @@
+#!/usr/bin/env node
+// Force Docmost Enterprise on. Single seam: the EE LicenseService (compiled
+// dist/ee/licence/license.service.js). Both license guards (FeatureGuard,
+// LicenseGuard) inject this exact service, and the open-source LicenseCheckService
+// delegates to it, which in turn feeds POST /workspace/entitlements -> the client's
+// useHasFeature() reads that. So patching these four read methods unlocks the whole
+// app (UI badges, backend route guards, share controller) with NO license key:
+//
+//   isValidEELicense() -> true          (license/enterprise-only route guards pass)
+//   hasFeature()       -> true          (every Feature.* allowed)
+//   getFeatures()      -> all enterprise features (entitlements.features = full set)
+//   getLicenseType()   -> 'enterprise'  (entitlements.tier = enterprise)
+//
+// getFeatures pulls the list from the app's own feature-registry ('enterprise' tier)
+// so newly-added enterprise features are included automatically on version bumps.
+// Each patch asserts it matched -> build fails loud if an anchor moves.
+
+const fs = require("fs");
+const path = require("path");
+
+const ROOT = "/app/apps/server/dist";
+
+const PATCHES = [
+  {
+    name: "isValidEELicense",
+    needle: "isValidEELicense(licenseKey) {",
+    replacement: "isValidEELicense(licenseKey) { return true;",
+  },
+  {
+    name: "hasFeature",
+    needle: "hasFeature(licenseKey, feature) {",
+    replacement: "hasFeature(licenseKey, feature) { return true;",
+  },
+  {
+    name: "getFeatures",
+    needle: "getFeatures(licenseKey) {",
+    replacement:
+      'getFeatures(licenseKey) { return [...require("./feature-registry").getFeaturesForLicenseType("enterprise")];',
+  },
+  {
+    name: "getLicenseType",
+    needle: "getLicenseType(licenseKey) {",
+    replacement: 'getLicenseType(licenseKey) { return "enterprise";',
+  },
+];
+
+function licenseServiceFiles(dir, out) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) licenseServiceFiles(p, out);
+    else if (e.name === "license.service.js") out.push(p);
+  }
+  return out;
+}
+
+const files = licenseServiceFiles(ROOT, []);
+for (const patch of PATCHES) {
+  let hits = 0;
+  for (const f of files) {
+    const src = fs.readFileSync(f, "utf8");
+    if (!src.includes(patch.needle)) continue;
+    fs.writeFileSync(f, src.split(patch.needle).join(patch.replacement));
+    hits++;
+  }
+  if (hits === 0) {
+    throw new Error(`astrawiki: anchor for ${patch.name} not found`);
+  }
+  console.log(`astrawiki: ${patch.name} patched in ${hits} file(s)`);
+}
