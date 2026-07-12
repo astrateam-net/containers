@@ -26,6 +26,12 @@
 // binding is satisfied by construction and Authentik needs no audience config —
 // the ONLY Authentik change required is whitelisting this broker's callback URL
 // (<base>/mcp-oauth/callback) in the existing provider's redirect URIs.
+//
+// State (DCR clients, pending authorize states, broker codes, refresh tokens)
+// is kept in the SAME Redis/Valkey that Docmost already uses (via its
+// RedisService), so registrations survive restarts and are shared across all
+// replicas. Falls back to an in-memory store only when Redis is unavailable
+// (single-instance dev). See registerMcpOauth().
 
 const crypto = require("node:crypto");
 const oidc = require("openid-client");
@@ -46,39 +52,51 @@ const AUTHZ_STATE_TTL_MS = 10 * 60 * 1000; // pending Authentik round-trip
 const BROKER_CODE_TTL_MS = 5 * 60 * 1000; // our authorization code
 const API_KEY_TTL_MS = 90 * 24 * 60 * 60 * 1000; // minted token lifetime
 const REFRESH_TTL_MS = 180 * 24 * 60 * 60 * 1000; // broker refresh token
+const CLIENT_TTL_MS = REFRESH_TTL_MS; // DCR client registration retention
 
-// ---- tiny TTL stores (in-memory; single-instance MVP — see README) ----------
-function ttlStore() {
+// ---- shared TTL store ------------------------------------------------------
+// Redis-backed when available (survives restarts, shared across replicas);
+// in-memory Map fallback otherwise. Uniform async interface: set/get/take.
+function makeStore(redis, ns) {
+  if (redis) {
+    const k = (id) => `mcp-oauth:${ns}:${id}`;
+    return {
+      async set(id, v, ttlMs) {
+        await redis.set(k(id), JSON.stringify(v), "PX", ttlMs);
+      },
+      async get(id) {
+        const s = await redis.get(k(id));
+        return s ? JSON.parse(s) : undefined;
+      },
+      async take(id) {
+        const key = k(id);
+        const s = await redis.get(key);
+        if (s != null) await redis.del(key);
+        return s ? JSON.parse(s) : undefined;
+      },
+    };
+  }
   const m = new Map();
   return {
-    set(k, v, ttl) {
-      m.set(k, { v, exp: Date.now() + ttl });
+    async set(id, v, ttlMs) {
+      m.set(id, { v, exp: Date.now() + ttlMs });
     },
-    get(k) {
-      const e = m.get(k);
+    async get(id) {
+      const e = m.get(id);
       if (!e) return undefined;
       if (e.exp < Date.now()) {
-        m.delete(k);
+        m.delete(id);
         return undefined;
       }
       return e.v;
     },
-    take(k) {
-      const v = this.get(k);
-      if (v !== undefined) m.delete(k);
+    async take(id) {
+      const v = await this.get(id);
+      if (v !== undefined) m.delete(id);
       return v;
-    },
-    sweep() {
-      const now = Date.now();
-      for (const [k, e] of m) if (e.exp < now) m.delete(k);
     },
   };
 }
-
-const clients = ttlStore(); // client_id -> { redirectUris, name }  (long TTL via refresh)
-const authzStates = ttlStore(); // brokerState -> pending authorize context
-const brokerCodes = ttlStore(); // brokerCode -> resolved-user context
-const refreshTokens = ttlStore(); // refresh_token -> { userId, workspaceId, clientId }
 
 // ---- helpers ----------------------------------------------------------------
 function rand(bytes = 32) {
@@ -206,7 +224,6 @@ async function mintApiKeyToken(services, user, workspaceId, name) {
 
 // ---- route handlers ---------------------------------------------------------
 async function handleRegister(services, req, reply) {
-  const base = baseUrl(req);
   const body = typeof req.body === "object" && req.body ? req.body : {};
   const redirectUris = Array.isArray(body.redirect_uris) ? body.redirect_uris.filter((u) => typeof u === "string") : [];
   if (redirectUris.length === 0) {
@@ -214,7 +231,7 @@ async function handleRegister(services, req, reply) {
   }
   const clientId = `mcp_${rand(16)}`;
   const name = (body.client_name || "MCP client").toString().slice(0, 120);
-  clients.set(clientId, { redirectUris, name }, REFRESH_TTL_MS);
+  await services.stores.clients.set(clientId, { redirectUris, name }, CLIENT_TTL_MS);
   services.log(`${LOG} registered client ${clientId} (${name}) redirect=${redirectUris.join(",")}`);
   return sendJson(
     reply,
@@ -238,7 +255,7 @@ async function handleAuthorize(services, req, reply) {
   if (q.response_type !== "code") {
     return oauthErr(reply, 400, "unsupported_response_type", "response_type must be 'code'");
   }
-  const client = clients.get(q.client_id);
+  const client = await services.stores.clients.get(q.client_id);
   if (!client) return oauthErr(reply, 400, "invalid_client", "Unknown client_id — register first");
   if (!q.redirect_uri || !client.redirectUris.includes(q.redirect_uri)) {
     return oauthErr(reply, 400, "invalid_request", "redirect_uri not registered for this client");
@@ -268,7 +285,7 @@ async function handleAuthorize(services, req, reply) {
   const legVerifier = oidc.randomPKCECodeVerifier();
   const legChallenge = await oidc.calculatePKCECodeChallenge(legVerifier);
 
-  authzStates.set(
+  await services.stores.authzStates.set(
     brokerState,
     {
       clientId: q.client_id,
@@ -300,7 +317,7 @@ async function handleCallback(services, req, reply) {
   if (q.error) {
     return sendJson(reply, 400, { error: q.error, error_description: q.error_description || "IdP error" }, false);
   }
-  const st = authzStates.take(q.state);
+  const st = await services.stores.authzStates.take(q.state);
   if (!st) return sendJson(reply, 400, { error: "invalid_state", error_description: "Unknown or expired state" }, false);
 
   try {
@@ -332,8 +349,9 @@ async function handleCallback(services, req, reply) {
       profile,
     });
 
+    const clientRec = await services.stores.clients.get(st.clientId);
     const brokerCode = rand(24);
-    brokerCodes.set(
+    await services.stores.brokerCodes.set(
       brokerCode,
       {
         userId: user.id,
@@ -341,7 +359,7 @@ async function handleCallback(services, req, reply) {
         clientId: st.clientId,
         clientRedirectUri: st.clientRedirectUri,
         clientCodeChallenge: st.clientCodeChallenge,
-        clientName: clients.get(st.clientId)?.name,
+        clientName: clientRec?.name,
       },
       BROKER_CODE_TTL_MS
     );
@@ -362,7 +380,7 @@ async function handleToken(services, req, reply) {
   const grantType = body.grant_type;
 
   if (grantType === "authorization_code") {
-    const bc = brokerCodes.take(body.code);
+    const bc = await services.stores.brokerCodes.take(body.code);
     if (!bc) return oauthErr(reply, 400, "invalid_grant", "Invalid or expired code");
     if (bc.clientId !== body.client_id) return oauthErr(reply, 400, "invalid_grant", "client_id mismatch");
     if (!body.redirect_uri || body.redirect_uri !== bc.clientRedirectUri) {
@@ -376,7 +394,11 @@ async function handleToken(services, req, reply) {
 
     const { token, expiresIn } = await mintApiKeyToken(services, user, bc.workspaceId, `MCP: ${bc.clientName || "client"}`);
     const refresh = rand(32);
-    refreshTokens.set(refresh, { userId: bc.userId, workspaceId: bc.workspaceId, clientId: bc.clientId }, REFRESH_TTL_MS);
+    await services.stores.refreshTokens.set(
+      refresh,
+      { userId: bc.userId, workspaceId: bc.workspaceId, clientId: bc.clientId },
+      REFRESH_TTL_MS
+    );
     services.log(`${LOG} issued token for user ${bc.userId} client ${bc.clientId}`);
     return sendJson(
       reply,
@@ -387,7 +409,7 @@ async function handleToken(services, req, reply) {
   }
 
   if (grantType === "refresh_token") {
-    const rt = refreshTokens.take(body.refresh_token);
+    const rt = await services.stores.refreshTokens.take(body.refresh_token);
     if (!rt) return oauthErr(reply, 400, "invalid_grant", "Invalid or expired refresh_token");
     if (body.client_id && rt.clientId !== body.client_id) {
       return oauthErr(reply, 400, "invalid_grant", "client_id mismatch");
@@ -397,7 +419,7 @@ async function handleToken(services, req, reply) {
 
     const { token, expiresIn } = await mintApiKeyToken(services, user, rt.workspaceId, `MCP: ${rt.clientId}`);
     const newRefresh = rand(32);
-    refreshTokens.set(newRefresh, rt, REFRESH_TTL_MS);
+    await services.stores.refreshTokens.set(newRefresh, rt, REFRESH_TTL_MS);
     return sendJson(
       reply,
       200,
@@ -411,12 +433,12 @@ async function handleToken(services, req, reply) {
 
 // ---- registration on the Fastify instance ----------------------------------
 function registerMcpOauth(app) {
-  const logger = typeof app.get === "function" ? null : null;
   const log = (m) => {
     try {
       console.log(m);
     } catch (_) {}
   };
+
   let services;
   try {
     services = {
@@ -430,6 +452,23 @@ function registerMcpOauth(app) {
     log(`${LOG} DISABLED — could not resolve Docmost services: ${e.message}`);
     return;
   }
+
+  // Shared state in Docmost's own Redis/Valkey (survives restarts, shared across
+  // replicas). Fall back to in-memory only if Redis can't be resolved.
+  let redis = null;
+  try {
+    const { RedisService } = require("@nestjs-labs/nestjs-ioredis");
+    redis = app.get(RedisService, { strict: false }).getOrThrow();
+    log(`${LOG} state store: Redis (shared, restart-safe)`);
+  } catch (e) {
+    log(`${LOG} state store: in-memory fallback (single-instance only) — Redis unavailable: ${e.message}`);
+  }
+  services.stores = {
+    clients: makeStore(redis, "client"),
+    authzStates: makeStore(redis, "authz"),
+    brokerCodes: makeStore(redis, "code"),
+    refreshTokens: makeStore(redis, "refresh"),
+  };
 
   const fastify = app.getHttpAdapter().getInstance();
 
@@ -475,14 +514,6 @@ function registerMcpOauth(app) {
     } catch (_) {}
     done(null, payload);
   });
-
-  const sweeper = setInterval(() => {
-    clients.sweep();
-    authzStates.sweep();
-    brokerCodes.sweep();
-    refreshTokens.sweep();
-  }, 60 * 1000);
-  if (sweeper.unref) sweeper.unref();
 
   log(`${LOG} broker mounted: /.well-known/* + /mcp-oauth/{register,authorize,callback,token}`);
 }
