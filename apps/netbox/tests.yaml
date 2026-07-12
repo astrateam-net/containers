@@ -1,0 +1,32 @@
+schemaVersion: "2.0.0"
+
+# Structural only — NetBox needs Postgres + Redis to boot, so we verify the plugins are installed
+# in the venv and the plugin config baked in, rather than running the app.
+
+commandTests:
+  - name: netbox_acls installed
+    command: /opt/netbox/venv/bin/python
+    args: ["-c", "import netbox_acls"]
+    exitCode: 0
+
+  - name: netbox_branching installed
+    command: /opt/netbox/venv/bin/python
+    args: ["-c", "import netbox_branching"]
+    exitCode: 0
+
+  - name: boto3 installed (R2 media)
+    command: /opt/netbox/venv/bin/python
+    args: ["-c", "import boto3"]
+    exitCode: 0
+
+  - name: plugins.py baked in
+    command: sh
+    args: ["-lc", "grep -qF 'netbox_branching' /etc/netbox/config/plugins.py"]
+    exitCode: 0
+
+  - name: branching listed last in PLUGINS
+    command: /opt/netbox/venv/bin/python
+    args:
+      - "-c"
+      - "import ast,io; d=ast.parse(open('/etc/netbox/config/plugins.py').read()); p=[n.value for n in ast.walk(d) if isinstance(n,ast.Assign) and getattr(n.targets[0],'id','')=='PLUGINS'][0]; assert [e.value for e in p.elts][-1]=='netbox_branching'"
+    exitCode: 0
