@@ -60,6 +60,28 @@ commandTests:
       - "grep -qF './mcp-oauth/broker' /app/apps/server/dist/main.js"
     exitCode: 0
 
+  # Upstream MCP list-pagination NaN fix: default perPage + list_child_pages limit.
+  - name: cursor-pagination default limit applied
+    command: sh
+    args:
+      - "-lc"
+      - "grep -qF 'opts.perPage = 20;' /app/apps/server/dist/database/pagination/cursor-pagination.js"
+    exitCode: 0
+
+  - name: list_child_pages exposes limit param
+    command: sh
+    args:
+      - "-lc"
+      - "grep -qF 'Number of child pages per page' /app/apps/server/dist/ee/mcp/tools/page.tools.js"
+    exitCode: 0
+
+  - name: list_child_pages passes limit through
+    command: sh
+    args:
+      - "-lc"
+      - "grep -qF '{ cursor: args.cursor, limit: args.limit }' /app/apps/server/dist/ee/mcp/tools/page.tools.js"
+    exitCode: 0
+
   # Docker/Swarm secrets: <NAME>_FILE must be resolved into <NAME> before the
   # app command runs. Write a temp secret file and confirm the entrypoint
   # exports its contents, then execs the passed command.

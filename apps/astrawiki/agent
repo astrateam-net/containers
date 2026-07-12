@@ -97,3 +97,55 @@ if (main.includes("./mcp-oauth/broker")) {
   fs.writeFileSync(mainFile, main);
   console.log("astrawiki: MCP OAuth broker wired into main.js");
 }
+
+// ---- 3. UPSTREAM BUGFIX: MCP list pagination NaN ----------------------------
+// Stock Docmost's MCP list tools call the paginated services WITHOUT a limit
+// (list_child_pages has no limit param at all), so cursor-pagination computes
+// `undefined + 1 = NaN` -> `LIMIT NaN` -> Postgres "invalid input syntax for
+// type bigint: NaN". The HTTP API never hits it because its PaginationOptions
+// DTO defaults limit to 20; the MCP path bypasses that DTO. Two targeted fixes,
+// matching Docmost's own behaviour (not inventing a new limit):
+//   a) cursor-pagination: default perPage to 20 (Docmost's canonical default)
+//      when it isn't a positive integer -> fixes every MCP list tool at once.
+//   b) list_child_pages: expose a `limit` param (min 1 / max 100) and pass it
+//      through, so clients can size the page like the sidebar tree does. Cursor
+//      paging already worked; only the limit knob was missing.
+const FILE_PATCHES = [
+  {
+    file: "database/pagination/cursor-pagination.js",
+    name: "pagination-default-limit",
+    skipIf: "opts.perPage = 20;",
+    needle: "    const rows = await qb.limit(opts.perPage + 1).execute();",
+    replacement:
+      "    if (!Number.isInteger(opts.perPage) || opts.perPage <= 0) opts.perPage = 20;\n    const rows = await qb.limit(opts.perPage + 1).execute();",
+  },
+  {
+    file: "ee/mcp/tools/page.tools.js",
+    name: "list_child_pages-limit-schema",
+    skipIf: "Number of child pages per page",
+    needle: "                .describe('Parent page ID to list children of'),",
+    replacement:
+      "                .describe('Parent page ID to list children of'),\n            limit: v4_1.z.number().int().min(1).max(100).optional().describe('Number of child pages per page (default 20, max 100)'),",
+  },
+  {
+    file: "ee/mcp/tools/page.tools.js",
+    name: "list_child_pages-limit-passthrough",
+    skipIf: "{ cursor: args.cursor, limit: args.limit }",
+    needle: "getSidebarPages(spaceId, { cursor: args.cursor }, args.pageId, user.id, spaceCanEdit)",
+    replacement: "getSidebarPages(spaceId, { cursor: args.cursor, limit: args.limit }, args.pageId, user.id, spaceCanEdit)",
+  },
+];
+
+for (const p of FILE_PATCHES) {
+  const fp = path.join(ROOT, p.file);
+  const src = fs.readFileSync(fp, "utf8");
+  if (p.skipIf && src.includes(p.skipIf)) {
+    console.log(`astrawiki: ${p.name} already applied (skipping)`);
+    continue;
+  }
+  if (!src.includes(p.needle)) {
+    throw new Error(`astrawiki: anchor for ${p.name} not found in ${p.file}`);
+  }
+  fs.writeFileSync(fp, src.split(p.needle).join(p.replacement));
+  console.log(`astrawiki: ${p.name} patched`);
+}
