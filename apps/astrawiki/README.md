@@ -54,6 +54,41 @@ not just the password.
 
 ---
 
+## 0b. MCP OAuth (Claude / ChatGPT native connectors)
+
+Stock Docmost exposes an MCP server at `/mcp` but accepts only a personal API key
+as a static bearer token — web MCP connectors that speak the MCP OAuth discovery
+handshake can't connect. `astrawiki` adds a small broker
+([`mcp-oauth-broker.js`](./mcp-oauth-broker.js), wired in by the [`agent`](./agent))
+that turns Docmost into its own OAuth 2.1 Authorization + Resource Server and
+delegates the login step to the workspace's existing **Authentik OIDC provider**.
+
+Flow: `/mcp` unauthenticated → `401` + `WWW-Authenticate: … resource_metadata=…`
+→ client discovers `/.well-known/oauth-{protected-resource,authorization-server}`
+→ Dynamic Client Registration → PKCE `authorize` → Authentik login → `callback`
+→ `token`. The broker mints a Docmost **API_KEY** token (same primitive as
+**Settings → API keys**), so `/mcp` validation is unchanged and each connected
+client is listed and revocable there.
+
+**Deploy prerequisite (one Authentik change):** add the broker callback to the
+existing OIDC provider's allowed redirect URIs — nothing else (no new app, no
+audience mapping):
+
+```
+<APP_URL>/mcp-oauth/callback      e.g. https://docs.astrateam.net/mcp-oauth/callback
+```
+
+Requirements already met on this deployment: enterprise features active (MCP +
+SSO), MCP enabled in **Settings → AI & MCP**, and the Authentik OIDC provider
+enabled. Clients connect by pointing at `<APP_URL>/mcp` — no API key to paste.
+
+> **Note (multi-replica):** broker OAuth state (registered clients, pending
+> authorize states, codes, refresh tokens) is currently in-memory — fine for a
+> single replica. A multi-replica Swarm deployment needs a shared store (Redis)
+> before scaling out.
+
+---
+
 ## 1. PostgreSQL extensions (the important part)
 
 Docmost creates its schema through migrations that run automatically on boot, as the role in

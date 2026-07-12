@@ -40,6 +40,26 @@ commandTests:
       - "grep -qF 'getLicenseType(licenseKey) { return \"enterprise\";' /app/apps/server/dist/ee/licence/license.service.js"
     exitCode: 0
 
+  # MCP OAuth broker shipped and wired into the bootstrap.
+  - name: broker module present
+    command: sh
+    args: ["-lc", "test -f /app/apps/server/dist/mcp-oauth/broker.js"]
+    exitCode: 0
+
+  - name: broker exports registerMcpOauth
+    command: sh
+    args:
+      - "-lc"
+      - "grep -qF 'registerMcpOauth' /app/apps/server/dist/mcp-oauth/broker.js"
+    exitCode: 0
+
+  - name: broker wired into main.js bootstrap
+    command: sh
+    args:
+      - "-lc"
+      - "grep -qF './mcp-oauth/broker' /app/apps/server/dist/main.js"
+    exitCode: 0
+
   # Docker/Swarm secrets: <NAME>_FILE must be resolved into <NAME> before the
   # app command runs. Write a temp secret file and confirm the entrypoint
   # exports its contents, then execs the passed command.
