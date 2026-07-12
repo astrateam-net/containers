@@ -67,3 +67,33 @@ for (const patch of PATCHES) {
   }
   console.log(`astrawiki: ${patch.name} patched in ${hits} file(s)`);
 }
+
+// ---- MCP OAuth broker: mount into the compiled server -----------------------
+// Stock Docmost gates /mcp behind a static API-key bearer with no OAuth flow, so
+// native web MCP connectors (Claude, ChatGPT) can't authenticate. The broker
+// (dist/mcp-oauth/broker.js, COPYed in by the Dockerfile) turns Docmost into its
+// own OAuth AS+RS and delegates login to the existing Authentik OIDC provider.
+// We require + invoke it just before app.listen() so its Fastify routes register
+// before the server goes live. Anchor asserted -> build fails loud if it moves.
+const brokerFile = path.join(ROOT, "mcp-oauth", "broker.js");
+if (!fs.existsSync(brokerFile)) {
+  throw new Error(`astrawiki: broker not found at ${brokerFile} (Dockerfile must COPY it before running the agent)`);
+}
+
+const mainFile = path.join(ROOT, "main.js");
+let main = fs.readFileSync(mainFile, "utf8");
+
+const INJECT_ANCHOR = "    const port = process.env.PORT || 3000;";
+const INJECT_LINE =
+  '    try { require("./mcp-oauth/broker").registerMcpOauth(app); } catch (e) { new (require("@nestjs/common").Logger)("McpOAuth").error("MCP OAuth broker failed to mount", e); }';
+
+if (main.includes("./mcp-oauth/broker")) {
+  console.log("astrawiki: broker already wired into main.js (skipping)");
+} else {
+  if (!main.includes(INJECT_ANCHOR)) {
+    throw new Error("astrawiki: bootstrap anchor (app.listen port line) not found in main.js");
+  }
+  main = main.replace(INJECT_ANCHOR, `${INJECT_LINE}\n${INJECT_ANCHOR}`);
+  fs.writeFileSync(mainFile, main);
+  console.log("astrawiki: MCP OAuth broker wired into main.js");
+}

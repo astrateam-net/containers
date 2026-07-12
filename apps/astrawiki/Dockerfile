@@ -13,6 +13,9 @@ ARG VERSION
 FROM docmost/docmost:${VERSION}
 
 USER root
+# Ship the MCP OAuth broker into the compiled server tree, THEN patch (the agent
+# asserts the broker exists and wires it into main.js).
+COPY mcp-oauth-broker.js /app/apps/server/dist/mcp-oauth/broker.js
 COPY agent /tmp/agent
 RUN node /tmp/agent && rm -f /tmp/agent
 
