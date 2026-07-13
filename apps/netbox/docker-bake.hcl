@@ -18,6 +18,13 @@ variable "NETBOX_ACLS_VERSION" {
   default = "2.0.1"
 }
 
+# Diode NetBox plugin — write-side API for the Diode ingestion / NetBox Discovery pipeline.
+# NetBox 4.6 requires >= 1.12.0 (plugin min_version 4.4.10 / max_version 4.6.99).
+variable "NETBOX_DIODE_VERSION" {
+  // renovate: datasource=pypi depName=netboxlabs-diode-netbox-plugin
+  default = "1.14.0"
+}
+
 variable "NETBOX_BRANCHING_VERSION" {
   // renovate: datasource=pypi depName=netboxlabs-netbox-branching
   default = "1.1.1"
@@ -37,6 +44,7 @@ target "image" {
     VERSION                  = "${VERSION}"
     NETBOX_DOCKER_VERSION    = "${NETBOX_DOCKER_VERSION}"
     NETBOX_ACLS_VERSION      = "${NETBOX_ACLS_VERSION}"
+    NETBOX_DIODE_VERSION     = "${NETBOX_DIODE_VERSION}"
     NETBOX_BRANCHING_VERSION = "${NETBOX_BRANCHING_VERSION}"
   }
   labels = {
