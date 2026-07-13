@@ -1,16 +1,18 @@
 # syntax=docker/dockerfile:1
 
-# NetBox = official netbox-docker base + carried plugins (netbox-acls, netbox-branching) + boto3
-# for Cloudflare R2 media. Consumed by the tower repo (stacks/tools/netbox). Versions: docker-bake.hcl.
+# NetBox = official netbox-docker base + carried plugins (netbox-acls, diode, netbox-branching) +
+# boto3 for Cloudflare R2 media. Consumed by the tower repo (stacks/tools/netbox). Versions: docker-bake.hcl.
 ARG VERSION=4.6.4
 ARG NETBOX_DOCKER_VERSION=5.0.1
 FROM netboxcommunity/netbox:v${VERSION}-${NETBOX_DOCKER_VERSION}
 
 ARG NETBOX_ACLS_VERSION
+ARG NETBOX_DIODE_VERSION
 ARG NETBOX_BRANCHING_VERSION
 
 RUN /usr/local/bin/uv pip install \
       "netbox-acls==${NETBOX_ACLS_VERSION}" \
+      "netboxlabs-diode-netbox-plugin==${NETBOX_DIODE_VERSION}" \
       "netboxlabs-netbox-branching==${NETBOX_BRANCHING_VERSION}" \
       boto3
 

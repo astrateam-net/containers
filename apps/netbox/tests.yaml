@@ -9,6 +9,11 @@ commandTests:
     args: ["-c", "import netbox_acls"]
     exitCode: 0
 
+  - name: netbox_diode_plugin installed
+    command: /opt/netbox/venv/bin/python
+    args: ["-c", "import netbox_diode_plugin"]
+    exitCode: 0
+
   - name: netbox_branching installed
     command: /opt/netbox/venv/bin/python
     args: ["-c", "import netbox_branching"]
@@ -22,6 +27,11 @@ commandTests:
   - name: plugins.py baked in
     command: sh
     args: ["-lc", "grep -qF 'netbox_branching' /etc/netbox/config/plugins.py"]
+    exitCode: 0
+
+  - name: diode plugin enabled in plugins.py
+    command: sh
+    args: ["-lc", "grep -qF 'netbox_diode_plugin' /etc/netbox/config/plugins.py"]
     exitCode: 0
 
   - name: branching listed last in PLUGINS

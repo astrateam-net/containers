@@ -1,6 +1,9 @@
 # Baked into the image. See README.md. netbox_branching MUST be last.
+# netbox_diode_plugin runs on safe defaults (grpc://localhost:8080/diode, no secret) until the
+# Diode server is deployed; runtime PLUGINS_CONFIG lives in the tower stack's config/extra.py.
 PLUGINS = [
     "netbox_acls",
+    "netbox_diode_plugin",
     "netbox_branching",
 ]
 
