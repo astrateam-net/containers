@@ -20,7 +20,7 @@
 # Build variant matches the upstream `ee-postgresql` image: BUILD=enterprise,
 # DATABASE=pg. Runner packaging mirrors upstream's own Dockerfile.
 
-ARG VERSION=1.19.4
+ARG VERSION=1.20.0
 ARG NODE_VERSION=24
 
 # ---- fetch pristine upstream source at the tag, apply our patches ----

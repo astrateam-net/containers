@@ -5,7 +5,7 @@ target "docker-metadata-action" {}
 # fails at `git apply`).
 variable "VERSION" {
   // renovate: datasource=github-releases depName=fosrl/pangolin
-  default = "1.19.4"
+  default = "1.20.0"
 }
 
 variable "SOURCE" {
