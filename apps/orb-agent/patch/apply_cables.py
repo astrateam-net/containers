@@ -90,6 +90,35 @@ def main() -> None:
         label="driver getter",
     )
 
+    # --- 1b. Driver: stop clobbering SNMP interface descriptions -----------------
+    # get_interfaces() hardcoded description="" — on the proto's `optional string
+    # description` an empty string is a PRESENT value, so Diode overwrites the
+    # description snmp_discovery set from ifAlias (the RouterOS port comment).
+    # Drop the key: the field goes out absent (None), Diode PATCH leaves the
+    # existing value untouched, and snmp_discovery stays the single owner of
+    # interface descriptions. No more device-vs-snmp clobber cycle.
+    patch(
+        driver,
+        "            result[name] = {\n"
+        '                "is_up": row["is_up"],\n'
+        '                "is_enabled": row["is_enabled"],\n'
+        '                "description": "",\n'
+        '                "last_flapped": -1.0,\n'
+        '                "mtu": row["mtu"],\n'
+        '                "speed": -1.0,\n'
+        '                "mac_address": row["mac_address"],\n'
+        "            }\n",
+        "            result[name] = {\n"
+        '                "is_up": row["is_up"],\n'
+        '                "is_enabled": row["is_enabled"],\n'
+        '                "last_flapped": -1.0,\n'
+        '                "mtu": row["mtu"],\n'
+        '                "speed": -1.0,\n'
+        '                "mac_address": row["mac_address"],\n'
+        "            }\n",
+        label="driver: drop empty description (no SNMP clobber)",
+    )
+
     # --- 2. Options model: discover_cables + cable_peer_pattern -------------------
     models = dd / "policy" / "models.py"
     patch(
