@@ -50,7 +50,7 @@ const OIDC = "oidc";
 // Lifetimes.
 const AUTHZ_STATE_TTL_MS = 10 * 60 * 1000; // pending Authentik round-trip
 const BROKER_CODE_TTL_MS = 5 * 60 * 1000; // our authorization code
-const API_KEY_TTL_MS = 90 * 24 * 60 * 60 * 1000; // minted token lifetime
+const API_KEY_TTL_MS = 8 * 60 * 60 * 1000; // short-lived access token; refresh_token extends sessions (spec: short-lived tokens)
 const REFRESH_TTL_MS = 180 * 24 * 60 * 60 * 1000; // broker refresh token
 const CLIENT_TTL_MS = REFRESH_TTL_MS; // DCR client registration retention
 
@@ -133,6 +133,88 @@ function verifyPkceS256(verifier, challenge) {
   const a = Buffer.from(computed);
   const b = Buffer.from(challenge);
   return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function isLoopbackHost(h) {
+  return h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "::1";
+}
+
+// RFC 8252 §7.3: native apps (e.g. the VS Code Claude Code extension) catch the
+// OAuth redirect on http://localhost:<port> with an OS-assigned ephemeral port
+// that can differ between DCR and /authorize. So for loopback redirect URIs we
+// match on scheme+host+path and IGNORE the port; non-loopback URIs must still
+// match exactly. This is why Claude Desktop (stable claude:// redirect) worked
+// while Claude Code (ephemeral localhost port) hit "redirect_uri not registered".
+function redirectUriAllowed(registered, requested) {
+  if (!requested) return false;
+  if (registered.includes(requested)) return true;
+  let rq;
+  try {
+    rq = new URL(requested);
+  } catch (_) {
+    return false;
+  }
+  if (!isLoopbackHost(rq.hostname)) return false;
+  return registered.some((r) => {
+    let ru;
+    try {
+      ru = new URL(r);
+    } catch (_) {
+      return false;
+    }
+    return isLoopbackHost(ru.hostname) && ru.protocol === rq.protocol && ru.hostname === rq.hostname && ru.pathname === rq.pathname;
+  });
+}
+
+// Spec (OAuth 2.1 §1.5): all redirect URIs MUST be either loopback or HTTPS.
+function isValidRedirectUri(uri) {
+  let u;
+  try {
+    u = new URL(uri);
+  } catch (_) {
+    return false;
+  }
+  if (u.protocol === "https:") return true;
+  if (u.protocol === "http:" && isLoopbackHost(u.hostname)) return true;
+  return false;
+}
+
+// Per-IP, per-minute rate limit on the abuse-prone endpoints (/register,/token).
+// Redis-backed so the limit is shared across replicas; in-memory fallback for a
+// single-instance dev run. Returns {allowed, limit, remaining, reset}.
+const RL_FALLBACK = new Map();
+async function rateLimit(services, req, endpoint, maxPerMin) {
+  const ip = (req.ip || req.headers["x-forwarded-for"] || "unknown").toString().split(",")[0].trim();
+  const key = `mcp-oauth:rl:${endpoint}:${ip}`;
+  let count = 0;
+  let reset = 60;
+  if (services.redis) {
+    try {
+      count = await services.redis.incr(key);
+      if (count === 1) await services.redis.expire(key, 60);
+      const ttl = await services.redis.ttl(key);
+      reset = ttl > 0 ? ttl : 60;
+    } catch (_) {
+      return { allowed: true, limit: maxPerMin, remaining: maxPerMin, reset: 60 };
+    }
+  } else {
+    const now = Date.now();
+    let e = RL_FALLBACK.get(key);
+    if (!e || e.exp < now) {
+      e = { n: 0, exp: now + 60000 };
+      RL_FALLBACK.set(key, e);
+    }
+    e.n += 1;
+    count = e.n;
+    reset = Math.max(1, Math.ceil((e.exp - now) / 1000));
+  }
+  return { allowed: count <= maxPerMin, limit: maxPerMin, remaining: Math.max(0, maxPerMin - count), reset };
+}
+
+function applyRateHeaders(reply, rl) {
+  reply.header("RateLimit-Limit", String(rl.limit));
+  reply.header("RateLimit-Remaining", String(rl.remaining));
+  reply.header("RateLimit-Reset", String(rl.reset));
 }
 
 // Metadata documents ----------------------------------------------------------
@@ -219,15 +301,49 @@ async function mintApiKeyToken(services, user, workspaceId, name) {
       expiresAt: new Date(Date.now() + API_KEY_TTL_MS),
     })
     .execute();
-  return { token, expiresIn };
+  return { token, expiresIn, apiKeyId };
+}
+
+async function revokeApiKeyById(services, apiKeyId) {
+  try {
+    await services.ssoService.db.deleteFrom("apiKeys").where("id", "=", apiKeyId).execute();
+  } catch (e) {
+    services.log(`${LOG} failed to revoke api key ${apiKeyId}: ${e.message}`);
+  }
+}
+
+// Housekeeping: delete broker-minted API keys (name prefixed "MCP: ") that are
+// past their expiry, so abandoned or rotated connections don't leave a graveyard
+// of api_keys rows. Only touches rows we created (name prefix) and only expired
+// ones — user-created keys and live MCP keys are untouched.
+async function sweepExpiredMcpKeys(services) {
+  try {
+    await services.ssoService.db
+      .deleteFrom("apiKeys")
+      .where("name", "like", "MCP: %")
+      .where("expiresAt", "<", new Date())
+      .execute();
+  } catch (e) {
+    services.log(`${LOG} expired-key sweep failed: ${e.message}`);
+  }
 }
 
 // ---- route handlers ---------------------------------------------------------
 async function handleRegister(services, req, reply) {
+  const rl = await rateLimit(services, req, "register", 20);
+  applyRateHeaders(reply, rl);
+  if (!rl.allowed) {
+    services.log(`${LOG}[sec] rate-limit /register from ${req.ip}`);
+    return oauthErr(reply, 429, "temporarily_unavailable", "Rate limit exceeded");
+  }
   const body = typeof req.body === "object" && req.body ? req.body : {};
   const redirectUris = Array.isArray(body.redirect_uris) ? body.redirect_uris.filter((u) => typeof u === "string") : [];
   if (redirectUris.length === 0) {
     return oauthErr(reply, 400, "invalid_redirect_uri", "redirect_uris is required");
+  }
+  if (!redirectUris.every(isValidRedirectUri)) {
+    services.log(`${LOG}[sec] rejected DCR (redirect not loopback/HTTPS) from ${req.ip}: ${redirectUris.join(",")}`);
+    return oauthErr(reply, 400, "invalid_redirect_uri", "redirect_uris must be https:// or http://localhost");
   }
   const clientId = `mcp_${rand(16)}`;
   const name = (body.client_name || "MCP client").toString().slice(0, 120);
@@ -256,8 +372,12 @@ async function handleAuthorize(services, req, reply) {
     return oauthErr(reply, 400, "unsupported_response_type", "response_type must be 'code'");
   }
   const client = await services.stores.clients.get(q.client_id);
-  if (!client) return oauthErr(reply, 400, "invalid_client", "Unknown client_id — register first");
-  if (!q.redirect_uri || !client.redirectUris.includes(q.redirect_uri)) {
+  if (!client) {
+    services.log(`${LOG}[sec] authorize with unknown client_id ${q.client_id} from ${req.ip}`);
+    return oauthErr(reply, 400, "invalid_client", "Unknown client_id — register first");
+  }
+  if (!q.redirect_uri || !redirectUriAllowed(client.redirectUris, q.redirect_uri)) {
+    services.log(`${LOG}[sec] redirect_uri not registered for client ${q.client_id} from ${req.ip}`);
     return oauthErr(reply, 400, "invalid_request", "redirect_uri not registered for this client");
   }
   if (!q.code_challenge || q.code_challenge_method !== "S256") {
@@ -376,6 +496,12 @@ async function handleCallback(services, req, reply) {
 }
 
 async function handleToken(services, req, reply) {
+  const rl = await rateLimit(services, req, "token", 60);
+  applyRateHeaders(reply, rl);
+  if (!rl.allowed) {
+    services.log(`${LOG}[sec] rate-limit /token from ${req.ip}`);
+    return oauthErr(reply, 429, "temporarily_unavailable", "Rate limit exceeded");
+  }
   const body = typeof req.body === "object" && req.body ? req.body : {};
   const grantType = body.grant_type;
 
@@ -387,16 +513,17 @@ async function handleToken(services, req, reply) {
       return oauthErr(reply, 400, "invalid_grant", "redirect_uri mismatch");
     }
     if (!verifyPkceS256(body.code_verifier, bc.clientCodeChallenge)) {
+      services.log(`${LOG}[sec] PKCE verification failed for client ${body.client_id} from ${req.ip}`);
       return oauthErr(reply, 400, "invalid_grant", "PKCE verification failed");
     }
     const user = await services.userRepo.findById(bc.userId, bc.workspaceId);
     if (!user) return oauthErr(reply, 400, "invalid_grant", "User no longer exists");
 
-    const { token, expiresIn } = await mintApiKeyToken(services, user, bc.workspaceId, `MCP: ${bc.clientName || "client"}`);
+    const { token, expiresIn, apiKeyId } = await mintApiKeyToken(services, user, bc.workspaceId, `MCP: ${bc.clientName || "client"}`);
     const refresh = rand(32);
     await services.stores.refreshTokens.set(
       refresh,
-      { userId: bc.userId, workspaceId: bc.workspaceId, clientId: bc.clientId },
+      { userId: bc.userId, workspaceId: bc.workspaceId, clientId: bc.clientId, clientName: bc.clientName, apiKeyId },
       REFRESH_TTL_MS
     );
     services.log(`${LOG} issued token for user ${bc.userId} client ${bc.clientId}`);
@@ -417,9 +544,12 @@ async function handleToken(services, req, reply) {
     const user = await services.userRepo.findById(rt.userId, rt.workspaceId);
     if (!user) return oauthErr(reply, 400, "invalid_grant", "User no longer exists");
 
-    const { token, expiresIn } = await mintApiKeyToken(services, user, rt.workspaceId, `MCP: ${rt.clientId}`);
+    // One live key per refresh chain: drop the key the previous grant minted
+    // before minting a new one, so refreshes don't pile up api_keys rows.
+    if (rt.apiKeyId) await revokeApiKeyById(services, rt.apiKeyId);
+    const { token, expiresIn, apiKeyId } = await mintApiKeyToken(services, user, rt.workspaceId, `MCP: ${rt.clientName || rt.clientId}`);
     const newRefresh = rand(32);
-    await services.stores.refreshTokens.set(newRefresh, rt, REFRESH_TTL_MS);
+    await services.stores.refreshTokens.set(newRefresh, { ...rt, apiKeyId }, REFRESH_TTL_MS);
     return sendJson(
       reply,
       200,
@@ -463,6 +593,7 @@ function registerMcpOauth(app) {
   } catch (e) {
     log(`${LOG} state store: in-memory fallback (single-instance only) — Redis unavailable: ${e.message}`);
   }
+  services.redis = redis;
   services.stores = {
     clients: makeStore(redis, "client"),
     authzStates: makeStore(redis, "authz"),
@@ -514,6 +645,13 @@ function registerMcpOauth(app) {
     } catch (_) {}
     done(null, payload);
   });
+
+  // Periodic cleanup of expired broker-minted API keys (every 6h). Redis TTL
+  // handles OAuth-flow state; this handles the api_keys rows we insert. Safe to
+  // run on every replica (idempotent DELETE of already-expired MCP-prefixed rows).
+  const keySweep = setInterval(() => sweepExpiredMcpKeys(services), 6 * 60 * 60 * 1000);
+  if (keySweep.unref) keySweep.unref();
+  sweepExpiredMcpKeys(services);
 
   log(`${LOG} broker mounted: /.well-known/* + /mcp-oauth/{register,authorize,callback,token}`);
 }
