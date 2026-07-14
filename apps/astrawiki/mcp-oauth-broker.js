@@ -50,7 +50,7 @@ const OIDC = "oidc";
 // Lifetimes.
 const AUTHZ_STATE_TTL_MS = 10 * 60 * 1000; // pending Authentik round-trip
 const BROKER_CODE_TTL_MS = 5 * 60 * 1000; // our authorization code
-const API_KEY_TTL_MS = 90 * 24 * 60 * 60 * 1000; // minted token lifetime
+const API_KEY_TTL_MS = 8 * 60 * 60 * 1000; // short-lived access token; refresh_token extends sessions (spec: short-lived tokens)
 const REFRESH_TTL_MS = 180 * 24 * 60 * 60 * 1000; // broker refresh token
 const CLIENT_TTL_MS = REFRESH_TTL_MS; // DCR client registration retention
 
@@ -166,6 +166,57 @@ function redirectUriAllowed(registered, requested) {
   });
 }
 
+// Spec (OAuth 2.1 §1.5): all redirect URIs MUST be either loopback or HTTPS.
+function isValidRedirectUri(uri) {
+  let u;
+  try {
+    u = new URL(uri);
+  } catch (_) {
+    return false;
+  }
+  if (u.protocol === "https:") return true;
+  if (u.protocol === "http:" && isLoopbackHost(u.hostname)) return true;
+  return false;
+}
+
+// Per-IP, per-minute rate limit on the abuse-prone endpoints (/register,/token).
+// Redis-backed so the limit is shared across replicas; in-memory fallback for a
+// single-instance dev run. Returns {allowed, limit, remaining, reset}.
+const RL_FALLBACK = new Map();
+async function rateLimit(services, req, endpoint, maxPerMin) {
+  const ip = (req.ip || req.headers["x-forwarded-for"] || "unknown").toString().split(",")[0].trim();
+  const key = `mcp-oauth:rl:${endpoint}:${ip}`;
+  let count = 0;
+  let reset = 60;
+  if (services.redis) {
+    try {
+      count = await services.redis.incr(key);
+      if (count === 1) await services.redis.expire(key, 60);
+      const ttl = await services.redis.ttl(key);
+      reset = ttl > 0 ? ttl : 60;
+    } catch (_) {
+      return { allowed: true, limit: maxPerMin, remaining: maxPerMin, reset: 60 };
+    }
+  } else {
+    const now = Date.now();
+    let e = RL_FALLBACK.get(key);
+    if (!e || e.exp < now) {
+      e = { n: 0, exp: now + 60000 };
+      RL_FALLBACK.set(key, e);
+    }
+    e.n += 1;
+    count = e.n;
+    reset = Math.max(1, Math.ceil((e.exp - now) / 1000));
+  }
+  return { allowed: count <= maxPerMin, limit: maxPerMin, remaining: Math.max(0, maxPerMin - count), reset };
+}
+
+function applyRateHeaders(reply, rl) {
+  reply.header("RateLimit-Limit", String(rl.limit));
+  reply.header("RateLimit-Remaining", String(rl.remaining));
+  reply.header("RateLimit-Reset", String(rl.reset));
+}
+
 // Metadata documents ----------------------------------------------------------
 function protectedResourceDoc(base) {
   return {
@@ -279,10 +330,20 @@ async function sweepExpiredMcpKeys(services) {
 
 // ---- route handlers ---------------------------------------------------------
 async function handleRegister(services, req, reply) {
+  const rl = await rateLimit(services, req, "register", 20);
+  applyRateHeaders(reply, rl);
+  if (!rl.allowed) {
+    services.log(`${LOG}[sec] rate-limit /register from ${req.ip}`);
+    return oauthErr(reply, 429, "temporarily_unavailable", "Rate limit exceeded");
+  }
   const body = typeof req.body === "object" && req.body ? req.body : {};
   const redirectUris = Array.isArray(body.redirect_uris) ? body.redirect_uris.filter((u) => typeof u === "string") : [];
   if (redirectUris.length === 0) {
     return oauthErr(reply, 400, "invalid_redirect_uri", "redirect_uris is required");
+  }
+  if (!redirectUris.every(isValidRedirectUri)) {
+    services.log(`${LOG}[sec] rejected DCR (redirect not loopback/HTTPS) from ${req.ip}: ${redirectUris.join(",")}`);
+    return oauthErr(reply, 400, "invalid_redirect_uri", "redirect_uris must be https:// or http://localhost");
   }
   const clientId = `mcp_${rand(16)}`;
   const name = (body.client_name || "MCP client").toString().slice(0, 120);
@@ -311,8 +372,12 @@ async function handleAuthorize(services, req, reply) {
     return oauthErr(reply, 400, "unsupported_response_type", "response_type must be 'code'");
   }
   const client = await services.stores.clients.get(q.client_id);
-  if (!client) return oauthErr(reply, 400, "invalid_client", "Unknown client_id — register first");
+  if (!client) {
+    services.log(`${LOG}[sec] authorize with unknown client_id ${q.client_id} from ${req.ip}`);
+    return oauthErr(reply, 400, "invalid_client", "Unknown client_id — register first");
+  }
   if (!q.redirect_uri || !redirectUriAllowed(client.redirectUris, q.redirect_uri)) {
+    services.log(`${LOG}[sec] redirect_uri not registered for client ${q.client_id} from ${req.ip}`);
     return oauthErr(reply, 400, "invalid_request", "redirect_uri not registered for this client");
   }
   if (!q.code_challenge || q.code_challenge_method !== "S256") {
@@ -431,6 +496,12 @@ async function handleCallback(services, req, reply) {
 }
 
 async function handleToken(services, req, reply) {
+  const rl = await rateLimit(services, req, "token", 60);
+  applyRateHeaders(reply, rl);
+  if (!rl.allowed) {
+    services.log(`${LOG}[sec] rate-limit /token from ${req.ip}`);
+    return oauthErr(reply, 429, "temporarily_unavailable", "Rate limit exceeded");
+  }
   const body = typeof req.body === "object" && req.body ? req.body : {};
   const grantType = body.grant_type;
 
@@ -442,6 +513,7 @@ async function handleToken(services, req, reply) {
       return oauthErr(reply, 400, "invalid_grant", "redirect_uri mismatch");
     }
     if (!verifyPkceS256(body.code_verifier, bc.clientCodeChallenge)) {
+      services.log(`${LOG}[sec] PKCE verification failed for client ${body.client_id} from ${req.ip}`);
       return oauthErr(reply, 400, "invalid_grant", "PKCE verification failed");
     }
     const user = await services.userRepo.findById(bc.userId, bc.workspaceId);
@@ -521,6 +593,7 @@ function registerMcpOauth(app) {
   } catch (e) {
     log(`${LOG} state store: in-memory fallback (single-instance only) — Redis unavailable: ${e.message}`);
   }
+  services.redis = redis;
   services.stores = {
     clients: makeStore(redis, "client"),
     authzStates: makeStore(redis, "authz"),
