@@ -47,6 +47,11 @@ const { v7: uuidv7 } = require("uuid");
 const LOG = "[mcp-oauth]";
 const OIDC = "oidc";
 
+// Verbose per-request traces (authorize/token/callback/register/issued) are
+// gated behind debug: env MCP_OAUTH_DEBUG=true or LOG_LEVEL=debug. Security
+// events ([sec]) and errors always log regardless of this flag.
+const DEBUG = process.env.MCP_OAUTH_DEBUG === "true" || ["debug", "trace"].includes((process.env.LOG_LEVEL || "").toLowerCase());
+
 // Lifetimes.
 const AUTHZ_STATE_TTL_MS = 10 * 60 * 1000; // pending Authentik round-trip
 const BROKER_CODE_TTL_MS = 5 * 60 * 1000; // our authorization code
@@ -348,7 +353,7 @@ async function handleRegister(services, req, reply) {
   const clientId = `mcp_${rand(16)}`;
   const name = (body.client_name || "MCP client").toString().slice(0, 120);
   await services.stores.clients.set(clientId, { redirectUris, name }, CLIENT_TTL_MS);
-  services.log(`${LOG} registered client ${clientId} (${name}) redirect=${redirectUris.join(",")}`);
+  services.debug(`${LOG} registered client ${clientId} (${name}) redirect=${redirectUris.join(",")}`);
   return sendJson(
     reply,
     201,
@@ -368,6 +373,7 @@ async function handleRegister(services, req, reply) {
 async function handleAuthorize(services, req, reply) {
   const base = baseUrl(req);
   const q = req.query || {};
+  services.debug(`${LOG} authorize client=${q.client_id} redirect=${q.redirect_uri}`);
   if (q.response_type !== "code") {
     return oauthErr(reply, 400, "unsupported_response_type", "response_type must be 'code'");
   }
@@ -487,6 +493,7 @@ async function handleCallback(services, req, reply) {
     const back = new URL(st.clientRedirectUri);
     back.searchParams.set("code", brokerCode);
     if (st.clientState) back.searchParams.set("state", st.clientState);
+    services.debug(`${LOG} callback ok: brokerCode issued for client ${st.clientId} user ${user.id} -> ${st.clientRedirectUri}`);
     reply.header("Cache-Control", "no-store");
     return reply.redirect(back.href);
   } catch (e) {
@@ -504,12 +511,20 @@ async function handleToken(services, req, reply) {
   }
   const body = typeof req.body === "object" && req.body ? req.body : {};
   const grantType = body.grant_type;
+  services.debug(`${LOG} token grant=${grantType} client=${body.client_id} redirect=${body.redirect_uri} code=${body.code ? "yes" : "no"}`);
 
   if (grantType === "authorization_code") {
     const bc = await services.stores.brokerCodes.take(body.code);
-    if (!bc) return oauthErr(reply, 400, "invalid_grant", "Invalid or expired code");
-    if (bc.clientId !== body.client_id) return oauthErr(reply, 400, "invalid_grant", "client_id mismatch");
-    if (!body.redirect_uri || body.redirect_uri !== bc.clientRedirectUri) {
+    if (!bc) {
+      services.log(`${LOG}[sec] token: invalid/expired code from ${req.ip} client=${body.client_id}`);
+      return oauthErr(reply, 400, "invalid_grant", "Invalid or expired code");
+    }
+    if (bc.clientId !== body.client_id) {
+      services.log(`${LOG}[sec] token: client_id mismatch (authz=${bc.clientId} token=${body.client_id})`);
+      return oauthErr(reply, 400, "invalid_grant", "client_id mismatch");
+    }
+    if (!body.redirect_uri || !redirectUriAllowed([bc.clientRedirectUri], body.redirect_uri)) {
+      services.log(`${LOG}[sec] token: redirect mismatch (authz=${bc.clientRedirectUri} token=${body.redirect_uri})`);
       return oauthErr(reply, 400, "invalid_grant", "redirect_uri mismatch");
     }
     if (!verifyPkceS256(body.code_verifier, bc.clientCodeChallenge)) {
@@ -526,7 +541,7 @@ async function handleToken(services, req, reply) {
       { userId: bc.userId, workspaceId: bc.workspaceId, clientId: bc.clientId, clientName: bc.clientName, apiKeyId },
       REFRESH_TTL_MS
     );
-    services.log(`${LOG} issued token for user ${bc.userId} client ${bc.clientId}`);
+    services.debug(`${LOG} issued token for user ${bc.userId} client ${bc.clientId}`);
     return sendJson(
       reply,
       200,
@@ -594,6 +609,8 @@ function registerMcpOauth(app) {
     log(`${LOG} state store: in-memory fallback (single-instance only) — Redis unavailable: ${e.message}`);
   }
   services.redis = redis;
+  services.debug = DEBUG ? log : () => {};
+  if (DEBUG) log(`${LOG} debug logging ON`);
   services.stores = {
     clients: makeStore(redis, "client"),
     authzStates: makeStore(redis, "authz"),
