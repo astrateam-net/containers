@@ -30,11 +30,9 @@ RUN git init -q . \
 
 WORKDIR /src/orb-discovery/snmp-discovery
 
-# Drop-in tolerant walker + test, then rewire Client.Walk. apply.py fails the
-# build if the upstream anchor drifted (no silent no-op patch).
-COPY patch/tolerant_walk.go      ./snmp/tolerant_walk.go
-COPY patch/tolerant_walk_test.go ./snmp/tolerant_walk_test.go
-COPY patch/apply.py              /tmp/apply.py
+# Set gosnmp's AppOpts["c"] before the stock WalkAll (== snmpwalk -Cc). apply.py
+# fails the build if the upstream anchor drifted (no silent no-op patch).
+COPY patch/apply.py /tmp/apply.py
 RUN python3 /tmp/apply.py
 
 ARG TARGETOS TARGETARCH
@@ -42,8 +40,7 @@ ARG VERSION
 ARG BUILD_COMMIT=astra
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
-    go test ./snmp/ -run 'TolerantWalk|LessOID' \
- && printf '%s+astra-routeros-tolerant\n' "${VERSION}" > version/BUILD_VERSION.txt \
+    printf '%s+astra-routeros-tolerant\n' "${VERSION}" > version/BUILD_VERSION.txt \
  && printf '%s\n' "${BUILD_COMMIT}" > version/BUILD_COMMIT.txt \
  && CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
     go build -ldflags="-s -w" -trimpath -o /out/snmp-discovery ./cmd/main.go
