@@ -1,0 +1,37 @@
+schemaVersion: "2.0.0"
+
+# Structural tests for the orb-agent overlay. The agent needs a live config
+# (MQTT/diode targets, policies) to actually run discovery, so we don't boot it
+# here — we verify the overlay is intact: the stock backends survive untouched
+# and our patched snmp-discovery is the one that shipped.
+
+fileExistenceTests:
+  - name: patched snmp-discovery backend (Go)
+    path: /usr/local/bin/snmp-discovery
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
+  - name: orb-agent core (inherited)
+    path: /usr/local/bin/orb-agent
+    shouldExist: true
+  - name: device-discovery backend (inherited, Python)
+    path: /usr/local/bin/device-discovery
+    shouldExist: true
+  - name: entrypoint (inherited)
+    path: /usr/local/bin/orb-agent-entry.sh
+    shouldExist: true
+  - name: tini init (inherited)
+    path: /sbin/tini
+    shouldExist: true
+
+commandTests:
+  # Proof-of-patch: the build stamps "<version>+astra-routeros-tolerant" into
+  # snmp-discovery's go:embed'd BUILD_VERSION.txt, so the marker survives
+  # -s -w -trimpath. Its presence proves OUR binary replaced the stock one.
+  # (busybox grep reads the binary as text, so a plain grep -q matches.)
+  - name: snmp-discovery carries the RouterOS-tolerant patch
+    command: grep
+    args: ["-q", "astra-routeros-tolerant", "/usr/local/bin/snmp-discovery"]
+    exitCode: 0
+
+metadataTest:
+  entrypoint: ["/sbin/tini", "--", "/usr/local/bin/orb-agent-entry.sh"]
