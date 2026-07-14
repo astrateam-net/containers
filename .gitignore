@@ -10,6 +10,10 @@ webstudio/
 # Maven build output (e.g. apps/*/agent/target from local/IDE builds)
 target/
 
+# Python bytecode from local runs of the overlay patchers (e.g. apps/orb-agent/patch)
+__pycache__/
+*.pyc
+
 # Local-only mise workbench (decompilation toolchain — see mise.local.toml)
 mise.local.toml
 mise.lock
