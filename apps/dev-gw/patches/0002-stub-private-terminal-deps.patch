@@ -11,10 +11,13 @@ this edition; RDP — the point of the fork — is fully functional.
 
 --- a/webapp/pnpm-workspace.yaml
 +++ b/webapp/pnpm-workspace.yaml
-@@ -8,3 +8,11 @@ allowBuilds:
+@@ -8,6 +8,14 @@ allowBuilds:
    esbuild: true
    lmdb: true
    msgpackr-extract: true
+ minimumReleaseAge: 1440
+ minimumReleaseAgeExclude:
+   - '@devolutions/*'
 +# devget: private Artifactory-only packages swapped for build stubs (stubs/README.md).
 +# RDP-only edition — stock SSH/Telnet/VNC/ARD sessions and icon glyphs are inert.
 +overrides:
