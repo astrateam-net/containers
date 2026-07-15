@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=docker.io/n8nio/runners
-  default = "2.30.1"
+  default = "2.31.1"
 }
 
 # Our image adds _FILE secret support to stock n8nio/runners — point source at us.
