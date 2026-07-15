@@ -1,14 +1,11 @@
 target "docker-metadata-action" {}
 
+# VERSION is the OpenTofu version, as in every other app here — CI derives the
+# published tags from it, so ci-opentofu:1.12.4 now means what it says, and
+# Renovate moves the tag by moving this. Previously VERSION was this image's own
+# counter and Renovate could not see it, so an auto-merged OpenTofu bump changed
+# the contents while VERSION stood still and republished over an existing tag.
 variable "VERSION" {
-  // This image's own version — not upstream-tracked, so Renovate leaves it
-  // alone. Bump manually whenever the contents change (OPENTOFU_VERSION, the
-  // provider mirror, or the Dockerfile), so the published semver tags point at
-  // new content instead of silently overwriting an existing one.
-  default = "1.3.0"
-}
-
-variable "OPENTOFU_VERSION" {
   // renovate: datasource=docker depName=ghcr.io/opentofu/opentofu
   default = "1.12.4"
 }
@@ -29,7 +26,7 @@ group "default" {
 target "image" {
   inherits = ["docker-metadata-action"]
   args = {
-    VERSION                  = "${OPENTOFU_VERSION}"
+    VERSION                  = "${VERSION}"
     PROXMOX_PROVIDER_VERSION = "${PROXMOX_PROVIDER_VERSION}"
   }
   labels = {
