@@ -5,7 +5,7 @@ variable "VERSION" {
   // alone. Bump manually whenever the contents change (OPENTOFU_VERSION, the
   // provider mirror, or the Dockerfile), so the published semver tags point at
   // new content instead of silently overwriting an existing one.
-  default = "1.2.0"
+  default = "1.3.0"
 }
 
 variable "OPENTOFU_VERSION" {
@@ -15,7 +15,7 @@ variable "OPENTOFU_VERSION" {
 
 variable "PROXMOX_PROVIDER_VERSION" {
   // renovate: datasource=github-releases depName=bpg/terraform-provider-proxmox
-  default = "0.100.0"
+  default = "0.111.1"
 }
 
 variable "SOURCE" {
