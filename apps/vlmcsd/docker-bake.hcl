@@ -1,7 +1,7 @@
 target "docker-metadata-action" {}
 
 variable "VERSION" {
-  // renovate: datasource=github-tags depName=Wind4/vlmcsd/tags
+  // renovate: datasource=github-tags depName=Wind4/vlmcsd versioning=regex:^svn(?<major>\d+)$
   default = "svn1113"
 }
 
