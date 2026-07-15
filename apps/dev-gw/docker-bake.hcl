@@ -7,7 +7,7 @@ target "docker-metadata-action" {}
 # re-verify patches/ against the new tag (git apply fails the build otherwise).
 variable "VERSION" {
   // renovate: datasource=docker depName=devolutions/devolutions-gateway
-  default = "2026.2.2"
+  default = "2026.2.3"
 }
 
 variable "SOURCE" {
