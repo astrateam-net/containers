@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=tolgee/tolgee extractVersion=^v(?<version>.+)$
-  default = "3.207.0"
+  default = "3.212.1"
 }
 
 variable "SOURCE" {
