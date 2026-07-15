@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=percona/percona-xtrabackup
-  default = "8.4.0-2"
+  default = "8.4.0"
 }
 
 variable "SOURCE" {
