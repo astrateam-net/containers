@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=ghcr.io/goauthentik/server
-  default = "2026.5.3"
+  default = "2026.5.5"
 }
 
 # This is our patched image (cap_net_bind_service + Enterprise unlock), not stock
