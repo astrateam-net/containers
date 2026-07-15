@@ -25,7 +25,29 @@
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <!-- Match the version bundled in the stirling-pdf fat image (/app/lib). -->
+    <!--
+      Match the version bundled in the stirling-pdf fat image (/app/lib).
+
+      NOT a dependency to keep fresh — newer is WRONG. Byte Buddy is 'provided'
+      (see the note above), so this jar is never shipped: the JVM loads the
+      image's own copy at runtime. Compiling against a newer API still builds
+      clean, then fails at runtime with NoSuchMethodError — or silently no-ops
+      the unlock. Renovate is disabled for this dep (see .renovaterc.json5).
+
+      Re-derive on every Stirling-PDF bump (stirling declares no explicit
+      byte-buddy, so its Spring Boot BOM governs):
+        1. Stirling-PDF build.gradle -> springBootVersion
+        2. that BOM's <byte-buddy.version>, e.g.
+           repo1.maven.org/maven2/org/springframework/boot/
+             spring-boot-dependencies/<ver>/spring-boot-dependencies-<ver>.pom
+
+      Verified 1.17.8 @ stirling v2.14.2 (Spring Boot 4.0.6) — 2026-07-15.
+      Boot stays 4.0.6 across v2.12.0/v2.14.0/v2.14.2, so a bump to 2.14.2 needs
+      no change here.
+      NB apps/astrai18n pins this separately: it tracks tolgee, which is on a
+      different Spring Boot line (3.5.x). Both land on 1.17.8 today, but that is
+      coincidence — expect the two pins to diverge, and do not sync them.
+    -->
     <bytebuddy.version>1.17.8</bytebuddy.version>
   </properties>
 
