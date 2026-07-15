@@ -13,13 +13,14 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [astra-sso](apps/astra-sso/) | `ghcr.io/astrateam-net/astra-sso` | `2026.5.3` |
 | [astraflow](apps/astraflow/) | `ghcr.io/astrateam-net/astraflow` | `2.30.1` |
 | [astrai18n](apps/astrai18n/) | `ghcr.io/astrateam-net/astrai18n` | `3.207.0` |
-| [astrapdf](apps/astrapdf/) | `ghcr.io/astrateam-net/astrapdf` | `2.12.0` |
+| [astranote](apps/astranote/) | `ghcr.io/astrateam-net/astranote` | `0.27.1` |
+| [astrapdf](apps/astrapdf/) | `ghcr.io/astrateam-net/astrapdf` | `2.14.2` |
 | [astravault](apps/astravault/) | `ghcr.io/astrateam-net/astravault` | `0.161.10` |
 | [astravaultnet](apps/astravaultnet/) | `ghcr.io/astrateam-net/astravaultnet` | `0.43.100` |
 | [astrawiki](apps/astrawiki/) | `ghcr.io/astrateam-net/astrawiki` | `0.95.0` |
 | [bird-maxmind](apps/bird-maxmind/) | `ghcr.io/astrateam-net/bird-maxmind` | `0.1.2` |
-| [bkm](apps/bkm/) | `ghcr.io/astrateam-net/bkm` | `10.2.11` |
-| [bpm](apps/bpm/) | `ghcr.io/astrateam-net/bpm` | `11.3.6` |
+| [bkm](apps/bkm/) | `ghcr.io/astrateam-net/bkm` | `10.2.14` |
+| [bpm](apps/bpm/) | `ghcr.io/astrateam-net/bpm` | `11.3.8` |
 | [ci-ansible](apps/ci-ansible/) | `ghcr.io/astrateam-net/ci-ansible` | `1.2.0` |
 | [ci-opentofu](apps/ci-opentofu/) | `ghcr.io/astrateam-net/ci-opentofu` | `1.3.0` |
 | [dev](apps/dev/) | `ghcr.io/astrateam-net/dev` | `v2.34.5` |
@@ -31,7 +32,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [n8n-mcp](apps/n8n-mcp/) | `ghcr.io/astrateam-net/n8n-mcp` | `2.47.12` |
 | [netbox](apps/netbox/) | `ghcr.io/astrateam-net/netbox` | `4.6.4` |
 | [newt-swarm](apps/newt-swarm/) | `ghcr.io/astrateam-net/newt-swarm` | `1.14.0` |
-| [obsync](apps/obsync/) | `ghcr.io/astrateam-net/obsync` | `3.5.1` |
+| [obsync](apps/obsync/) | `ghcr.io/astrateam-net/obsync` | `3.5.2` |
 | [orb-agent](apps/orb-agent/) | `ghcr.io/astrateam-net/orb-agent` | `2.11.0` |
 | [pangolin](apps/pangolin/) | `ghcr.io/astrateam-net/pangolin` | `1.20.0` |
 | [postgres-pgbackrest](apps/postgres-pgbackrest/) | `ghcr.io/astrateam-net/postgres-pgbackrest` | `17.8.0` |
