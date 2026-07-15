@@ -33,6 +33,18 @@ RUN set -eux; \
     cp "$bb" ${AGENT_PATH}/byte-buddy.jar; \
     chmod 444 ${AGENT_PATH}/byte-buddy.jar
 
+# Fail the build if the agent's seams have moved in this Tolgee version.
+#
+# The agent transforms classes at RUNTIME, so a rename upstream makes Byte Buddy match nothing:
+# no error, no warning, image builds, tests pass, app boots with the OSS feature set. Every other
+# unlock in this repo patches at build time and refuses to build on a moved anchor; this one had
+# no such guard, so it was the only one that could rot silently. This check restores parity —
+# it resolves the exact classes/methods the agent instruments, against the real application
+# classpath (mirrors /app/cmd.sh: `java -cp app:app/lib/* io.tolgee.Application`).
+RUN set -eux; \
+    java -cp "${AGENT_PATH}/astrai18n-agent.jar:/app:/app/lib/*" \
+      net.astrateam.astrai18n.VerifyAnchors
+
 # JAVA_TOOL_OPTIONS is applied by the JVM on top of any user-supplied JAVA_OPTS, so the
 # agent always loads regardless of runtime env overrides.
 ENV JAVA_TOOL_OPTIONS="-javaagent:${AGENT_PATH}/astrai18n-agent.jar"
