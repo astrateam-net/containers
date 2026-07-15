@@ -29,7 +29,9 @@ RUN mvn -q -B -e -DskipTests package
 # Mirrors the fork's docker/embedded/Dockerfile.fat app-build stage, but pulls the source by git ref
 # instead of a build-context COPY. Installs Node + Task because -PbuildWithFrontend=true compiles the
 # React frontend and embeds it into the Spring Boot jar.
-FROM docker.io/library/gradle:9.3.1-jdk25 AS app-build
+# Keep this Gradle version matched to the fork's wrapper: `gradle` is invoked directly below, so the
+# image's Gradle wins over gradle/wrapper/gradle-wrapper.properties. Upstream 2.14.2 builds on 9.6.0.
+FROM docker.io/library/gradle:9.6.0-jdk25 AS app-build
 ARG TASK_VERSION=3.49.1
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl ca-certificates git \
