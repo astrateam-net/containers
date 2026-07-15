@@ -1,0 +1,69 @@
+#!/usr/bin/env node
+// Force AFFiNE self-host Team on. Single seam: EntitlementService.resolveBestEntitlement
+// in the bundled server (dist/main.js). Every paid gate funnels through here —
+// resolveUserEntitlement / resolveWorkspaceEntitlement both delegate to it, and the
+// resolved {plan, quota, flags} is what QuotaStateService persists into
+// effective(User|Workspace)QuotaState, which the whole app (team-workspace features,
+// member/storage/blob limits, permission policy) reads. So patching this one method
+// unlocks Team with NO licence key and no signed payload.
+//
+// How the unlock works: the real gate lives in native code (resolveEntitlementV1 in
+// the Rust addon), and it REFUSES `deploymentType:"selfhosted"` + a commercial plan
+// unless you hand it a signed, key-verified licence blob (keys baked into the .node
+// binary — not swappable). But the SAME native resolver happily returns a full
+// selfhost_team entitlement on `deploymentType:"cloud"` — the exact path AFFiNE itself
+// uses for remote-validated self-host licences (see the `source==='selfhost_license'
+// && !signedPayload -> 'cloud'` branch a few lines below our injection). We route
+// every self-hosted workspace through that path, so quota/flags come out of the app's
+// own resolver, correct and version-proof.
+//
+// We do NOT hardcode the minified native-resolver reference (it changes every build);
+// we extract it from builtinFree, the app's canonical resolveEntitlementV1 call site.
+// Every anchor is asserted -> the build fails loud if upstream moves a seam.
+//
+// Scope: this unlocks Team workspace features + quotas. It deliberately does NOT touch
+// AI/Copilot metering (`unlimitedCopilot`), which is a separate axis gated on a per-user
+// 'ai' entitlement — and moot on self-host, where BYOK is already free (ByokEntitlementPolicy
+// short-circuits `if (env.selfhosted) return true`). See README.
+
+const fs = require("fs");
+
+const MAIN = "/app/dist/main.js";
+
+let src = fs.readFileSync(MAIN, "utf8");
+
+// 1. Extract the bundle's own native-resolver reference from builtinFree:
+//      async builtinFree(e){return(0,n.nm)({deploymentType:...})}
+const RESOLVER_RE =
+  /builtinFree\(([A-Za-z0-9_$]+)\)\{return\(0,([A-Za-z0-9_$.]+)\)\(\{deploymentType:/;
+const rm = src.match(RESOLVER_RE);
+if (!rm) {
+  throw new Error("astranote: builtinFree / native-resolver anchor not found");
+}
+const RESOLVER = rm[2];
+
+// 2. Short-circuit resolveBestEntitlement(targetType, targetId): on self-hosted,
+//    force every workspace to an active selfhost_team entitlement (full Team quota)
+//    via the app's own resolver on the 'cloud' code path. quantity 1e5 = max seats.
+const INJECT_RE =
+  /async resolveBestEntitlement\(([A-Za-z0-9_$]+),([A-Za-z0-9_$]+)\)\{/;
+const im = src.match(INJECT_RE);
+if (!im) {
+  throw new Error("astranote: resolveBestEntitlement anchor not found");
+}
+
+if (src.includes('plan:"selfhost_team",quantity:1e5')) {
+  console.log("astranote: already patched (skipping)");
+} else {
+  const [whole, tType, tId] = im;
+  const inject =
+    `async resolveBestEntitlement(${tType},${tId}){` +
+    `if(env.selfhosted&&${tType}==="workspace")` +
+    `return(0,${RESOLVER})({deploymentType:"cloud",targetType:"workspace",targetId:${tId},` +
+    `plan:"selfhost_team",quantity:1e5,now:new Date().toISOString()});`;
+  src = src.replace(whole, inject);
+  fs.writeFileSync(MAIN, src);
+  console.log(
+    `astranote: resolveBestEntitlement short-circuited for selfhosted workspaces (resolver=${RESOLVER})`
+  );
+}
