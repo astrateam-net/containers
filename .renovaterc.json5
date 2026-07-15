@@ -101,6 +101,22 @@
       enabled: false,
     },
     {
+      description: [
+        "n8n and its task runners are version-locked — the runner protocol is",
+        "tied to the broker, so flowrunner (n8nio/runners) MUST match",
+        "astraflow (n8nio/n8n); apps/flowrunner/Dockerfile says so outright.",
+        "They are separate apps in separate files, so by default Renovate",
+        "raises two independently auto-merging PRs: if one fails CI or is held",
+        "up, the other still lands and the pair drifts, silently breaking the",
+        "runner protocol at runtime. Group them so they always move together,",
+        "or not at all. This coupling is across apps, so the matchFileNames",
+        "review rule above cannot express it.",
+      ],
+      matchDatasources: ["docker"],
+      matchPackageNames: ["docker.io/n8nio/n8n", "docker.io/n8nio/runners"],
+      groupName: "n8n",
+    },
+    {
       description: ["Auto-merge minor/patch GitHub Actions updates"],
       matchManagers: ["github-actions"],
       matchUpdateTypes: ["minor", "patch", "pin", "digest"],
