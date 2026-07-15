@@ -12,10 +12,10 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 |-----|-------|---------|
 | [astra-sso](apps/astra-sso/) | `ghcr.io/astrateam-net/astra-sso` | `2026.5.5` |
 | [astraflow](apps/astraflow/) | `ghcr.io/astrateam-net/astraflow` | `2.31.1` |
-| [astrai18n](apps/astrai18n/) | `ghcr.io/astrateam-net/astrai18n` | `3.207.0` |
+| [astrai18n](apps/astrai18n/) | `ghcr.io/astrateam-net/astrai18n` | `3.212.1` |
 | [astranote](apps/astranote/) | `ghcr.io/astrateam-net/astranote` | `0.27.1` |
 | [astrapdf](apps/astrapdf/) | `ghcr.io/astrateam-net/astrapdf` | `2.14.2` |
-| [astravault](apps/astravault/) | `ghcr.io/astrateam-net/astravault` | `0.161.10` |
+| [astravault](apps/astravault/) | `ghcr.io/astrateam-net/astravault` | `0.162.6` |
 | [astravaultnet](apps/astravaultnet/) | `ghcr.io/astrateam-net/astravaultnet` | `0.43.107` |
 | [astrawiki](apps/astrawiki/) | `ghcr.io/astrateam-net/astrawiki` | `0.95.0` |
 | [bird-maxmind](apps/bird-maxmind/) | `ghcr.io/astrateam-net/bird-maxmind` | `0.1.2` |
