@@ -11,7 +11,7 @@
     {
       customType: "regex",
       description: "Process Annotations in Docker Bake",
-      managerFilePatterns: ["(^|/)docker-bake\\.hcl$"],
+      managerFilePatterns: ["/(^|/)docker-bake\\.hcl$/"],
       matchStrings: [
         "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( versioning=(?<versioning>\\S+))?\\n.+ = \"(?<currentValue>[^\"]+)\"",
       ],
@@ -45,6 +45,16 @@
       matchUpdateTypes: ["major"],
       automerge: false,
       labels: ["breaking"],
+    },
+    {
+      description: [
+        "Coder (apps/dev) is version-locked to the i18n build — a stray",
+        "bump breaks the русификация patches. Never auto-merge; require",
+        "manual review for every update type.",
+      ],
+      matchFileNames: ["apps/dev/docker-bake.hcl"],
+      automerge: false,
+      labels: ["review-required"],
     },
     {
       description: ["Auto-merge minor/patch GitHub Actions updates"],
