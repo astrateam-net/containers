@@ -57,6 +57,20 @@
       labels: ["review-required"],
     },
     {
+      description: [
+        "byte-buddy is NOT a dependency to keep fresh — it is pinned to match",
+        "the copy each upstream image already ships in /app/lib. The agents",
+        "declare it 'provided', so the jar is never shipped and the JVM loads",
+        "the image's own copy at runtime. A newer version compiles clean (CI",
+        "stays green) but then fails at runtime with NoSuchMethodError, or",
+        "worse, silently no-ops the EE unlock. Newer is WRONG here.",
+        "Re-derive by hand on each upstream bump — see the agent poms.",
+      ],
+      matchManagers: ["maven"],
+      matchPackageNames: ["net.bytebuddy:byte-buddy"],
+      enabled: false,
+    },
+    {
       description: ["Auto-merge minor/patch GitHub Actions updates"],
       matchManagers: ["github-actions"],
       matchUpdateTypes: ["minor", "patch", "pin", "digest"],
