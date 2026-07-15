@@ -1,7 +1,7 @@
 target "docker-metadata-action" {}
 
 variable "VERSION" {
-  default = "1.1.0"
+  default = "1.2.0"
 }
 
 variable "ANSIBLE_CORE_VERSION" {
@@ -11,12 +11,12 @@ variable "ANSIBLE_CORE_VERSION" {
 
 variable "PARAMIKO_VERSION" {
   // renovate: datasource=pypi depName=paramiko
-  default = "4.0.0"
+  default = "5.0.0"
 }
 
 variable "ANSIBLE_LINT_VERSION" {
   // renovate: datasource=pypi depName=ansible-lint
-  default = "26.4.0"
+  default = "26.6.0"
 }
 
 variable "SOURCE" {
