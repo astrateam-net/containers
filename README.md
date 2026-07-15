@@ -11,7 +11,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | App | Image | Version |
 |-----|-------|---------|
 | [astra-sso](apps/astra-sso/) | `ghcr.io/astrateam-net/astra-sso` | `2026.5.5` |
-| [astraflow](apps/astraflow/) | `ghcr.io/astrateam-net/astraflow` | `2.30.1` |
+| [astraflow](apps/astraflow/) | `ghcr.io/astrateam-net/astraflow` | `2.31.1` |
 | [astrai18n](apps/astrai18n/) | `ghcr.io/astrateam-net/astrai18n` | `3.207.0` |
 | [astranote](apps/astranote/) | `ghcr.io/astrateam-net/astranote` | `0.27.1` |
 | [astrapdf](apps/astrapdf/) | `ghcr.io/astrateam-net/astrapdf` | `2.14.2` |
@@ -25,7 +25,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [ci-opentofu](apps/ci-opentofu/) | `ghcr.io/astrateam-net/ci-opentofu` | `1.3.0` |
 | [dev](apps/dev/) | `ghcr.io/astrateam-net/dev` | `v2.34.5` |
 | [dev-gw](apps/dev-gw/) | `ghcr.io/astrateam-net/dev-gw` | `2026.2.3` |
-| [flowrunner](apps/flowrunner/) | `ghcr.io/astrateam-net/flowrunner` | `2.30.1` |
+| [flowrunner](apps/flowrunner/) | `ghcr.io/astrateam-net/flowrunner` | `2.31.1` |
 | [gerbil-traefik-s6](apps/gerbil-traefik-s6/) | `ghcr.io/astrateam-net/gerbil-traefik-s6` | `1.4.2` |
 | [gh-actions-runner](apps/gh-actions-runner/) | `ghcr.io/astrateam-net/gh-actions-runner` | `0.3.0` |
 | [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.30.1` |
