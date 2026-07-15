@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=infisical/cli
-  default = "0.43.100"
+  default = "0.43.107"
 }
 
 # This is our env-driven wrapper around the official infisical/cli image (adds
