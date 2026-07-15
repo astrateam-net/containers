@@ -36,7 +36,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [orb-agent](apps/orb-agent/) | `ghcr.io/astrateam-net/orb-agent` | `2.11.0` |
 | [pangolin](apps/pangolin/) | `ghcr.io/astrateam-net/pangolin` | `1.20.0` |
 | [postgres-pgbackrest](apps/postgres-pgbackrest/) | `ghcr.io/astrateam-net/postgres-pgbackrest` | `17.8.0` |
-| [postiz](apps/postiz/) | `ghcr.io/astrateam-net/postiz` | `v2.21.8` |
+| [postiz](apps/postiz/) | `ghcr.io/astrateam-net/postiz` | `v2.21.10` |
 | [vlmcsd](apps/vlmcsd/) | `ghcr.io/astrateam-net/vlmcsd` | `svn1113` |
 | [xtrabackup](apps/xtrabackup/) | `ghcr.io/astrateam-net/xtrabackup` | `8.4.0-2` |
 
