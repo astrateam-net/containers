@@ -2,6 +2,14 @@
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: ["github>home-operations/renovate-config"],
   ignorePaths: [".archive/**"],
+  // apps/ci-ansible names its Galaxy requirements 'ansible-requirements.yml'.
+  // The ansible-galaxy manager only looks for 'requirements.yml' by default, so
+  // the collections pinned there were never tracked at all — they had drifted up
+  // to two majors behind before anyone noticed. Patterns here are ADDED to the
+  // manager's defaults, they do not replace them.
+  "ansible-galaxy": {
+    managerFilePatterns: ["/(^|/)ansible-requirements\\.ya?ml$/"],
+  },
   // Limit concurrent PRs to avoid noise
   prConcurrentLimit: 5,
   branchConcurrentLimit: 5,
