@@ -21,7 +21,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [bkm](apps/bkm/) | `ghcr.io/astrateam-net/bkm` | `10.2.11` |
 | [bpm](apps/bpm/) | `ghcr.io/astrateam-net/bpm` | `11.3.6` |
 | [ci-ansible](apps/ci-ansible/) | `ghcr.io/astrateam-net/ci-ansible` | `1.1.0` |
-| [ci-opentofu](apps/ci-opentofu/) | `ghcr.io/astrateam-net/ci-opentofu` | `1.1.0` |
+| [ci-opentofu](apps/ci-opentofu/) | `ghcr.io/astrateam-net/ci-opentofu` | `1.2.0` |
 | [dev](apps/dev/) | `ghcr.io/astrateam-net/dev` | `v2.34.5` |
 | [dev-gw](apps/dev-gw/) | `ghcr.io/astrateam-net/dev-gw` | `2026.2.2` |
 | [flowrunner](apps/flowrunner/) | `ghcr.io/astrateam-net/flowrunner` | `2.30.1` |
