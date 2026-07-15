@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=docker.io/stirlingtools/stirling-pdf
-  default = "2.12.0"
+  default = "2.14.2"
 }
 
 # SOURCE_REF is the git ref on our fork carrying the AstraPDF patch set, applied
@@ -11,7 +11,7 @@ variable "VERSION" {
 # branch onto a newer upstream tag, push a new astrapdf-<version> tag, and point
 # this (and VERSION) at it. Drop SOURCE_REF entirely if upstream merges the PR.
 variable "SOURCE_REF" {
-  default = "astrapdf-2.12.0"
+  default = "astrapdf-2.14.2"
 }
 
 # Fork the patched Stirling source is fetched from at build time.
