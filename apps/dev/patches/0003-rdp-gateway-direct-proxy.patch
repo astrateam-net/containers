@@ -1,8 +1,8 @@
 diff --git a/coderd/coderd.go b/coderd/coderd.go
-index c87adc5647..9e9303635b 100644
+index 877a903d03..f649e356de 100644
 --- a/coderd/coderd.go
 +++ b/coderd/coderd.go
-@@ -930,6 +930,9 @@ func New(options *Options) *API {
+@@ -957,6 +957,9 @@ func New(options *Options) *API {
  		DisablePathApps:          options.DeploymentValues.DisablePathApps.Value(),
  		CookiesConfig:            options.DeploymentValues.HTTPCookies,
  		APIKeyEncryptionKeycache: options.AppEncryptionKeyCache,
@@ -13,13 +13,13 @@ index c87adc5647..9e9303635b 100644
  
  	api.workspaceAgentConnWatcher = workspaceconnwatcher.New(api.ctx, options.Logger, options.Pubsub, options.Database)
 diff --git a/coderd/workspaceapps/proxy.go b/coderd/workspaceapps/proxy.go
-index 86ec757f31..37cedf1582 100644
+index bb35843a06..1782484a25 100644
 --- a/coderd/workspaceapps/proxy.go
 +++ b/coderd/workspaceapps/proxy.go
-@@ -112,6 +112,17 @@ type ServerOptions struct {
- 
+@@ -113,6 +113,17 @@ type ServerOptions struct {
  	AgentProvider  AgentProvider
  	StatsCollector *StatsCollector
+ 	WSWatcher      *httpapi.WSWatcher
 +
 +	// RDPGatewayAppPrefix, when non-empty, makes a subdomain app whose slug starts
 +	// with this prefix proxy DIRECTLY to the app's own URL (an external Devolutions
@@ -34,7 +34,7 @@ index 86ec757f31..37cedf1582 100644
  }
  
  // Server serves workspace apps endpoints, including:
-@@ -636,7 +647,14 @@ func (s *Server) proxyWorkspaceApp(rw http.ResponseWriter, r *http.Request, appT
+@@ -659,7 +670,14 @@ func (s *Server) proxyWorkspaceApp(rw http.ResponseWriter, r *http.Request, appT
  		appURL.Scheme = protocol
  	}
  

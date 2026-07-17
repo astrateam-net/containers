@@ -14,18 +14,18 @@ so no separate host allowlist is maintained in the frontend. Every other
 Markdown consumer keeps the strict, no-raw-HTML default.
 
 diff --git a/site/src/components/Markdown/Markdown.tsx b/site/src/components/Markdown/Markdown.tsx
-index c76d062d1c..c0bb7a147e 100644
+index 104861f842..75a158da73 100644
 --- a/site/src/components/Markdown/Markdown.tsx
 +++ b/site/src/components/Markdown/Markdown.tsx
-@@ -13,6 +13,8 @@ import {
+@@ -12,6 +12,8 @@ import {
  import ReactMarkdown, { type Options } from "react-markdown";
  import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
  import { dracula } from "react-syntax-highlighter/dist/cjs/styles/prism";
 +import rehypeRaw from "rehype-raw";
 +import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
  import gfm from "remark-gfm";
+ import { Link } from "#/components/Link/Link";
  import {
- 	Table,
 @@ -24,6 +26,36 @@ import {
  import colors from "#/theme/tailwindColors";
  import { cn } from "#/utils/cn";
