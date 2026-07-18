@@ -1,0 +1,15 @@
+schemaVersion: "2.0.0"
+
+fileExistenceTests:
+  - name: binary present
+    path: /usr/bin/enterprise-traces
+    shouldExist: true
+    isExecutableBy: any
+
+fileContentTests:
+  - name: expected key present
+    path: /usr/bin/enterprise-traces
+    expectedContents: ['pLPKNkcOmTOBjEI9I86_iNnX5JDFyHZVTPv1D09SsuTHokDT']
+  - name: prior key absent
+    path: /usr/bin/enterprise-traces
+    excludedContents: ['uJAXaOR2-CwuKz2xuj5jMOtj']
