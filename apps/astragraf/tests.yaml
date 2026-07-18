@@ -1,0 +1,32 @@
+schemaVersion: "2.0.0"
+
+# Structural: verify the license trust-root swap landed. agent.py already asserts its
+# anchors at build time (the build fails if upstream moves them); this double-checks
+# the shipped binary trusts OUR key and no longer trusts upstream's kid=1 key.
+
+fileExistenceTests:
+  - name: grafana binary present
+    path: /usr/share/grafana/bin/grafana
+    shouldExist: true
+
+commandTests:
+  - name: grafana binary is executable
+    command: sh
+    args: ["-lc", "test -x /usr/share/grafana/bin/grafana"]
+    exitCode: 0
+
+  # Our RSA-4096 modulus (JWK "n" prefix) must be present -> our key is the trust root.
+  - name: our validation key baked in
+    command: sh
+    args:
+      - "-lc"
+      - "grep -qaF 'pLPKNkcOmTOBjEI9I86_iNnX5JDFyHZVTPv1D09SsuTHokDT' /usr/share/grafana/bin/grafana"
+    exitCode: 0
+
+  # Upstream's kid=1 modulus must be gone -> the swap actually replaced it.
+  - name: upstream kid=1 trust key removed
+    command: sh
+    args:
+      - "-lc"
+      - "grep -qaF 'uJAXaOR2-CwuKz2xuj5jMOtj' /usr/share/grafana/bin/grafana"
+    exitCode: 1
