@@ -15,8 +15,10 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [astragraf](apps/astragraf/) | `ghcr.io/astrateam-net/astragraf` | `13.0.1` |
 | [astrai18n](apps/astrai18n/) | `ghcr.io/astrateam-net/astrai18n` | `3.212.1` |
 | [astralog](apps/astralog/) | `ghcr.io/astrateam-net/astralog` | `3.6.10` |
+| [astrametrics](apps/astrametrics/) | `ghcr.io/astrateam-net/astrametrics` | `v2.17.15` |
 | [astranote](apps/astranote/) | `ghcr.io/astrateam-net/astranote` | `0.27.1` |
 | [astrapdf](apps/astrapdf/) | `ghcr.io/astrateam-net/astrapdf` | `2.14.2` |
+| [astratraces](apps/astratraces/) | `ghcr.io/astrateam-net/astratraces` | `v2.8.10` |
 | [astravault](apps/astravault/) | `ghcr.io/astrateam-net/astravault` | `0.162.6` |
 | [astravaultnet](apps/astravaultnet/) | `ghcr.io/astrateam-net/astravaultnet` | `0.43.107` |
 | [astrawiki](apps/astrawiki/) | `ghcr.io/astrateam-net/astrawiki` | `0.95.0` |
