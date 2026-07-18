@@ -5,7 +5,6 @@ variable "VERSION" {
   default = "2.31.1"
 }
 
-# Our patched image (Enterprise opened), not stock n8n — point the source label at us.
 variable "SOURCE" {
   default = "https://github.com/astrateam-net/containers"
 }

@@ -1,7 +1,6 @@
 schemaVersion: "2.0.0"
 
 # Structural only — authentik needs PostgreSQL + Redis to boot, so we verify the two
-# overlays (privileged-bind capability + Enterprise fix) rather than running the app.
 
 fileExistenceTests:
   - name: authentik-server binary

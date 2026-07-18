@@ -1,11 +1,5 @@
 # syntax=docker/dockerfile:1
 
-# astrai18n — thin runtime overlay on the upstream tolgee/tolgee image.
-#
-# No upstream source is rebuilt. A small Byte Buddy agent (built in stage 1) is attached at
-# JVM startup via JAVA_TOOL_OPTIONS; it configures the platform's active feature set at runtime.
-# The upstream image launches `java ... -cp app:app/lib/* io.tolgee.Application` from /app/cmd.sh,
-# which the JVM augments with JAVA_TOOL_OPTIONS automatically — the upstream ENTRYPOINT is kept.
 
 # Global build arg — visible to the FROM line of the final stage.
 ARG VERSION
@@ -33,14 +27,7 @@ RUN set -eux; \
     cp "$bb" ${AGENT_PATH}/byte-buddy.jar; \
     chmod 444 ${AGENT_PATH}/byte-buddy.jar
 
-# Fail the build if the agent's seams have moved in this Tolgee version.
-#
-# The agent transforms classes at RUNTIME, so a rename upstream makes Byte Buddy match nothing:
-# no error, no warning, image builds, tests pass, app boots with the OSS feature set. Every other
-# unlock in this repo patches at build time and refuses to build on a moved anchor; this one had
-# no such guard, so it was the only one that could rot silently. This check restores parity —
-# it resolves the exact classes/methods the agent instruments, against the real application
-# classpath (mirrors /app/cmd.sh: `java -cp app:app/lib/* io.tolgee.Application`).
+
 RUN set -eux; \
     java -cp "${AGENT_PATH}/astrai18n-agent.jar:/app:/app/lib/*" \
       net.astrateam.astrai18n.VerifyAnchors

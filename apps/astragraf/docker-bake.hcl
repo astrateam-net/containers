@@ -5,8 +5,6 @@ variable "VERSION" {
   default = "13.0.1"
 }
 
-# This is our patched image (license trust-root swapped), not stock Grafana
-# Enterprise - point the OCI source label at the repo that carries the patch.
 variable "SOURCE" {
   default = "https://github.com/astrateam-net/containers"
 }

@@ -1,26 +1,15 @@
 schemaVersion: "2.0.0"
 
-# Structural: verify the license trust-root swap landed. agent.py already asserts its
-# anchors at build time (the build fails if upstream moves them); this double-checks
-# the shipped binary trusts OUR key and no longer trusts upstream's kid=1 key.
-#
-# The grafana/enterprise-logs base is DISTROLESS (no shell), so unlike astragraf we
-# cannot grep in-container. container-structure-test fileContentTests read the binary
-# straight from the image layer and regex-match its bytes - no shell required.
-
 fileExistenceTests:
-  - name: enterprise-logs binary present
+  - name: binary present
     path: /usr/bin/enterprise-logs
     shouldExist: true
     isExecutableBy: any
 
 fileContentTests:
-  # Our RSA-4096 modulus (JWK "n" prefix) must be present -> our key is the trust root.
-  - name: our validation key baked in
+  - name: expected key present
     path: /usr/bin/enterprise-logs
     expectedContents: ['pLPKNkcOmTOBjEI9I86_iNnX5JDFyHZVTPv1D09SsuTHokDT']
-
-  # Upstream's kid=1 modulus must be gone -> the swap actually replaced it.
-  - name: upstream kid=1 trust key removed
+  - name: prior key absent
     path: /usr/bin/enterprise-logs
     excludedContents: ['uJAXaOR2-CwuKz2xuj5jMOtj']

@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-# Fix Enterprise gating: force status() -> VALID and forge cached_summary().
-# Backend and web UI both gate on summary.status; the forged summary also
-# skips the cached copy (authentik caches it in Postgres). Asserts fail
-# the build if an anchor moves.
-
 from pathlib import Path
 
 LICENSE = Path("/authentik/enterprise/license.py")

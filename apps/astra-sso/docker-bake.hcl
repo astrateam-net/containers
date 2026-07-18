@@ -5,8 +5,6 @@ variable "VERSION" {
   default = "2026.5.5"
 }
 
-# This is our patched image (cap_net_bind_service + Enterprise unlock), not stock
-# authentik — point the OCI source label at the repo that carries the patch.
 variable "SOURCE" {
   default = "https://github.com/astrateam-net/containers"
 }

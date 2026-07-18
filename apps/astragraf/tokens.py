@@ -1,21 +1,8 @@
 #!/usr/bin/env python3
-"""astragraf - offline signer for a Grafana Enterprise token.
+"""Sign a license token for a Grafana instance.
 
-The astragraf image trusts our public key (baked into the binary by agent.py),
-so a token signed with the matching private key validates against 100% stock
-Grafana code - status=Valid, edition=Enterprise, all features enabled.
-
-This is a pure, self-contained signing utility. It takes a private key and a
-root_url and emits a signed token. Where the private key comes from, where the
-emitted token is stored, and how it reaches a running instance are deployment
-concerns owned elsewhere - none of that belongs to image building.
-
-The `sub` claim MUST equal the instance's server root_url (Grafana compares
-them); a trailing slash is expected. The token is version-independent.
-
-Usage:
-  token.py --key private.pem --root-url https://grafana.example.com/ \
-           [--company Example] [--out license.jwt]
+Usage: tokens.py --key private.pem --root-url https://grafana.example.com/ \
+                 [--company C] [--slug S] [--users N] [--expires YYYY-MM-DD] [--out license.jwt]
 """
 import argparse
 import datetime
@@ -31,13 +18,12 @@ from cryptography.hazmat.primitives.serialization import (  # type: ignore
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--key", required=True, help="RSA-4096 private key PEM")
-    ap.add_argument("--root-url", required=True,
-                    help="instance root_url == subject (trailing slash)")
+    ap.add_argument("--key", required=True)
+    ap.add_argument("--root-url", required=True)
     ap.add_argument("--company", default="Enterprise")
     ap.add_argument("--slug", default="enterprise")
     ap.add_argument("--users", type=int, default=100000)
-    ap.add_argument("--expires", default="2050-01-01", help="YYYY-MM-DD")
+    ap.add_argument("--expires", default="2050-01-01")
     ap.add_argument("--out", default="license.jwt")
     a = ap.parse_args()
 
@@ -49,9 +35,6 @@ def main():
     now = int(time.time())
     exp = int(time.mktime(datetime.date(y, m, d).timetuple()))
 
-    # NOTE: `status` is a TokenStatus int enum in Grafana - do NOT set it as a
-    # string, or parsing fails ("cannot unmarshal string ... TokenStatus").
-    # Grafana derives status from the other claims. Omit it.
     claims = {
         "sub": a.root_url, "iss": "https://grafana.com",
         "iat": now, "nbf": now - 60, "exp": exp, "lexp": exp,
@@ -65,7 +48,6 @@ def main():
     token = jwt.encode(claims, priv_pem, algorithm="RS512",
                        headers={"kid": "1", "typ": "JWT"})
 
-    # self-verify against our own public half (mirrors the running instance)
     pub_pem = priv.public_key().public_bytes(
         Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
     chk = jwt.decode(token, pub_pem, algorithms=["RS512"],
@@ -75,8 +57,7 @@ def main():
 
     with open(a.out, "w") as f:
         f.write(token)
-    print(f"token: OK - {a.out} ({len(token)} bytes), "
-          f"sub={a.root_url}, expires={a.expires}")
+    print(f"token: OK - {a.out} ({len(token)} bytes)")
 
 
 if __name__ == "__main__":

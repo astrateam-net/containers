@@ -1,18 +1,4 @@
 #!/usr/bin/env node
-// Force n8n Enterprise on. Two seams on the License class (compiled dist/license.js);
-// LicenseState delegates to both, and the frontend derives its flags/limits from the
-// backend, so patching these two covers everything.
-//
-//   1. isLicensed(feature)  -> boolean features. Return true for all EXCEPT two inverted
-//      flags where licensed==true is a restriction:
-//        feat:showNonProdBanner -> the "not licensed for production" nag banner
-//        feat:apiDisabled       -> disables the public REST API (isApiEnabled checks it)
-//   2. getValue(feature)    -> numeric quotas. Return -1 (n8n's UNLIMITED_LICENSE_QUOTA)
-//      for every 'quota:*' key so limits default to unlimited instead of 0/blocked
-//      (maxTeamProjects=0 => Projects locked, aiCredits=0, evaluations, insights, ...).
-//      Non-quota getValue (e.g. 'planName') passes through untouched.
-//
-// Each patch asserts it matched at least once -> build fails loud if an anchor moves.
 
 const fs = require("fs");
 const path = require("path");
