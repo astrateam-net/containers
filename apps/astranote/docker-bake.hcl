@@ -5,7 +5,6 @@ variable "VERSION" {
   default = "0.27.1"
 }
 
-# Our patched image (self-host Team opened), not stock AFFiNE — point the source label at us.
 variable "SOURCE" {
   default = "https://github.com/astrateam-net/containers"
 }

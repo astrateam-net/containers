@@ -1,34 +1,23 @@
 schemaVersion: "2.0.0"
 
-# Structural only — AFFiNE needs Postgres + Redis to boot, so we verify the
-# entitlement patch was applied to the bundled server rather than running the app.
-
 commandTests:
   - name: server bundle present
     command: sh
     args: ["-lc", "test -f /app/dist/main.js"]
     exitCode: 0
-
-  # The Team unlock must be present: our short-circuit injected into
-  # resolveBestEntitlement (selfhost_team at max seats via the cloud resolver path).
-  - name: selfhost team unlock applied
+  - name: patch applied
     command: sh
     args:
       - "-lc"
       - 'grep -qF ''plan:"selfhost_team",quantity:1e5'' /app/dist/main.js'
     exitCode: 0
-
-  # The seam we patched must still be the real one (guards against a no-op patch
-  # if upstream renamed the method between build and test).
-  - name: entitlement resolver seam intact
+  - name: expected anchors present
     command: sh
     args:
       - "-lc"
       - "grep -qF 'resolveBestEntitlement' /app/dist/main.js && grep -qF 'builtinFree' /app/dist/main.js"
     exitCode: 0
-
-  # The agent must have been removed from the image.
-  - name: agent not shipped
+  - name: agent removed
     command: sh
     args: ["-lc", "! test -e /tmp/agent"]
     exitCode: 0
