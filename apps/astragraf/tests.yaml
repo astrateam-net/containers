@@ -22,3 +22,37 @@ commandTests:
       - "-lc"
       - "grep -qaF 'uJAXaOR2-CwuKz2xuj5jMOtj' /usr/share/grafana/bin/grafana"
     exitCode: 1
+  - name: plugins baked
+    command: sh
+    args:
+      - "-lc"
+      - "test -f /opt/astragraf/plugins/grafana-gitlab-datasource/plugin.json"
+    exitCode: 0
+  - name: expected key present in plugins
+    command: sh
+    args:
+      - "-lc"
+      - "grep -qaF 'pLPKNkcOmTOBjEI9I86_iNnX5JDFyHZVTPv1D09SsuTHokDT' /opt/astragraf/plugins/grafana-cloudflare-datasource/gpx_* && grep -qaF 'pLPKNkcOmTOBjEI9I86_iNnX5JDFyHZVTPv1D09SsuTHokDT' /opt/astragraf/plugins/grafana-gitlab-datasource/gpx_* && grep -qaF 'pLPKNkcOmTOBjEI9I86_iNnX5JDFyHZVTPv1D09SsuTHokDT' /opt/astragraf/plugins/grafana-jira-datasource/gpx_*"
+    exitCode: 0
+  - name: prior key absent in plugins
+    command: sh
+    args:
+      - "-lc"
+      - "grep -rqaF 'uJAXaOR2-CwuKz2xuj5jMOtj' /opt/astragraf/plugins"
+    exitCode: 1
+  - name: manifests dropped
+    command: sh
+    args:
+      - "-lc"
+      - "test ! -e /opt/astragraf/plugins/grafana-gitlab-datasource/MANIFEST.txt"
+    exitCode: 0
+  - name: unsigned list complete
+    command: sh
+    args:
+      - "-lc"
+      - "grep -qxF grafana-cloudflare-datasource /opt/astragraf/unsigned.txt && grep -qxF grafana-gitlab-datasource /opt/astragraf/unsigned.txt && grep -qxF grafana-jira-datasource /opt/astragraf/unsigned.txt"
+    exitCode: 0
+  - name: entrypoint executable
+    command: sh
+    args: ["-lc", "test -x /usr/local/bin/astragraf-entrypoint.sh"]
+    exitCode: 0

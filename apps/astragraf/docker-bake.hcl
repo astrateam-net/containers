@@ -9,6 +9,16 @@ variable "SOURCE" {
   default = "https://github.com/astrateam-net/containers"
 }
 
+// Plugin set shipped with the image. Entries are `id` or `id@version`.
+variable "PLUGINS" {
+  default = "elasticsearch,grafana-cloudflare-datasource,grafana-exploretraces-app,grafana-gitlab-datasource,grafana-jira-datasource,grafana-llm-app,grafana-lokiexplore-app,grafana-metricsdrilldown-app,grafana-pyroscope-app,volkovlabs-echarts-panel,grafana-enterprise-logs-app,grafana-metrics-enterprise-app,grafana-enterprise-traces-app"
+}
+
+// Build fails if any of these is not processed.
+variable "PLUGINS_EE" {
+  default = "grafana-cloudflare-datasource,grafana-gitlab-datasource,grafana-jira-datasource"
+}
+
 group "default" {
   targets = ["image-local"]
 }
@@ -16,7 +26,9 @@ group "default" {
 target "image" {
   inherits = ["docker-metadata-action"]
   args = {
-    VERSION = "${VERSION}"
+    VERSION    = "${VERSION}"
+    PLUGINS    = "${PLUGINS}"
+    PLUGINS_EE = "${PLUGINS_EE}"
   }
   labels = {
     "org.opencontainers.image.source" = "${SOURCE}"
