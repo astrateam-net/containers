@@ -1,0 +1,10 @@
+schemaVersion: "2.0.0"
+
+# Stock upstream image, republished unchanged — nothing of ours to validate.
+# This file exists only so the app is discovered by the CI inventory; the single
+# check below is a smoke test that the republished image is intact.
+
+fileExistenceTests:
+  - name: app dir present
+    path: /home/user/app
+    shouldExist: true
