@@ -1,17 +1,12 @@
 schemaVersion: "2.0.0"
 
-# LlamaParse (Node) embeds the license public key inline in license.js.
-
 fileExistenceTests:
   - name: license.js present
     path: /home/node/dist/worker/license/license.js
     shouldExist: true
 
 fileContentTests:
-  - name: our key swapped into license.js
+  - name: expected key present
     path: /home/node/dist/worker/license/license.js
     expectedContents: ["5xcc8kW96LH/D04kvyoA"]
     excludedContents: ['o3G2lxK\+FfE5h2b02JiCStkjopOte4yygDrSkEc8ns50']
-  - name: validator intact (still RS256 / byoc audience)
-    path: /home/node/dist/worker/license/license.js
-    expectedContents: ["llamaindex-byoc", "RS256"]

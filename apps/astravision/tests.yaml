@@ -1,10 +1,19 @@
 schemaVersion: "2.0.0"
 
-# Stock upstream image, republished unchanged — nothing of ours to validate.
-# This file exists only so the app is discovered by the CI inventory; the single
-# check below is a smoke test that the republished image is intact.
-
 fileExistenceTests:
-  - name: app dir present
-    path: /home/user/app
+  - name: pubkey v1 present
+    path: /home/user/app/license_public_key.pub
     shouldExist: true
+  - name: pubkey v2 present
+    path: /opt/pysetup/app/.venv/lib/python3.11/site-packages/ocrpaddle/utils/license_public_key.pub
+    shouldExist: true
+
+fileContentTests:
+  - name: expected key present v1
+    path: /home/user/app/license_public_key.pub
+    expectedContents: ["5xcc8kW96LH/D04kvyoA"]
+    excludedContents: ['o3G2lxK\+FfE5h2b02JiCStkjopOte4yygDrSkEc8ns50']
+  - name: expected key present v2
+    path: /opt/pysetup/app/.venv/lib/python3.11/site-packages/ocrpaddle/utils/license_public_key.pub
+    expectedContents: ["5xcc8kW96LH/D04kvyoA"]
+    excludedContents: ['o3G2lxK\+FfE5h2b02JiCStkjopOte4yygDrSkEc8ns50']

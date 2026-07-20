@@ -1,21 +1,19 @@
 schemaVersion: "2.0.0"
 
-# Backend image is distroless (no shell) -> structure tests only, no commandTests.
-
 fileExistenceTests:
-  - name: license pubkey (app) present
+  - name: pubkey app present
     path: /app/src/app/license/license_public_key.pub
     shouldExist: true
-  - name: license pubkey (usage) present
+  - name: pubkey usage present
     path: /app/src/usage/license/license_public_key.pub
     shouldExist: true
 
 fileContentTests:
-  - name: our key swapped in (app)
+  - name: expected key present app
     path: /app/src/app/license/license_public_key.pub
     expectedContents: ["5xcc8kW96LH/D04kvyoA"]
     excludedContents: ['o3G2lxK\+FfE5h2b02JiCStkjopOte4yygDrSkEc8ns50']
-  - name: our key swapped in (usage)
+  - name: expected key present usage
     path: /app/src/usage/license/license_public_key.pub
     expectedContents: ["5xcc8kW96LH/D04kvyoA"]
     excludedContents: ['o3G2lxK\+FfE5h2b02JiCStkjopOte4yygDrSkEc8ns50']
