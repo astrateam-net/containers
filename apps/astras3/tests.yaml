@@ -1,0 +1,14 @@
+schemaVersion: "2.0.0"
+
+fileExistenceTests:
+  - name: minio binary present
+    path: /usr/bin/minio
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
+
+commandTests:
+  - name: minio runs and reports version
+    command: /usr/bin/minio
+    args: ["--version"]
+    exitCode: 0
+    expectedOutput: ["minio version RELEASE."]
