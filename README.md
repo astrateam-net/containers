@@ -27,6 +27,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [astravault](apps/astravault/) | `ghcr.io/astrateam-net/astravault` | `0.162.6` |
 | [astravaultnet](apps/astravaultnet/) | `ghcr.io/astrateam-net/astravaultnet` | `0.43.107` |
 | [astravision](apps/astravision/) | `ghcr.io/astrateam-net/astravision` | `0.8.5` |
+| [astravision-cpu](apps/astravision-cpu/) | `ghcr.io/astrateam-net/astravision-cpu` | `0.8.5` |
 | [astrawiki](apps/astrawiki/) | `ghcr.io/astrateam-net/astrawiki` | `0.95.0` |
 | [bird-maxmind](apps/bird-maxmind/) | `ghcr.io/astrateam-net/bird-maxmind` | `0.1.2` |
 | [bkm](apps/bkm/) | `ghcr.io/astrateam-net/bkm` | `10.2.14` |
