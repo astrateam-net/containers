@@ -10,7 +10,7 @@
 
 services:
   gateway:
-    image: ghcr.io/astrateam-net/astravaultnet:0.43.100
+    image: ghcr.io/astrateam-net/astravaultnet:0.43.107
     restart: unless-stopped
 
     environment:
