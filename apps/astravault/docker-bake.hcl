@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=infisical/infisical extractVersion=^v(?<version>.+)$
-  default = "0.162.6"
+  default = "0.162.12"
 }
 
 variable "SOURCE" {
