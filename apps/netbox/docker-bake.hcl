@@ -22,7 +22,7 @@ variable "NETBOX_ACLS_VERSION" {
 # NetBox 4.6 requires >= 1.12.0 (plugin min_version 4.4.10 / max_version 4.6.99).
 variable "NETBOX_DIODE_VERSION" {
   // renovate: datasource=pypi depName=netboxlabs-diode-netbox-plugin
-  default = "1.14.0"
+  default = "1.14.1"
 }
 
 variable "NETBOX_BRANCHING_VERSION" {
