@@ -12,7 +12,7 @@ variable "UBUNTU_VERSION" {
 
 variable "GH_RUNNER_VERSION" {
   // renovate: datasource=github-releases depName=actions/runner
-  default = "2.333.1"
+  default = "2.336.0"
 }
 
 variable "OP_CLI_VERSION" {
