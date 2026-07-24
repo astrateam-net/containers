@@ -16,7 +16,7 @@ variable "TRAEFIK_VERSION" {
 
 variable "S6_OVERLAY_VERSION" {
   // renovate: datasource=github-releases depName=just-containers/s6-overlay versioning=loose extractVersion=^v(?<version>.+)$
-  default = "3.2.3.0"
+  default = "3.2.3.2"
 }
 
 variable "SOURCE" {
