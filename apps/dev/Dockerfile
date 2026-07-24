@@ -99,7 +99,7 @@ ARG TARGETARCH
 ARG GO_TAGS_COMMON
 ARG SLIM_OSARCHES
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git ca-certificates zstd \
+    && apt-get install -y --no-install-recommends git ca-certificates zstd curl unzip \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 RUN git init -q . \
@@ -130,6 +130,14 @@ COPY --from=site /src/site/out ./site/out
 #   coder.sha1     "<sha1> *<file>" manifest (sha1sum -b), parsed by site/bin.go
 #   coder.tar.zst  zstd-compressed tar of the coder-<os>-<arch> binaries
 # The raw binaries are then removed, so only the archive + manifest get embedded.
+#
+# Exception: coder-darwin-arm64 is REPLACED with Coder's official release binary.
+# Coder Desktop (macOS) downloads the client-arch binary from /bin/ and rejects
+# it unless it carries Coder's Apple Developer ID signature (team 4399GN35BJ),
+# which only Coder can produce. Our self-built binary is unsigned → "signature is
+# invalid". The release zip binary is the fat (full) build, hence larger, but it
+# is the only signed darwin/arm64 Coder publishes as a standalone file. Other
+# arches need no signature check (Linux: none; the org has no Intel Macs).
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     version="${VERSION#v}"; \
@@ -142,6 +150,16 @@ RUN --mount=type=cache,target=/go/pkg/mod \
         -ldflags "-s -w -X github.com/coder/coder/v2/buildinfo.tag=${version}" \
         -o "site/out/bin/coder-$os-$arch$ext" ./enterprise/cmd/coder || exit 1; \
     done; \
+    echo ">> replacing coder-darwin-arm64 with Coder's official signed release binary"; \
+    curl -fsSL -o /tmp/darwin-arm64.zip \
+      "https://github.com/coder/coder/releases/download/${VERSION}/coder_${version}_darwin_arm64.zip"; \
+    mkdir -p /tmp/darwin-arm64 && unzip -oq /tmp/darwin-arm64.zip -d /tmp/darwin-arm64; \
+    signed="$(find /tmp/darwin-arm64 -type f -name coder | head -1)"; \
+    [ -n "$signed" ] || { echo "ERROR: no coder binary in darwin_arm64 release zip"; exit 1; }; \
+    head -c4 "$signed" | od -An -tx1 | tr -d ' \n' | grep -qi '^cffaedfe$' \
+      || { echo "ERROR: darwin_arm64 release binary is not a Mach-O 64 executable"; exit 1; }; \
+    cp "$signed" site/out/bin/coder-darwin-arm64; \
+    rm -rf /tmp/darwin-arm64 /tmp/darwin-arm64.zip; \
     cd site/out/bin \
     && sha1sum -b coder-* | tee coder.sha1 \
     && tar cf coder.tar coder-* \
