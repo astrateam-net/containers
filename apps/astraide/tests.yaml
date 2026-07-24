@@ -1,0 +1,23 @@
+schemaVersion: 2.0.0
+
+fileExistenceTests:
+  - name: orca-ide executable
+    path: /opt/astraide/orca-ide
+    shouldExist: true
+  - name: packaged app resources
+    path: /opt/astraide/resources/app.asar
+    shouldExist: true
+  - name: entrypoint
+    path: /usr/local/bin/entrypoint
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
+
+metadataTest:
+  user: "orca"
+  entrypoint: ["/usr/local/bin/entrypoint"]
+  exposedPorts: ["6768"]
+  envVars:
+    - key: ORCA_TRUSTED_PROXY
+      value: "true"
+    - key: ORCA_PORT
+      value: "6768"
