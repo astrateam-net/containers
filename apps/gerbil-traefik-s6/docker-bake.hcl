@@ -3,7 +3,7 @@ target "docker-metadata-action" {}
 # Primary version = Gerbil. Drives the image tag (semver X.Y.Z / rolling).
 variable "VERSION" {
   // renovate: datasource=docker depName=ghcr.io/fosrl/gerbil
-  default = "1.4.2"
+  default = "1.4.3"
 }
 
 # Traefik binary lifted into the image. Pinned to the 3.6 line to match the
