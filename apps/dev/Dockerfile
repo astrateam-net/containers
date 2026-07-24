@@ -30,9 +30,14 @@ ARG VERSION
 # unused Tailscale features (notably the AWS SDK), matching upstream binary size.
 ARG GO_TAGS_COMMON="ts_omit_aws,ts_omit_bird,ts_omit_tap,ts_omit_kube"
 
-# Slim agent/CLI platforms to embed, amd64 only (upstream also ships the arm64
-# and armv7 variants). Space-separated os:arch entries.
-ARG SLIM_OSARCHES="linux:amd64 darwin:amd64 windows:amd64"
+# Slim CLI platforms to embed and serve at /bin/. Coder Desktop and `coder`
+# download the binary matching the CLIENT's os/arch from the server, so we must
+# host every platform a client connects from — notably darwin/arm64 (Apple
+# Silicon). Missing a client's arch leaves it on its bundled older binary and it
+# fails the server version check. Mirrors upstream's matrix except linux/armv7,
+# which needs GOARM handling and a coder-linux-armv7 name this os:arch loop can't
+# emit. Space-separated os:arch entries.
+ARG SLIM_OSARCHES="linux:amd64 linux:arm64 darwin:amd64 darwin:arm64 windows:amd64 windows:arm64"
 
 # --- Stage 1: build the React frontend from pristine upstream ---------------
 FROM --platform=$BUILDPLATFORM docker.io/library/node:22.19.0-bookworm AS site
