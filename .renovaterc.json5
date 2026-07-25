@@ -1,6 +1,6 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  extends: ["github>home-operations/renovate-config"],
+  extends: ["github>astrateam-net/renovate-config"],
   ignorePaths: [".archive/**"],
   // apps/ci-ansible names its Galaxy requirements 'ansible-requirements.yml'.
   // The ansible-galaxy manager only looks for 'requirements.yml' by default, so
