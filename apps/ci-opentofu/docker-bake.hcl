@@ -7,7 +7,7 @@ target "docker-metadata-action" {}
 # the contents while VERSION stood still and republished over an existing tag.
 variable "VERSION" {
   // renovate: datasource=docker depName=ghcr.io/opentofu/opentofu
-  default = "1.12.4"
+  default = "1.12.5"
 }
 
 variable "PROXMOX_PROVIDER_VERSION" {
