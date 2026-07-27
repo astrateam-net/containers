@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=ghcr.io/toeverything/affine
-  default = "0.27.1"
+  default = "0.27.3"
 }
 
 variable "SOURCE" {
