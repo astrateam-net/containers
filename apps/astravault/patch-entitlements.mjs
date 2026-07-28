@@ -3,9 +3,10 @@
 // The backend derives its active plan from getDefaultOnPremFeatures() (in
 // dist/ee/services/license/license-fns.mjs) whenever no license key is configured —
 // the same single chokepoint the license server would otherwise populate. This
-// rewrites that function's returned object so every capability flag is enabled and
-// the numeric caps are effectively unlimited, leaving the actual on/off decision to
-// deployment config (mirrors the entitle-all approach used for the dev image).
+// rewrites that function's returned object so every capability flag is enabled, the
+// numeric caps are effectively unlimited and the plan slug matches, leaving the actual
+// on/off decision to deployment config (mirrors the entitle-all approach used for the
+// dev image).
 //
 // The enforce* flags in this set are *entitlements* ("allowed to enforce"), not live
 // switches — real enforcement lives in per-org settings that stay admin-controlled.
@@ -28,6 +29,11 @@ const CAPS = {
   honeyTokenLimit: 100000
 };
 
+// Plan identity. The UI plan label is derived from this slug alone and never from the
+// feature flags, so the set below stays cosmetic-only; "enterprise" is the same value
+// the license service assigns for an enterprise tier.
+const SLUG = /(\bslug:\s*)null/;
+
 const src = readFileSync(FILE, "utf8");
 const startIdx = src.indexOf(START);
 const endIdx = startIdx === -1 ? -1 : src.indexOf(END, startIdx);
@@ -42,6 +48,12 @@ let block = original.replace(/: false\b/g, ": true");
 for (const [key, val] of Object.entries(CAPS)) {
   block = block.replace(new RegExp(`(\\b${key}:\\s*)\\d+`), `$1${val}`);
 }
+
+if (!SLUG.test(block)) {
+  console.error(`astravault: plan slug anchor not found in ${FILE} — upstream shape changed; refusing to build`);
+  process.exit(1);
+}
+block = block.replace(SLUG, '$1"enterprise"');
 
 if (block === original) {
   console.error("astravault: no substitutions applied — refusing to build");
