@@ -24,6 +24,14 @@ commandTests:
       - 'grep -q "samlSSO: true" /backend/dist/ee/services/license/license-fns.mjs && grep -q "oidcSSO: true" /backend/dist/ee/services/license/license-fns.mjs && grep -q "auditLogs: true" /backend/dist/ee/services/license/license-fns.mjs && ! grep -q "samlSSO: false" /backend/dist/ee/services/license/license-fns.mjs'
     exitCode: 0
 
+  # The plan label shown in the UI comes from the slug, not from the flags above.
+  - name: plan slug set
+    command: sh
+    args:
+      - -c
+      - 'grep -q "slug: \"enterprise\"" /backend/dist/ee/services/license/license-fns.mjs && ! grep -q "slug: null" /backend/dist/ee/services/license/license-fns.mjs'
+    exitCode: 0
+
   # Prove the <VAR>_FILE secret expansion resolves: write a probe secret to a file,
   # source the helper with PROBE_FILE pointing at it, and assert PROBE is exported
   # (checked via `env` so the test command carries no $var for CST to substitute).
