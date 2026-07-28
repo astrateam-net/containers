@@ -1,0 +1,12 @@
+# Deps for the MCP venv (/opt/mcp/venv). A file, not a Dockerfile ARG: the image
+# has no shell, so RUN is exec form, which does not expand variables.
+
+# Newest stable; 4.x is prerelease-only. Needs starlette >=1.0.1 — the reason this
+# venv exists at all.
+fastmcp==3.4.5
+
+# Current supported line, not a bump of the 0.1.41 upstream used to ship: different
+# generator, different method names. Covers Index V1+V2, retrieval, parse/classify/
+# extract and job polling. Still raw HTTP for split and pipeline files — this SDK
+# targets the deprecated beta routes there.
+llama-cloud==2.13.0
