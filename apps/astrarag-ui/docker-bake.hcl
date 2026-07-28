@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=llamaindex/llamacloud-frontend
-  default = "0.8.5"
+  default = "0.9.0"
 }
 
 variable "SOURCE" {
