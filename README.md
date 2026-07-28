@@ -26,7 +26,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [astrarag-ui](apps/astrarag-ui/) | `ghcr.io/astrateam-net/astrarag-ui` | `0.8.5` |
 | [astras3](apps/astras3/) | `ghcr.io/astrateam-net/astras3` | `—` |
 | [astratraces](apps/astratraces/) | `ghcr.io/astrateam-net/astratraces` | `v2.8.10` |
-| [astravault](apps/astravault/) | `ghcr.io/astrateam-net/astravault` | `0.162.12` |
+| [astravault](apps/astravault/) | `ghcr.io/astrateam-net/astravault` | `0.162.13` |
 | [astravaultnet](apps/astravaultnet/) | `ghcr.io/astrateam-net/astravaultnet` | `0.43.114` |
 | [astravision](apps/astravision/) | `ghcr.io/astrateam-net/astravision` | `0.8.5` |
 | [astravision-cpu](apps/astravision-cpu/) | `ghcr.io/astrateam-net/astravision-cpu` | `0.8.5` |
