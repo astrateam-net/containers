@@ -1,0 +1,37 @@
+# Renovate owns version updates here (.renovaterc.json5). Dependabot is declared
+# only to stay out of that lane: open-pull-requests-limit: 0 disables version
+# updates per ecosystem, so the two never raise competing PRs.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 0
+
+  - package-ecosystem: docker
+    directories:
+      - /apps/**
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 0
+
+  - package-ecosystem: maven
+    directories:
+      - /apps/astrapdf/agent
+      - /apps/astrai18n/agent
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 0
+
+  - package-ecosystem: pip
+    directory: /apps/gh-actions-runner
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 0
+
+  - package-ecosystem: npm
+    directory: /webstudio
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 0
