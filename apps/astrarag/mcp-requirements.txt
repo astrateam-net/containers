@@ -10,3 +10,8 @@ fastmcp==3.4.5
 # extract and job polling. Still raw HTTP for split and pipeline files — this SDK
 # targets the deprecated beta routes there.
 llama-cloud==2.13.0
+
+# The OAuth broker's state — client registrations, authorize states, codes and
+# refresh tokens — lives in the platform's own Redis, so it survives a restart
+# and a second replica. Nothing else in the venv brings a Redis driver.
+redis==8.0.1
