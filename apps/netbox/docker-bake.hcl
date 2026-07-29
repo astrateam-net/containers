@@ -15,7 +15,7 @@ variable "NETBOX_DOCKER_VERSION" {
 # (see configuration/plugins.py). Dropped in the 4.6 move: nextbox-ui (no 4.6 build), netbox-routing.
 variable "NETBOX_ACLS_VERSION" {
   // renovate: datasource=pypi depName=netbox-acls
-  default = "2.0.1"
+  default = "2.0.2"
 }
 
 # Diode NetBox plugin — write-side API for the Diode ingestion / NetBox Discovery pipeline.
