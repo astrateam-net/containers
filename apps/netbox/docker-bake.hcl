@@ -8,7 +8,7 @@ variable "VERSION" {
 
 variable "NETBOX_DOCKER_VERSION" {
   // renovate: datasource=github-tags depName=netbox-community/netbox-docker
-  default = "5.0.1"
+  default = "5.0.2"
 }
 
 # Carried plugins — must stay NetBox-4.6-compatible. netbox_branching MUST be last in PLUGINS
