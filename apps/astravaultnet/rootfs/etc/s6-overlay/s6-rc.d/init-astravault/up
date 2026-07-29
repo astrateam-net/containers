@@ -1,0 +1,2 @@
+#!/command/execlineb -P
+/command/with-contenv /usr/local/bin/astravault-init.sh

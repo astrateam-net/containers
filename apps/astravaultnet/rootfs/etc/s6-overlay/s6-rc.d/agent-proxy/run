@@ -1,0 +1,32 @@
+#!/command/with-contenv sh
+# infisical secrets agent-proxy start [flags] — HTTP(S) forward proxy that
+# brokers credentials onto agent traffic. Listens on 17322, keeps everything in
+# memory: no disk, no database, so replicas scale freely.
+set -eu
+. /usr/local/lib/astravaultnet/common.sh
+
+if ! av_role_enabled agent-proxy; then exec /command/s6-svc -O .; fi
+
+av_resolve_file_secrets
+
+# The proxy's only credential source is a machine identity, and the CLI takes it
+# from its own environment — which also keeps it out of argv and out of `ps`.
+client_id=$(av_var PROXY CLIENT_ID)
+client_secret=$(av_var PROXY CLIENT_SECRET)
+if [ -z "$client_id" ] || [ -z "$client_secret" ]; then
+  echo "astravaultnet: ERROR: agent-proxy needs a machine identity — set ASTRAVAULT_PROXY_CLIENT_ID / ASTRAVAULT_PROXY_CLIENT_SECRET (or the shared ASTRAVAULT_CLIENT_ID / ASTRAVAULT_CLIENT_SECRET), or their _FILE companions" >&2
+  exit 1
+fi
+export INFISICAL_UNIVERSAL_AUTH_CLIENT_ID="$client_id"
+export INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET="$client_secret"
+
+set --
+_v=$(av_var PROXY DOMAIN);                     [ -n "$_v" ] && set -- "$@" "--domain=$_v"
+_v=${ASTRAVAULT_PROXY_PORT:-};                 [ -n "$_v" ] && set -- "$@" "--port=$_v"
+_v=${ASTRAVAULT_PROXY_UNMATCHED_HOST:-};       [ -n "$_v" ] && set -- "$@" "--unmatched-host=$_v"
+_v=${ASTRAVAULT_PROXY_POLL_INTERVAL:-};        [ -n "$_v" ] && set -- "$@" "--poll-interval=$_v"
+_v=${ASTRAVAULT_PROXY_LOG_FORMAT:-};           [ -n "$_v" ] && set -- "$@" "--log-format=$_v"
+_v=${ASTRAVAULT_PROXY_LOG_FILE:-};             [ -n "$_v" ] && set -- "$@" "--log-file=$_v"
+_v=${ASTRAVAULT_PROXY_LOG_LEVEL:-};            [ -n "$_v" ] && set -- "$@" "--log-level=$_v"
+
+av_exec secrets agent-proxy start "$@"

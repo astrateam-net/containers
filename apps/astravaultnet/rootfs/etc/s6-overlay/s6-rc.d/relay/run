@@ -1,0 +1,25 @@
+#!/command/with-contenv sh
+# infisical relay start [flags] — listens on 2222 (gateways) and 8443 (platform).
+set -eu
+. /usr/local/lib/astravaultnet/common.sh
+
+if ! av_role_enabled relay; then exec /command/s6-svc -O .; fi
+
+av_resolve_file_secrets
+
+av_export INFISICAL_RELAY_ACCESS_TOKEN           "${ASTRAVAULT_RELAY_ACCESS_TOKEN:-}"
+av_export INFISICAL_RELAY_AUTH_SECRET            "${ASTRAVAULT_RELAY_AUTH_SECRET:-}"
+av_export INFISICAL_UNIVERSAL_AUTH_CLIENT_ID     "$(av_var RELAY CLIENT_ID)"
+av_export INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET "$(av_var RELAY CLIENT_SECRET)"
+
+set --
+_v=$(av_var RELAY DOMAIN);        [ -n "$_v" ] && set -- "$@" "--domain=$_v"
+_v=$(av_var RELAY ENROLL_METHOD); [ -n "$_v" ] && set -- "$@" "--enroll-method=$_v"
+_v=$(av_var RELAY TOKEN);         [ -n "$_v" ] && set -- "$@" "--token=$_v"
+_v=$(av_var RELAY AUTH_METHOD);   [ -n "$_v" ] && set -- "$@" "--auth-method=$_v"
+_v=$(av_subst_hostname "${ASTRAVAULT_RELAY_NAME:-}"); [ -n "$_v" ] && set -- "$@" "--name=$_v"
+_v=${ASTRAVAULT_RELAY_HOST:-};    [ -n "$_v" ] && set -- "$@" "--host=$_v"
+_v=${ASTRAVAULT_RELAY_TYPE:-};    [ -n "$_v" ] && set -- "$@" "--type=$_v"
+_v=${ASTRAVAULT_RELAY_ID:-};      [ -n "$_v" ] && set -- "$@" "--relay-id=$_v"
+
+av_exec relay start "$@"

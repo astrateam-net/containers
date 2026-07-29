@@ -1,0 +1,31 @@
+#!/command/with-contenv sh
+# infisical gateway start <name> [flags] — outbound-only, dials a relay.
+set -eu
+. /usr/local/lib/astravaultnet/common.sh
+
+# Not in ASTRAVAULT_NET: mark the service "no restart after this death" and go
+# down cleanly, instead of flapping for the life of the container.
+if ! av_role_enabled gateway; then exec /command/s6-svc -O .; fi
+
+av_resolve_file_secrets
+
+# Values the CLI reads only from its own environment. Exported here rather than
+# globally so a co-resident agent-proxy can use a different machine identity.
+av_export INFISICAL_GATEWAY_ACCESS_TOKEN         "${ASTRAVAULT_GATEWAY_ACCESS_TOKEN:-}"
+av_export INFISICAL_UNIVERSAL_AUTH_CLIENT_ID     "$(av_var GATEWAY CLIENT_ID)"
+av_export INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET "$(av_var GATEWAY CLIENT_SECRET)"
+
+set --
+_v=$(av_var GATEWAY DOMAIN);        [ -n "$_v" ] && set -- "$@" "--domain=$_v"
+_v=$(av_var GATEWAY ENROLL_METHOD); [ -n "$_v" ] && set -- "$@" "--enroll-method=$_v"
+_v=$(av_var GATEWAY TOKEN);         [ -n "$_v" ] && set -- "$@" "--token=$_v"
+_v=$(av_var GATEWAY AUTH_METHOD);   [ -n "$_v" ] && set -- "$@" "--auth-method=$_v"
+_v=${ASTRAVAULT_GATEWAY_ID:-};         [ -n "$_v" ] && set -- "$@" "--gateway-id=$_v"
+_v=${ASTRAVAULT_TARGET_RELAY_NAME:-};  [ -n "$_v" ] && set -- "$@" "--target-relay-name=$_v"
+_v=${ASTRAVAULT_PKCS11_MODULE:-};      [ -n "$_v" ] && set -- "$@" "--pkcs11-module=$_v"
+
+# Name is positional and must come before the flags.
+name=$(av_subst_hostname "${ASTRAVAULT_GATEWAY_NAME:-}")
+[ -n "$name" ] && set -- "$name" "$@"
+
+av_exec gateway start "$@"

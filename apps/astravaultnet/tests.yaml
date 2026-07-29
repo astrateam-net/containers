@@ -1,22 +1,37 @@
 schemaVersion: "2.0.0"
 
-# Structural + behavioural tests for the wrapper. We can't run a real gateway /
-# relay (they need a live Infisical instance and a one-time enrollment token),
-# so we exercise the entrypoint's argv-building via its dry-run mode
-# (INFISICAL_ENTRYPOINT_DEBUG=1) and verify the runtime building blocks.
+# Structural + behavioural tests for the wrapper. We can't run a real gateway,
+# relay or agent proxy (they need a live astravault and, for the first two, a
+# one-time enrollment token), so we exercise each role's argv-building through
+# its dry-run mode (ASTRAVAULT_NET_DEBUG=1) and verify the runtime scaffolding.
+#
+# Run scripts are invoked as `sh <path>` so the /command/with-contenv shebang,
+# which only resolves inside s6 stage 2, is bypassed.
 
 fileExistenceTests:
   - name: infisical binary (from base image)
     path: /bin/infisical
     shouldExist: true
-  - name: tini init (from base image)
-    path: /sbin/tini
+  - name: s6-overlay init
+    path: /init
     shouldExist: true
-  - name: entrypoint wrapper
-    path: /usr/local/bin/entrypoint.sh
+  - name: shared shell library
+    path: /usr/local/lib/astravaultnet/common.sh
     shouldExist: true
   - name: healthcheck script
     path: /usr/local/bin/healthcheck.sh
+    shouldExist: true
+  - name: gateway longrun
+    path: /etc/s6-overlay/s6-rc.d/gateway/run
+    shouldExist: true
+  - name: relay longrun
+    path: /etc/s6-overlay/s6-rc.d/relay/run
+    shouldExist: true
+  - name: agent-proxy longrun
+    path: /etc/s6-overlay/s6-rc.d/agent-proxy/run
+    shouldExist: true
+  - name: agent-proxy is in the user bundle
+    path: /etc/s6-overlay/user-bundles.d/user/contents.d/agent-proxy
     shouldExist: true
 
 commandTests:
@@ -25,9 +40,9 @@ commandTests:
     args: ["--version"]
     exitCode: 0
 
-  - name: healthcheck deps present (nc, pgrep)
+  - name: healthcheck deps present (nc, s6-svstat)
     command: sh
-    args: ["-lc", "command -v nc && command -v pgrep"]
+    args: ["-lc", "command -v nc && test -x /package/admin/s6/command/s6-svstat"]
     exitCode: 0
 
   # gateway dispatch: name is positional, token/domain become flags.
@@ -35,7 +50,7 @@ commandTests:
     command: sh
     args:
       - "-lc"
-      - "ASTRAVAULT_NET=gateway ASTRAVAULT_GATEWAY_NAME=gw1 ASTRAVAULT_DOMAIN=https://vault.example.com ASTRAVAULT_ENROLL_METHOD=token ASTRAVAULT_TOKEN=secret-enroll ASTRAVAULT_NET_DEBUG=1 /usr/local/bin/entrypoint.sh 2>/dev/null"
+      - "ASTRAVAULT_NET=gateway ASTRAVAULT_GATEWAY_NAME=gw1 ASTRAVAULT_DOMAIN=https://vault.example.com ASTRAVAULT_ENROLL_METHOD=token ASTRAVAULT_TOKEN=secret-enroll ASTRAVAULT_NET_DEBUG=1 sh /etc/s6-overlay/s6-rc.d/gateway/run 2>/dev/null"
     expectedOutput:
       - "infisical gateway start gw1 .*--domain=https://vault.example.com.*--enroll-method=token.*--token=\\*\\*\\*"
     excludedOutput:
@@ -46,9 +61,64 @@ commandTests:
     command: sh
     args:
       - "-lc"
-      - "ASTRAVAULT_NET=relay ASTRAVAULT_RELAY_NAME=r1 ASTRAVAULT_RELAY_HOST=relay.example.com ASTRAVAULT_DOMAIN=https://vault.example.com ASTRAVAULT_NET_DEBUG=1 /usr/local/bin/entrypoint.sh 2>/dev/null"
+      - "ASTRAVAULT_NET=relay ASTRAVAULT_RELAY_NAME=r1 ASTRAVAULT_RELAY_HOST=relay.example.com ASTRAVAULT_DOMAIN=https://vault.example.com ASTRAVAULT_NET_DEBUG=1 sh /etc/s6-overlay/s6-rc.d/relay/run 2>/dev/null"
     expectedOutput:
       - "infisical relay start .*--name=r1.*--host=relay.example.com"
+
+  # agent-proxy dispatch: subcommand is three words; every knob becomes a flag.
+  - name: agent-proxy argv is built correctly
+    command: sh
+    args:
+      - "-lc"
+      - "ASTRAVAULT_NET=agent-proxy ASTRAVAULT_CLIENT_ID=cid ASTRAVAULT_CLIENT_SECRET=csec ASTRAVAULT_DOMAIN=https://vault.example.com ASTRAVAULT_PROXY_PORT=17322 ASTRAVAULT_PROXY_UNMATCHED_HOST=block ASTRAVAULT_PROXY_POLL_INTERVAL=30 ASTRAVAULT_PROXY_LOG_FORMAT=json ASTRAVAULT_NET_DEBUG=1 sh /etc/s6-overlay/s6-rc.d/agent-proxy/run 2>/dev/null"
+    expectedOutput:
+      - "infisical secrets agent-proxy start .*--domain=https://vault.example.com.*--port=17322.*--unmatched-host=block.*--poll-interval=30.*--log-format=json"
+
+  # Machine-identity creds reach the CLI through its own env, never argv, so
+  # they can't leak via `ps`.
+  - name: agent-proxy credentials go to env, not argv
+    command: sh
+    args:
+      - "-lc"
+      - "ASTRAVAULT_NET=agent-proxy ASTRAVAULT_CLIENT_ID=cid-test ASTRAVAULT_CLIENT_SECRET=csec-test ASTRAVAULT_NET_DEBUG=1 sh /etc/s6-overlay/s6-rc.d/agent-proxy/run 2>/dev/null"
+    expectedOutput:
+      - "env: INFISICAL_UNIVERSAL_AUTH_CLIENT_ID"
+      - "env: INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET"
+    excludedOutput:
+      - "cid-test"
+      - "csec-test"
+
+  # agent-proxy authenticates before it binds, so missing creds fail fast with
+  # the ASTRAVAULT_* names rather than the CLI's INFISICAL_* ones.
+  - name: agent-proxy without credentials fails fast
+    command: sh
+    args: ["-lc", "ASTRAVAULT_NET=agent-proxy sh /etc/s6-overlay/s6-rc.d/agent-proxy/run 2>&1 | grep -q ASTRAVAULT_PROXY_CLIENT_ID"]
+    exitCode: 0
+
+  # Several roles at once: each reads the same list and starts.
+  - name: multi-role list selects every named role
+    command: sh
+    args:
+      - "-lc"
+      - "export ASTRAVAULT_NET='gateway,agent-proxy' ASTRAVAULT_CLIENT_ID=cid ASTRAVAULT_CLIENT_SECRET=csec ASTRAVAULT_GATEWAY_NAME=gw1 ASTRAVAULT_NET_DEBUG=1; sh /etc/s6-overlay/s6-rc.d/gateway/run 2>/dev/null | grep -q 'gateway start gw1' && sh /etc/s6-overlay/s6-rc.d/agent-proxy/run 2>/dev/null | grep -q 'secrets agent-proxy start'"
+    exitCode: 0
+
+  # A role-scoped variable beats the shared one, so co-resident roles can hold
+  # separate identities.
+  - name: role-scoped variable overrides the shared fallback
+    command: sh
+    args:
+      - "-lc"
+      - "export ASTRAVAULT_NET='gateway,agent-proxy' ASTRAVAULT_DOMAIN=https://shared.example.com ASTRAVAULT_PROXY_DOMAIN=https://proxy.example.com ASTRAVAULT_CLIENT_ID=cid ASTRAVAULT_CLIENT_SECRET=csec ASTRAVAULT_NET_DEBUG=1; sh /etc/s6-overlay/s6-rc.d/agent-proxy/run 2>/dev/null | grep -q -- '--domain=https://proxy.example.com' && sh /etc/s6-overlay/s6-rc.d/gateway/run 2>/dev/null | grep -q -- '--domain=https://shared.example.com'"
+    exitCode: 0
+
+  # The role name tolerates the underscore/concatenated spellings and any case.
+  - name: role aliases normalise
+    command: sh
+    args:
+      - "-lc"
+      - "ASTRAVAULT_NET=AGENT_PROXY ASTRAVAULT_CLIENT_ID=c ASTRAVAULT_CLIENT_SECRET=s ASTRAVAULT_NET_DEBUG=1 sh /etc/s6-overlay/s6-rc.d/agent-proxy/run 2>/dev/null | grep -q 'secrets agent-proxy start' && ASTRAVAULT_NET=agentproxy ASTRAVAULT_CLIENT_ID=c ASTRAVAULT_CLIENT_SECRET=s ASTRAVAULT_NET_DEBUG=1 sh /etc/s6-overlay/s6-rc.d/agent-proxy/run 2>/dev/null | grep -q 'secrets agent-proxy start'"
+    exitCode: 0
 
   # Docker/Swarm secret: VAR_FILE is read into VAR (using a non-secret var so we
   # can assert the resolved value made it into the argv).
@@ -56,7 +126,7 @@ commandTests:
     command: sh
     args:
       - "-lc"
-      - "printf 'https://vault.example.com' > /tmp/domain && ASTRAVAULT_NET=relay ASTRAVAULT_RELAY_NAME=r1 ASTRAVAULT_DOMAIN_FILE=/tmp/domain ASTRAVAULT_NET_DEBUG=1 /usr/local/bin/entrypoint.sh 2>/dev/null"
+      - "printf 'https://vault.example.com' > /tmp/domain && ASTRAVAULT_NET=relay ASTRAVAULT_RELAY_NAME=r1 ASTRAVAULT_DOMAIN_FILE=/tmp/domain ASTRAVAULT_NET_DEBUG=1 sh /etc/s6-overlay/s6-rc.d/relay/run 2>/dev/null"
     expectedOutput:
       - "--domain=https://vault.example.com"
 
@@ -65,17 +135,29 @@ commandTests:
     command: sh
     args:
       - "-lc"
-      - "ASTRAVAULT_NET=gateway ASTRAVAULT_GATEWAY_NAME=gw-%h ASTRAVAULT_NET_DEBUG=1 /usr/local/bin/entrypoint.sh 2>/dev/null | grep -q \"gw-$(hostname)\""
+      - "ASTRAVAULT_NET=gateway ASTRAVAULT_GATEWAY_NAME=gw-%h ASTRAVAULT_NET_DEBUG=1 sh /etc/s6-overlay/s6-rc.d/gateway/run 2>/dev/null | grep -q \"gw-$(hostname)\""
     exitCode: 0
 
-  # No role and no args is a usage error.
-  - name: missing role fails
+  # An unknown role is a typo — the init oneshot rejects it so the container
+  # dies instead of idling with every service silently disabled.
+  - name: unknown role is rejected at init
     command: sh
-    args: ["-lc", "ASTRAVAULT_NET= /usr/local/bin/entrypoint.sh"]
+    args: ["-lc", "ASTRAVAULT_NET=gatway /usr/local/bin/astravault-init.sh"]
     exitCode: 1
 
-  # Escape hatch: no role but args -> raw infisical passthrough.
-  - name: raw passthrough without role
+  - name: known roles pass init validation
     command: sh
-    args: ["-lc", "ASTRAVAULT_NET= /usr/local/bin/entrypoint.sh --version"]
+    args: ["-lc", "ASTRAVAULT_NET='gateway, relay, agent-proxy' /usr/local/bin/astravault-init.sh"]
     exitCode: 0
+
+  # Healthcheck only probes the roles that were actually selected, and reports
+  # unhealthy while a selected role has nothing listening.
+  - name: healthcheck fails when a selected role is not up
+    command: sh
+    args: ["-lc", "ASTRAVAULT_NET=agent-proxy ASTRAVAULT_PROXY_PORT=17399 /usr/local/bin/healthcheck.sh"]
+    exitCode: 1
+
+  - name: healthcheck fails when no role is selected
+    command: sh
+    args: ["-lc", "ASTRAVAULT_NET= /usr/local/bin/healthcheck.sh"]
+    exitCode: 1

@@ -1,0 +1,111 @@
+# astravaultnet — AGENT PROXY example
+# ---------------------------------------------------------------------------
+# The agent proxy points the opposite way to a gateway: agents route their
+# outbound HTTP(S) through it (HTTPS_PROXY/HTTP_PROXY), and it injects the real
+# credentials on the wire. The agent calls authenticated APIs while never
+# holding the secret — only a scoped token and dummy placeholders.
+#
+# Put it on its OWN host, not the one running the coding agent: that separation
+# is the whole point, since the real credentials live only in this process's
+# memory. Reachable from your agent machines on 17322, never from the internet.
+#
+# It writes nothing to disk — cache, dynamic-secret leases and its signed
+# intermediate CA are all in memory — so there is no volume and no database,
+# and `replicas` scale freely behind an L4 (TCP) load balancer.
+#
+# Deploy: docker compose -f docker-compose.agent-proxy.yml up -d
+# ---------------------------------------------------------------------------
+
+services:
+  agent-proxy:
+    image: ghcr.io/astrateam-net/astravaultnet:0.43.114
+    restart: unless-stopped
+
+    environment:
+      # --- role selector (required) -------------------------------------
+      ASTRAVAULT_NET: agent-proxy
+
+      # --- who to talk to ------------------------------------------------
+      ASTRAVAULT_DOMAIN: https://vault.astrateam.net
+
+      # --- identity (required) -------------------------------------------
+      # The proxy's ONLY credential source is a machine identity, and it needs
+      # read access to the secrets its proxied services reference. Give it its
+      # own identity — separate from the agents', which only hold Proxy access.
+      # Passed to the CLI through its own env, never as flags, so it stays out
+      # of `ps`. Any variable can be sourced from a file by appending _FILE.
+      ASTRAVAULT_PROXY_CLIENT_ID_FILE: /run/secrets/astravault_proxy_client_id
+      ASTRAVAULT_PROXY_CLIENT_SECRET_FILE: /run/secrets/astravault_proxy_client_secret
+
+      # --- behaviour (all optional) --------------------------------------
+      # Listen port. Default 17322; also what the healthcheck probes.
+      # ASTRAVAULT_PROXY_PORT: 17322
+      #
+      # What to do with hosts no proxied service matches. `allow` (default)
+      # forwards them untouched with no credentials — the normal mode, since
+      # much agent traffic is docs, package registries and self-authenticated
+      # calls. `block` rejects with 403 and restricts agents to exactly the
+      # services you defined — including blocking astravault itself, so the
+      # agent's own `infisical` commands stop working.
+      # ASTRAVAULT_PROXY_UNMATCHED_HOST: allow
+      #
+      # Seconds between permission/credential refreshes. An edited service, a
+      # rotated secret or a revoked grant takes effect within one interval.
+      # ASTRAVAULT_PROXY_POLL_INTERVAL: 60
+      #
+      # Per-request activity logging. The level doubles as the activity filter:
+      # debug=everything incl. passthrough, info=brokered (default),
+      # warn=blocked + errors only.
+      # ASTRAVAULT_PROXY_LOG_FORMAT: json
+      # ASTRAVAULT_PROXY_LOG_LEVEL: info
+
+    secrets:
+      - astravault_proxy_client_id
+      - astravault_proxy_client_secret
+
+    ports:
+      # Publish ONLY to the network your agent machines sit on.
+      - "17322:17322"
+
+    # No volume: the proxy is stateless. Scale with `deploy.replicas` behind an
+    # L4 load balancer — every instance chains to the same org root CA, so an
+    # agent trusts whichever one it lands on.
+
+  # --- Combined: gateway + agent proxy in one container --------------------
+  # ASTRAVAULT_NET takes a LIST, and the roles' ports never collide, so one
+  # container can be both. This is the natural fit when your gateways are
+  # already pinned one per node: the same nodes then serve as the agent proxy
+  # replicas. Shared variables (DOMAIN here) apply to both roles; role-scoped
+  # ones (ASTRAVAULT_GATEWAY_* / ASTRAVAULT_PROXY_*) override per role, so the
+  # two can hold completely separate identities.
+  #
+  # Trade-off: health is shared. A crashed gateway marks the whole task
+  # unhealthy and restarts the proxy with it. Split into two services if you
+  # want them to fail independently.
+  #
+  # gateway-and-proxy:
+  #   image: ghcr.io/astrateam-net/astravaultnet:0.43.114
+  #   restart: unless-stopped
+  #   environment:
+  #     ASTRAVAULT_NET: gateway,agent-proxy
+  #     ASTRAVAULT_DOMAIN: https://vault.astrateam.net
+  #     # gateway: its own name + single-use enrollment token, per node
+  #     ASTRAVAULT_GATEWAY_NAME: gw-01
+  #     ASTRAVAULT_ENROLL_METHOD: token
+  #     ASTRAVAULT_TOKEN_FILE: /run/secrets/gw_enroll_token
+  #     # agent proxy: a machine identity of its own
+  #     ASTRAVAULT_PROXY_CLIENT_ID_FILE: /run/secrets/astravault_proxy_client_id
+  #     ASTRAVAULT_PROXY_CLIENT_SECRET_FILE: /run/secrets/astravault_proxy_client_secret
+  #   secrets: [gw_enroll_token, astravault_proxy_client_id, astravault_proxy_client_secret]
+  #   ports: ["17322:17322"]
+  #   volumes:
+  #     # Only the gateway needs this — its exchanged access token lives here.
+  #     - gw_state:/etc/infisical
+
+# Provisioned out-of-band, e.g.:
+#   printf '<client-id>' | docker secret create astravault_proxy_client_id -
+secrets:
+  astravault_proxy_client_id:
+    external: true
+  astravault_proxy_client_secret:
+    external: true
