@@ -1,0 +1,97 @@
+# astravaultnet — GATEWAY + AGENT PROXY in one container
+# ---------------------------------------------------------------------------
+# ASTRAVAULT_NET takes a LIST, and these two roles are orthogonal: the gateway
+# only dials out (SSH reverse tunnel to a relay), the agent proxy only listens
+# (17322). Nothing collides, so one container runs both.
+#
+# WHICH PAIRINGS ARE VALID
+#   gateway | relay | agent-proxy            — any one alone
+#   gateway,agent-proxy                      — this file
+#   relay,agent-proxy                        — same shape, swap the role block
+# A gateway dials a relay, so those two are the ends of one tunnel and never
+# belong together: ASTRAVAULT_NET=gateway,relay is rejected at startup, and so
+# is the all-three list.
+#
+# WHY PAIR THEM
+# Gateways are already pinned one per node (each needs its own name and its own
+# single-use enrollment token), while the agent proxy is stateless and wants N
+# identical replicas behind an L4 load balancer. Folding the proxy into the
+# node-pinned gateways gives you one proxy per node for free — no extra service,
+# no extra placement rules.
+#
+# TRADE-OFF
+# Health is shared: the container is healthy only when BOTH roles are up, so a
+# crashed gateway marks the task unhealthy and restarts the proxy with it. Split
+# them into two services if you need independent restarts.
+#
+# Deploy: docker compose -f docker-compose.gateway-agent-proxy.yml up -d
+# ---------------------------------------------------------------------------
+
+services:
+  gateway-and-proxy:
+    image: ghcr.io/astrateam-net/astravaultnet:0.43.114
+    restart: unless-stopped
+
+    environment:
+      # --- roles (a list, order irrelevant) ------------------------------
+      ASTRAVAULT_NET: gateway,agent-proxy
+
+      # --- shared by both roles ------------------------------------------
+      # A bare variable applies to every role in the list. Give a role its own
+      # value by using the role-scoped form instead (ASTRAVAULT_GATEWAY_DOMAIN,
+      # ASTRAVAULT_PROXY_DOMAIN, ...), which always wins over the bare one.
+      ASTRAVAULT_DOMAIN: https://vault.astrateam.net
+
+      # --- gateway: identity of THIS node --------------------------------
+      # Unique per gateway — its credentials are stored on disk scoped by this
+      # name. `%h` expands to the container hostname if you'd rather derive it.
+      ASTRAVAULT_GATEWAY_NAME: gw-01
+      # OPTIONAL: pin one relay (disables auto-select + failover).
+      # ASTRAVAULT_TARGET_RELAY_NAME: relay-01
+      #
+      # One-time enrollment token from the astravault UI: SINGLE-USE, 1h TTL. On
+      # first start it's exchanged for a long-lived access token written to
+      # /etc/infisical (kept by the volume below, so restarts reuse it).
+      # ASTRAVAULT_GATEWAY_ENROLL_METHOD / _TOKEN would scope these to the
+      # gateway only; bare names are fine here since the proxy ignores them.
+      ASTRAVAULT_ENROLL_METHOD: token
+      ASTRAVAULT_TOKEN_FILE: /run/secrets/gw_enroll_token
+
+      # --- agent proxy: its own machine identity -------------------------
+      # Role-scoped on purpose: the proxy needs read access to the secrets its
+      # proxied services reference, which is a different privilege set from the
+      # gateway's. Passed to the CLI through its own environment, never as
+      # flags, so it stays out of `ps`.
+      ASTRAVAULT_PROXY_CLIENT_ID_FILE: /run/secrets/astravault_proxy_client_id
+      ASTRAVAULT_PROXY_CLIENT_SECRET_FILE: /run/secrets/astravault_proxy_client_secret
+      # OPTIONAL knobs — see docker-compose.agent-proxy.yml for all of them.
+      # ASTRAVAULT_PROXY_UNMATCHED_HOST: allow
+      # ASTRAVAULT_PROXY_POLL_INTERVAL: 60
+
+    secrets:
+      - gw_enroll_token
+      - astravault_proxy_client_id
+      - astravault_proxy_client_secret
+
+    ports:
+      # Only the proxy listens. Publish it to the network your agent machines
+      # sit on, never to the internet. The gateway publishes nothing.
+      - "17322:17322"
+
+    volumes:
+      # Only the gateway needs state — its exchanged access token lives here.
+      # The agent proxy writes nothing at all.
+      - gw_state:/etc/infisical
+
+# Provisioned out-of-band, e.g.:
+#   printf '<token-from-ui>' | docker secret create gw_enroll_token -
+secrets:
+  gw_enroll_token:
+    external: true
+  astravault_proxy_client_id:
+    external: true
+  astravault_proxy_client_secret:
+    external: true
+
+volumes:
+  gw_state:

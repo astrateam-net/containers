@@ -145,10 +145,22 @@ commandTests:
     args: ["-lc", "ASTRAVAULT_NET=gatway /usr/local/bin/astravault-init.sh"]
     exitCode: 1
 
-  - name: known roles pass init validation
+  - name: valid role pairings pass init validation
     command: sh
-    args: ["-lc", "ASTRAVAULT_NET='gateway, relay, agent-proxy' /usr/local/bin/astravault-init.sh"]
+    args: ["-lc", "for n in gateway relay agent-proxy 'gateway,agent-proxy' 'relay, agent-proxy'; do ASTRAVAULT_NET=\"$n\" /usr/local/bin/astravault-init.sh || exit 1; done"]
     exitCode: 0
+
+  # A gateway dials a relay — the two ends of one tunnel never belong in one
+  # container, so the pairing (and the all-three list) is rejected outright.
+  - name: gateway plus relay is rejected
+    command: sh
+    args: ["-lc", "ASTRAVAULT_NET=gateway,relay /usr/local/bin/astravault-init.sh"]
+    exitCode: 1
+
+  - name: all three roles is rejected
+    command: sh
+    args: ["-lc", "ASTRAVAULT_NET='gateway,relay,agent-proxy' /usr/local/bin/astravault-init.sh"]
+    exitCode: 1
 
   # Healthcheck only probes the roles that were actually selected, and reports
   # unhealthy while a selected role has nothing listening.

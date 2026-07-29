@@ -71,36 +71,8 @@ services:
     # L4 load balancer — every instance chains to the same org root CA, so an
     # agent trusts whichever one it lands on.
 
-  # --- Combined: gateway + agent proxy in one container --------------------
-  # ASTRAVAULT_NET takes a LIST, and the roles' ports never collide, so one
-  # container can be both. This is the natural fit when your gateways are
-  # already pinned one per node: the same nodes then serve as the agent proxy
-  # replicas. Shared variables (DOMAIN here) apply to both roles; role-scoped
-  # ones (ASTRAVAULT_GATEWAY_* / ASTRAVAULT_PROXY_*) override per role, so the
-  # two can hold completely separate identities.
-  #
-  # Trade-off: health is shared. A crashed gateway marks the whole task
-  # unhealthy and restarts the proxy with it. Split into two services if you
-  # want them to fail independently.
-  #
-  # gateway-and-proxy:
-  #   image: ghcr.io/astrateam-net/astravaultnet:0.43.114
-  #   restart: unless-stopped
-  #   environment:
-  #     ASTRAVAULT_NET: gateway,agent-proxy
-  #     ASTRAVAULT_DOMAIN: https://vault.astrateam.net
-  #     # gateway: its own name + single-use enrollment token, per node
-  #     ASTRAVAULT_GATEWAY_NAME: gw-01
-  #     ASTRAVAULT_ENROLL_METHOD: token
-  #     ASTRAVAULT_TOKEN_FILE: /run/secrets/gw_enroll_token
-  #     # agent proxy: a machine identity of its own
-  #     ASTRAVAULT_PROXY_CLIENT_ID_FILE: /run/secrets/astravault_proxy_client_id
-  #     ASTRAVAULT_PROXY_CLIENT_SECRET_FILE: /run/secrets/astravault_proxy_client_secret
-  #   secrets: [gw_enroll_token, astravault_proxy_client_id, astravault_proxy_client_secret]
-  #   ports: ["17322:17322"]
-  #   volumes:
-  #     # Only the gateway needs this — its exchanged access token lives here.
-  #     - gw_state:/etc/infisical
+# To pair the proxy with a gateway or a relay in one container, see
+# docker-compose.gateway-agent-proxy.yml.
 
 # Provisioned out-of-band, e.g.:
 #   printf '<client-id>' | docker secret create astravault_proxy_client_id -

@@ -2,8 +2,9 @@
 # astravaultnet — helpers shared by the role services.
 #
 # Every role is a subcommand of the same `infisical` binary, so a container can
-# run one role or several at once. ASTRAVAULT_NET holds the list; each s6
-# longrun asks whether it is in it, and builds its own argv from there.
+# run one role, or a role plus the agent proxy. ASTRAVAULT_NET holds the list;
+# each s6 longrun asks whether it is in it, and builds its own argv from there.
+# gateway + relay is refused in astravault-init.sh — a gateway dials a relay.
 #
 # Because roles coexist, configuration resolves in two steps: a role-scoped
 # variable wins, and a bare one is the shared fallback. So a container running

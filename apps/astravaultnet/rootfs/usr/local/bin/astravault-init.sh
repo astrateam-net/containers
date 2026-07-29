@@ -26,4 +26,13 @@ for r in $roles; do
   esac
 done
 
+# A gateway dials a relay: they are the two ends of one tunnel, so pairing them
+# in a single container is always a mistake. The agent proxy is orthogonal and
+# pairs with either. Valid: gateway | relay | agent-proxy | gateway,agent-proxy
+# | relay,agent-proxy.
+if av_role_enabled gateway && av_role_enabled relay; then
+  echo "astravaultnet: ERROR: gateway and relay cannot share a container — a gateway dials a relay. Run one of them, optionally alongside agent-proxy" >&2
+  exit 1
+fi
+
 echo "astravaultnet: roles: $roles" >&2

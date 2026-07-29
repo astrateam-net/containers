@@ -9,9 +9,11 @@
 # its own long-running foreground process, so running more than one in a
 # container needs a supervisor. That is the whole reason s6-overlay is here:
 # ASTRAVAULT_NET is a LIST, each role is an s6 longrun, and a role that is not
-# in the list takes itself down at start instead of flapping. Their ports never
-# collide (relay 2222/8443, proxy 17322), so any combination is valid — e.g. a
-# node-pinned gateway that also serves as one of the agent proxy replicas.
+# in the list takes itself down at start instead of flapping. The agent proxy is
+# the only role that pairs: it only listens (17322) while a gateway only dials
+# out, so gateway,agent-proxy and relay,agent-proxy are valid — e.g. a
+# node-pinned gateway that also serves as one of the agent proxy replicas. A
+# gateway dials a relay, so that pairing is rejected at startup.
 #
 # Base is the official infisical/cli image: Alpine + the statically linked
 # `infisical` binary, published multi-arch (amd64/arm64) by Infisical.

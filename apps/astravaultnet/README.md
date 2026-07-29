@@ -108,14 +108,27 @@ agent's own `infisical` calls stop working — use it only for a strict allowlis
 For any variable above, a `<VAR>_FILE` pointing at a mounted secret is read into
 `<VAR>` (an explicit `<VAR>` wins over its `_FILE`).
 
-## Running several roles at once
+## Running two roles at once
 
 `ASTRAVAULT_NET` takes a list — `gateway,agent-proxy` — and each named role gets
-its own supervised process. The ports never collide, so any combination is
-valid. The natural pairing is a **node-pinned gateway that doubles as one of the
-agent proxy replicas**: gateways are already one-per-node with their own name
-and enrollment token, and the agent proxy is stateless, so the same three nodes
-give you three proxies behind an L4 load balancer.
+its own supervised process. The **agent proxy is the only role that pairs**: it
+only listens (17322) while a gateway only dials out, so nothing collides.
+
+| `ASTRAVAULT_NET` | |
+|---|---|
+| `gateway` · `relay` · `agent-proxy` | any one alone |
+| `gateway,agent-proxy` | ✅ |
+| `relay,agent-proxy` | ✅ |
+| `gateway,relay` | ❌ rejected at startup |
+| all three | ❌ rejected at startup |
+
+A gateway **dials** a relay — they are the two ends of one tunnel, so pairing
+them in one container is always a mistake and the init check refuses to start.
+
+The natural pairing is a **node-pinned gateway that doubles as one of the agent
+proxy replicas**: gateways are already one-per-node with their own name and
+enrollment token, and the agent proxy is stateless, so the same three nodes give
+you three proxies behind an L4 load balancer.
 
 ```yaml
 environment:
@@ -179,13 +192,16 @@ Ready-to-run, fully-commented compose files (every variable explained inline):
 - **[examples/docker-compose.relay.yml](examples/docker-compose.relay.yml)** — a
   relay on a public host (publishes 2222 + 8443).
 - **[examples/docker-compose.agent-proxy.yml](examples/docker-compose.agent-proxy.yml)** — an
-  agent proxy on its own host (publishes 17322), plus the combined
-  gateway + agent-proxy variant.
+  agent proxy on its own host (publishes 17322).
+- **[examples/docker-compose.gateway-agent-proxy.yml](examples/docker-compose.gateway-agent-proxy.yml)** — both
+  in one container: which pairings are legal, and which variables to scope per
+  role. Swap the gateway block for a relay one to get `relay,agent-proxy`.
 
 ```bash
-docker compose -f examples/docker-compose.gateway.yml     up -d
-docker compose -f examples/docker-compose.relay.yml       up -d
-docker compose -f examples/docker-compose.agent-proxy.yml up -d
+docker compose -f examples/docker-compose.gateway.yml             up -d
+docker compose -f examples/docker-compose.relay.yml               up -d
+docker compose -f examples/docker-compose.agent-proxy.yml         up -d
+docker compose -f examples/docker-compose.gateway-agent-proxy.yml up -d
 ```
 
 ## Docker Swarm topology
