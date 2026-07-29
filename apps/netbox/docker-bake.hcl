@@ -3,7 +3,7 @@ target "docker-metadata-action" {}
 # Base tag = v${VERSION}-${NETBOX_DOCKER_VERSION}; tracked as two independent lines. VERSION drives our tag.
 variable "VERSION" {
   // renovate: datasource=docker depName=netboxcommunity/netbox extractVersion=^v(?<version>\d+\.\d+\.\d+)$
-  default = "4.6.5"
+  default = "4.6.6"
 }
 
 variable "NETBOX_DOCKER_VERSION" {
