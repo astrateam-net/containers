@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=ghcr.io/kodustech/kodus-ai-api
-  default = "2.1.27"
+  default = "2.1.28"
 }
 
 variable "SOURCE" {
