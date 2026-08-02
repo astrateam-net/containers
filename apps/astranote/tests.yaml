@@ -5,17 +5,27 @@ commandTests:
     command: sh
     args: ["-lc", "test -f /app/dist/main.js"]
     exitCode: 0
-  - name: patch applied
+  - name: workspace patch applied
     command: sh
     args:
       - "-lc"
       - 'grep -qF ''plan:"selfhost_team",quantity:1e5'' /app/dist/main.js'
     exitCode: 0
+  - name: user patch applied
+    command: sh
+    args:
+      - "-lc"
+      - 'grep -qF ''__astranoteBaseEntitlements'' /app/dist/main.js && grep -qF ''source:"cloud_subscription",plan:"ai",status:"active"'' /app/dist/main.js'
+    exitCode: 0
   - name: expected anchors present
     command: sh
     args:
       - "-lc"
-      - "grep -qF 'resolveBestEntitlement' /app/dist/main.js && grep -qF 'builtinFree' /app/dist/main.js"
+      - "grep -qF 'resolveBestEntitlement' /app/dist/main.js && grep -qF 'builtinFree' /app/dist/main.js && grep -qF 'getActiveEntitlements' /app/dist/main.js"
+    exitCode: 0
+  - name: server bundle parses
+    command: sh
+    args: ["-lc", "node --check /app/dist/main.js"]
     exitCode: 0
   - name: agent removed
     command: sh
