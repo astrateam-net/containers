@@ -11,7 +11,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | App | Image | Version |
 |-----|-------|---------|
 | [astra-sso](apps/astra-sso/) | `ghcr.io/astrateam-net/astra-sso` | `2026.5.6` |
-| [astraflow](apps/astraflow/) | `ghcr.io/astrateam-net/astraflow` | `2.31.1` |
+| [astraflow](apps/astraflow/) | `ghcr.io/astrateam-net/astraflow` | `2.32.7` |
 | [astragraf](apps/astragraf/) | `ghcr.io/astrateam-net/astragraf` | `13.0.1` |
 | [astrai18n](apps/astrai18n/) | `ghcr.io/astrateam-net/astrai18n` | `3.212.1` |
 | [astraide](apps/astraide/) | `ghcr.io/astrateam-net/astraide` | `v1.4.154` |
@@ -36,9 +36,9 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [bpm](apps/bpm/) | `ghcr.io/astrateam-net/bpm` | `11.3.8` |
 | [ci-ansible](apps/ci-ansible/) | `ghcr.io/astrateam-net/ci-ansible` | `1.2.0` |
 | [ci-opentofu](apps/ci-opentofu/) | `ghcr.io/astrateam-net/ci-opentofu` | `1.12.5` |
-| [dev](apps/dev/) | `ghcr.io/astrateam-net/dev` | `v2.35.2` |
-| [dev-gw](apps/dev-gw/) | `ghcr.io/astrateam-net/dev-gw` | `2026.2.3` |
-| [flowrunner](apps/flowrunner/) | `ghcr.io/astrateam-net/flowrunner` | `2.31.1` |
+| [dev](apps/dev/) | `ghcr.io/astrateam-net/dev` | `v2.35.3` |
+| [dev-gw](apps/dev-gw/) | `ghcr.io/astrateam-net/dev-gw` | `2026.2.4` |
+| [flowrunner](apps/flowrunner/) | `ghcr.io/astrateam-net/flowrunner` | `2.32.7` |
 | [gerbil-traefik-s6](apps/gerbil-traefik-s6/) | `ghcr.io/astrateam-net/gerbil-traefik-s6` | `1.4.3` |
 | [gh-actions-runner](apps/gh-actions-runner/) | `ghcr.io/astrateam-net/gh-actions-runner` | `0.3.0` |
 | [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.30.1` |
