@@ -3,6 +3,7 @@ const fs = require("fs");
 
 const MAIN = "/app/dist/main.js";
 let src = fs.readFileSync(MAIN, "utf8");
+const applied = [];
 
 const RESOLVER_RE =
   /builtinFree\(([A-Za-z0-9_$]+)\)\{return\(0,([A-Za-z0-9_$.]+)\)\(\{deploymentType:/;
@@ -12,6 +13,7 @@ if (!rm) {
 }
 const RESOLVER = rm[2];
 
+// Workspace plan. Read through resolveBestEntitlement.
 const INJECT_RE =
   /async resolveBestEntitlement\(([A-Za-z0-9_$]+),([A-Za-z0-9_$]+)\)\{/;
 const im = src.match(INJECT_RE);
@@ -20,7 +22,7 @@ if (!im) {
 }
 
 if (src.includes('plan:"selfhost_team",quantity:1e5')) {
-  console.log("astranote: already patched (skipping)");
+  applied.push("workspace: already patched");
 } else {
   const [whole, tType, tId] = im;
   const inject =
@@ -28,7 +30,41 @@ if (src.includes('plan:"selfhost_team",quantity:1e5')) {
     `if(env.selfhosted&&${tType}==="workspace")` +
     `return(0,${RESOLVER})({deploymentType:"cloud",targetType:"workspace",targetId:${tId},` +
     `plan:"selfhost_team",quantity:1e5,now:new Date().toISOString()});`;
-  src = src.replace(whole, inject);
-  fs.writeFileSync(MAIN, src);
-  console.log(`astranote: patched (resolver=${RESOLVER})`);
+  src = src.replace(whole, () => inject);
+  applied.push(`workspace (resolver=${RESOLVER})`);
 }
+
+// Copilot action limit and the pro-model lock both read the full active set,
+// not the single best entitlement, so they need their own anchor. One `ai`
+// row covers both: it sets the unlimitedCopilot quota flag and makes
+// currentUser.subscriptions report an active AI plan.
+const ACTIVE_RE =
+  /async getActiveEntitlements\(([A-Za-z0-9_$]+),([A-Za-z0-9_$]+)\)\{/;
+const am = src.match(ACTIVE_RE);
+if (!am) {
+  throw new Error("astranote: getActiveEntitlements anchor not found");
+}
+
+if (src.includes("__astranoteBaseEntitlements")) {
+  applied.push("user: already patched");
+} else {
+  const [whole, tType, tId] = am;
+  const AT = 'new Date("2020-01-01T00:00:00.000Z")';
+  const inject =
+    `async getActiveEntitlements(${tType},${tId}){` +
+    `const __r=await this.__astranoteBaseEntitlements(${tType},${tId});` +
+    `if(env.selfhosted&&${tType}==="user"&&!__r.some(__e=>__e.plan==="ai"))` +
+    `__r.push({id:"astranote-ai-"+${tId},targetType:"user",targetId:${tId},` +
+    `source:"cloud_subscription",plan:"ai",status:"active",` +
+    `subjectId:"astranote-ai:"+${tId},issuer:null,quantity:1,` +
+    `signedPayload:null,tokenHash:null,metadata:{},issuedAt:null,` +
+    `startsAt:null,expiresAt:null,validatedAt:null,graceUntil:null,` +
+    `createdAt:${AT},updatedAt:${AT}});` +
+    `return __r}` +
+    `async __astranoteBaseEntitlements(${tType},${tId}){`;
+  src = src.replace(whole, () => inject);
+  applied.push("user: ai entitlement");
+}
+
+fs.writeFileSync(MAIN, src);
+console.log(`astranote: ${applied.join(", ")}`);
