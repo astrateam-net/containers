@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=docker.io/n8nio/n8n
-  default = "2.31.1"
+  default = "2.32.7"
 }
 
 variable "SOURCE" {

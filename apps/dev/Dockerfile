@@ -92,7 +92,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
 RUN NODE_ENV=production pnpm build
 
 # --- Stage 2: patch + build slim agents + cross-compile the server ----------
-FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.26.4-bookworm AS build
+FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.26.5-bookworm AS build
 ARG VERSION
 ARG TARGETOS
 ARG TARGETARCH
