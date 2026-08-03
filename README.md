@@ -11,6 +11,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | App | Image | Version |
 |-----|-------|---------|
 | [astra-sso](apps/astra-sso/) | `ghcr.io/astrateam-net/astra-sso` | `2026.5.6` |
+| [astradb](apps/astradb/) | `ghcr.io/astrateam-net/astradb` | `26.1.0` |
 | [astraflow](apps/astraflow/) | `ghcr.io/astrateam-net/astraflow` | `2.32.7` |
 | [astragraf](apps/astragraf/) | `ghcr.io/astrateam-net/astragraf` | `13.0.1` |
 | [astrai18n](apps/astrai18n/) | `ghcr.io/astrateam-net/astrai18n` | `3.212.1` |
