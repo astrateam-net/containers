@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=grafana/grafana-enterprise
-  default = "13.0.1"
+  default = "13.1.1"
 }
 
 variable "SOURCE" {
