@@ -1,0 +1,32 @@
+schemaVersion: "2.0.0"
+
+# Structural only — the server needs Postgres to boot and a licence at deploy
+# time, so we verify the public-key swap landed in the product bundle rather
+# than running the service.
+
+metadataTest:
+  envVars:
+    - key: CLOUDBEAVER_RESTRICT_EXTERNAL_SERVICES_INVOCATION
+      value: "true"
+
+commandTests:
+  - name: vendor licence key absent
+    command: bash
+    args:
+      - "-lc"
+      - "d=$(mktemp -d) && cd \"$d\" && jar xf \"$(find /opt/cloudbeaver/server/plugins -name 'io.cloudbeaver.product.ee_*.jar')\" keys/cloudbeaver-ee-public.key && ! grep -qF 'lAiyH9ghPpqATx/FtCV2o5y6UKDFR' keys/cloudbeaver-ee-public.key"
+    exitCode: 0
+
+  - name: our licence key present
+    command: bash
+    args:
+      - "-lc"
+      - "d=$(mktemp -d) && cd \"$d\" && jar xf \"$(find /opt/cloudbeaver/server/plugins -name 'io.cloudbeaver.product.ee_*.jar')\" keys/cloudbeaver-ee-public.key && grep -qF '1WAfZom4ZlkyIYH5PLpScutjKM4L0h2N' keys/cloudbeaver-ee-public.key"
+    exitCode: 0
+
+  - name: vendor jar signature stripped
+    command: bash
+    args:
+      - "-lc"
+      - "! jar tf \"$(find /opt/cloudbeaver/server/plugins -name 'io.cloudbeaver.product.ee_*.jar')\" | grep -qE 'META-INF/DBEAVER[.](SF|RSA)'"
+    exitCode: 0
