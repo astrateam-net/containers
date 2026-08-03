@@ -41,7 +41,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [flowrunner](apps/flowrunner/) | `ghcr.io/astrateam-net/flowrunner` | `2.32.7` |
 | [gerbil-traefik-s6](apps/gerbil-traefik-s6/) | `ghcr.io/astrateam-net/gerbil-traefik-s6` | `1.4.3` |
 | [gh-actions-runner](apps/gh-actions-runner/) | `ghcr.io/astrateam-net/gh-actions-runner` | `0.3.0` |
-| [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.30.1` |
+| [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.34.0` |
 | [n8n-mcp](apps/n8n-mcp/) | `ghcr.io/astrateam-net/n8n-mcp` | `2.47.12` |
 | [netbox](apps/netbox/) | `ghcr.io/astrateam-net/netbox` | `4.6.7` |
 | [newt-swarm](apps/newt-swarm/) | `ghcr.io/astrateam-net/newt-swarm` | `1.14.0` |
