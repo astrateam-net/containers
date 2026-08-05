@@ -1,0 +1,19 @@
+schemaVersion: "2.0.0"
+
+# Structural only — the service needs Keycloak, Kafka and Postgres to boot, so
+# we verify the key swap landed rather than running the backend.
+
+commandTests:
+  - name: our key present
+    command: sh
+    args:
+      - "-lc"
+      - "grep -qF '3IqSRU6W9TSirwmOhPwQ' /usr/src/app/backend/server/services/license/utils/public-key.ts"
+    exitCode: 0
+
+  - name: vendor key absent
+    command: sh
+    args:
+      - "-lc"
+      - "! grep -qF '6L90HBMIeiEUkLw85aRx' /usr/src/app/backend/server/services/license/utils/public-key.ts"
+    exitCode: 0
