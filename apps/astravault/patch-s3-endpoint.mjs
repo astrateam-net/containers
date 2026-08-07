@@ -12,6 +12,10 @@
 // what selects credentials from the app connection, which only matters for STS
 // assume-role; a static access key ignores it.
 //
+// FIPS is forced off on that path: the S3 endpoint ruleset rejects the combination
+// outright ("A custom endpoint cannot be combined with FIPS"), which would fail every
+// upload and presign. Stock AWS storage keeps whatever crypto.isFipsModeEnabled() reports.
+//
 //   PAM_RECORDING_S3_ENDPOINT          e.g. https://<account>.r2.cloudflarestorage.com
 //   PAM_RECORDING_S3_REGION            signing region, default "auto"
 //   PAM_RECORDING_S3_FORCE_PATH_STYLE  "false" to use virtual-host style, default path style
@@ -23,9 +27,10 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 const FILE = "/backend/dist/ee/services/pam-session-recording/aws-s3/aws-s3-provider-factory.mjs";
 
-// buildClient()'s constructor call. `region: config.region` is the first key upstream sets
-// and is what the endpoint path has to override.
-const ANCHOR = /return new S3Client\(\{(\s*)region: config\.region,/;
+// buildClient()'s constructor call. Both keys the endpoint path has to override are part
+// of the anchor, so an upstream change to either one fails the build.
+const ANCHOR =
+  /return new S3Client\(\{(\s*)region: config\.region,\s*useFipsEndpoint: crypto\.isFipsModeEnabled\(\),/;
 
 const REPLACEMENT = `const astravaultS3Endpoint = process.env.PAM_RECORDING_S3_ENDPOINT;
   return new S3Client({$1...(astravaultS3Endpoint
@@ -33,7 +38,7 @@ const REPLACEMENT = `const astravaultS3Endpoint = process.env.PAM_RECORDING_S3_E
           endpoint: astravaultS3Endpoint,
           forcePathStyle: process.env.PAM_RECORDING_S3_FORCE_PATH_STYLE !== "false"
         }
-      : {}),$1region: astravaultS3Endpoint ? process.env.PAM_RECORDING_S3_REGION || "auto" : config.region,`;
+      : {}),$1region: astravaultS3Endpoint ? process.env.PAM_RECORDING_S3_REGION || "auto" : config.region,$1useFipsEndpoint: astravaultS3Endpoint ? false : crypto.isFipsModeEnabled(),`;
 
 const src = readFileSync(FILE, "utf8");
 
