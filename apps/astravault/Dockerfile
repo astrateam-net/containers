@@ -24,6 +24,11 @@ WORKDIR /backend
 COPY patch-entitlements.mjs /tmp/astravault-patch-entitlements.mjs
 RUN node /tmp/astravault-patch-entitlements.mjs && rm /tmp/astravault-patch-entitlements.mjs
 
+# PAM session recordings: honour PAM_RECORDING_S3_ENDPOINT so an S3-compatible provider
+# can back external storage. Same fail-loud contract as the entitlement patch.
+COPY patch-s3-endpoint.mjs /tmp/astravault-patch-s3-endpoint.mjs
+RUN node /tmp/astravault-patch-s3-endpoint.mjs && rm /tmp/astravault-patch-s3-endpoint.mjs
+
 # File-secret support: the upstream image reads config only from plain env vars. Wrap
 # its standalone-entrypoint.sh to resolve <VAR>_FILE (Docker/Swarm secrets in
 # /run/secrets) into the environment first; the wrapper ends with
