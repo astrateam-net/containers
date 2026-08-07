@@ -29,13 +29,13 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [astratalk](apps/astratalk/) | `ghcr.io/astrateam-net/astratalk` | `3.17.4` |
 | [astratalk-studio](apps/astratalk-studio/) | `ghcr.io/astrateam-net/astratalk-studio` | `1.17.1` |
 | [astratraces](apps/astratraces/) | `ghcr.io/astrateam-net/astratraces` | `v2.8.10` |
-| [astravault](apps/astravault/) | `ghcr.io/astrateam-net/astravault` | `0.162.15` |
+| [astravault](apps/astravault/) | `ghcr.io/astrateam-net/astravault` | `0.162.16` |
 | [astravaultnet](apps/astravaultnet/) | `ghcr.io/astrateam-net/astravaultnet` | `0.43.116` |
 | [astravision](apps/astravision/) | `ghcr.io/astrateam-net/astravision` | `0.9.0` |
 | [astravision-cpu](apps/astravision-cpu/) | `ghcr.io/astrateam-net/astravision-cpu` | `0.9.0` |
 | [astrawiki](apps/astrawiki/) | `ghcr.io/astrateam-net/astrawiki` | `0.95.0` |
 | [bird-maxmind](apps/bird-maxmind/) | `ghcr.io/astrateam-net/bird-maxmind` | `0.1.2` |
-| [bkm](apps/bkm/) | `ghcr.io/astrateam-net/bkm` | `10.2.14` |
+| [bkm](apps/bkm/) | `ghcr.io/astrateam-net/bkm` | `10.2.15` |
 | [bpm](apps/bpm/) | `ghcr.io/astrateam-net/bpm` | `11.3.8` |
 | [ci-ansible](apps/ci-ansible/) | `ghcr.io/astrateam-net/ci-ansible` | `1.2.0` |
 | [ci-opentofu](apps/ci-opentofu/) | `ghcr.io/astrateam-net/ci-opentofu` | `1.12.5` |
