@@ -6,7 +6,7 @@ target "docker-metadata-action" {}
 # -rc/pre-release tags by default while VERSION is stable.
 variable "VERSION" {
   // renovate: datasource=github-releases depName=stablyai/orca
-  default = "v1.4.154"
+  default = "v1.4.176"
 }
 
 variable "SOURCE" {
