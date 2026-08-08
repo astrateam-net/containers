@@ -29,7 +29,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [astratalk](apps/astratalk/) | `ghcr.io/astrateam-net/astratalk` | `3.17.4` |
 | [astratalk-studio](apps/astratalk-studio/) | `ghcr.io/astrateam-net/astratalk-studio` | `1.17.1` |
 | [astratraces](apps/astratraces/) | `ghcr.io/astrateam-net/astratraces` | `v2.8.10` |
-| [astravault](apps/astravault/) | `ghcr.io/astrateam-net/astravault` | `0.162.16` |
+| [astravault](apps/astravault/) | `ghcr.io/astrateam-net/astravault` | `0.162.18` |
 | [astravaultnet](apps/astravaultnet/) | `ghcr.io/astrateam-net/astravaultnet` | `0.43.116` |
 | [astravision](apps/astravision/) | `ghcr.io/astrateam-net/astravision` | `0.9.0` |
 | [astravision-cpu](apps/astravision-cpu/) | `ghcr.io/astrateam-net/astravision-cpu` | `0.9.0` |
