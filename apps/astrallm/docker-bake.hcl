@@ -1,8 +1,8 @@
 target "docker-metadata-action" {}
 
 variable "VERSION" {
-  // renovate: datasource=docker depName=ghcr.io/berriai/litellm versioning=docker
-  default = "main-latest@sha256:e0ac5d76ead293c1505587985c8d4360647118cf30d8005963a8f1225ee4d631"
+  // renovate: datasource=docker depName=ghcr.io/berriai/litellm
+  default = "1.95.1"
 }
 
 variable "SOURCE" {
