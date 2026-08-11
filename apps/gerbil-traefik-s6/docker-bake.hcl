@@ -6,12 +6,11 @@ variable "VERSION" {
   default = "1.4.3"
 }
 
-# Traefik binary lifted into the image. Pinned to the 3.6 line to match the
-# proven standalone traefik_config.yml (badger v1.4.1, entrypoints). Let a
-# jump to 3.7.x be a deliberate, separate change.
+# Traefik binary lifted into the image. Tracks the line Pangolin's reference
+# stack pins in its own compose.
 variable "TRAEFIK_VERSION" {
   // renovate: datasource=docker depName=traefik
-  default = "v3.6.22"
+  default = "v3.7.10"
 }
 
 variable "S6_OVERLAY_VERSION" {
