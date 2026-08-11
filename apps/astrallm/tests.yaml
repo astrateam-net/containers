@@ -3,7 +3,7 @@ schemaVersion: "2.0.0"
 fileContentTests:
   - name: our public key installed
     path: /app/.venv/lib/python3.13/site-packages/litellm/proxy/auth/public_key.pem
-    expectedContents: ['r2ETelH4Ge/Q\+SZGyd8rtNtRkpQDDt']
+    expectedContents: ['phfsQShY5V9GqVeqJbsAVyrihu8VUX']
   - name: vendor public key removed
     path: /app/.venv/lib/python3.13/site-packages/litellm/proxy/auth/public_key.pem
     excludedContents: ['A3rF7vrLb8\+1yhF2U62AghQp9nStyu']
