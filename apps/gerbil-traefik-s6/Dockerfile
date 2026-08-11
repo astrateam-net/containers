@@ -14,8 +14,8 @@
 # image's Swarm service named `gerbil` so `gerbil:3004` / `gerbil:8080` and
 # Gerbil's `--reachableAt` keep resolving for the rest of the stack.
 
-ARG VERSION=1.4.2
-ARG TRAEFIK_VERSION=v3.6.22
+ARG VERSION
+ARG TRAEFIK_VERSION
 
 # Traefik ships a static, CGO-free binary — lift it straight out of the
 # official image.
@@ -27,7 +27,7 @@ FROM traefik:${TRAEFIK_VERSION} AS traefik
 FROM ghcr.io/fosrl/gerbil:${VERSION} AS runner
 
 ARG TARGETARCH
-ARG S6_OVERLAY_VERSION=3.2.3.0
+ARG S6_OVERLAY_VERSION
 
 # ca-certificates: Traefik ACME + badger plugin fetch over HTTPS.
 # xz: busybox tar needs it to unpack the s6-overlay tarballs.
