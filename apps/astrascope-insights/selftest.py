@@ -39,11 +39,23 @@ def find_fn(code, name):
     return None
 
 
-def swap(code, orig, new):
-    return code.replace(co_consts=tuple(
-        swap(c, orig, new) if isinstance(c, types.CodeType)
-        else (new if c == orig else c)
-        for c in code.co_consts))
+VENDOR_AUD = "langgraph-cloud"
+OUR_AUD = "langsmith"
+
+
+def swap(code, orig, new, in_gate=False):
+    gate = in_gate or code.co_name == "decode_license_jwt"
+    consts = []
+    for c in code.co_consts:
+        if isinstance(c, types.CodeType):
+            consts.append(swap(c, orig, new, gate))
+        elif c == orig:
+            consts.append(new)
+        elif gate and c == VENDOR_AUD:
+            consts.append(OUR_AUD)
+        else:
+            consts.append(c)
+    return code.replace(co_consts=tuple(consts))
 
 
 def prove(code, orig):
@@ -71,8 +83,8 @@ def prove(code, orig):
     now = datetime.datetime.now(datetime.timezone.utc)
 
     def mint(key):
-        return jwt.encode({"aud": ["langsmith", "langgraph-cloud"], "iat": now,
-                           "nbf": now, "exp": now + datetime.timedelta(days=3650),
+        return jwt.encode({"aud": "langsmith", "iat": now, "nbf": now,
+                           "exp": now + datetime.timedelta(days=3650),
                            "sub": "astrateam-selfhosted", "customer_name": "AstraTeam"},
                           key, algorithm="RS256")
 
