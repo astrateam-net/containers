@@ -1,4 +1,5 @@
 # syntax=docker/dockerfile:1
+# check=skip=InvalidDefaultArgInFrom
 
 ARG VERSION
 FROM ghcr.io/kiwigrid/k8s-sidecar:${VERSION}
