@@ -29,6 +29,9 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [astrarag-ui](apps/astrarag-ui/) | `ghcr.io/astrateam-net/astrarag-ui` | `0.9.0` |
 | [astras3](apps/astras3/) | `ghcr.io/astrateam-net/astras3` | `—` |
 | [astrascope](apps/astrascope/) | `ghcr.io/astrateam-net/astrascope` | `0.17.1rc1` |
+| [astrascope-chat](apps/astrascope-chat/) | `ghcr.io/astrateam-net/astrascope-chat` | `0.17.1rc1` |
+| [astrascope-fleet](apps/astrascope-fleet/) | `ghcr.io/astrateam-net/astrascope-fleet` | `0.17.1rc1` |
+| [astrascope-insights](apps/astrascope-insights/) | `ghcr.io/astrateam-net/astrascope-insights` | `0.17.1rc1` |
 | [astratalk](apps/astratalk/) | `ghcr.io/astrateam-net/astratalk` | `3.17.4` |
 | [astratalk-studio](apps/astratalk-studio/) | `ghcr.io/astrateam-net/astratalk-studio` | `1.17.1` |
 | [astratraces](apps/astratraces/) | `ghcr.io/astrateam-net/astratraces` | `v2.8.10` |
