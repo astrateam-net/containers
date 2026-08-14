@@ -10,6 +10,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 
 | App | Image | Version |
 |-----|-------|---------|
+| [actions-runner](apps/actions-runner/) | `ghcr.io/astrateam-net/actions-runner` | `2.336.0` |
 | [astra-sso](apps/astra-sso/) | `ghcr.io/astrateam-net/astra-sso` | `2026.5.6` |
 | [astradb](apps/astradb/) | `ghcr.io/astrateam-net/astradb` | `26.1.0` |
 | [astraflow](apps/astraflow/) | `ghcr.io/astrateam-net/astraflow` | `2.32.7` |
