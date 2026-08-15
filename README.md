@@ -16,7 +16,6 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [astraflow](apps/astraflow/) | `ghcr.io/astrateam-net/astraflow` | `2.32.7` |
 | [astragraf](apps/astragraf/) | `ghcr.io/astrateam-net/astragraf` | `13.1.1` |
 | [astrai18n](apps/astrai18n/) | `ghcr.io/astrateam-net/astrai18n` | `3.212.1` |
-| [astraide](apps/astraide/) | `ghcr.io/astrateam-net/astraide` | `v1.4.154` |
 | [astralens](apps/astralens/) | `ghcr.io/astrateam-net/astralens` | `0.9.0` |
 | [astrallm](apps/astrallm/) | `ghcr.io/astrateam-net/astrallm` | `1.97.0-rc.1` |
 | [astralogs](apps/astralogs/) | `ghcr.io/astrateam-net/astralogs` | `3.6.11` |
