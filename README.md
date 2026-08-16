@@ -22,7 +22,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.34.0` |
 | [k8s-sidecar](apps/k8s-sidecar/) | `ghcr.io/astrateam-net/k8s-sidecar` | `2.10.1` |
 | [n8n-mcp](apps/n8n-mcp/) | `ghcr.io/astrateam-net/n8n-mcp` | `2.47.12` |
-| [netbox](apps/netbox/) | `ghcr.io/astrateam-net/netbox` | `4.6.7` |
+| [netbox](apps/netbox/) | `ghcr.io/astrateam-net/netbox` | `4.6.8` |
 | [newt-swarm](apps/newt-swarm/) | `ghcr.io/astrateam-net/newt-swarm` | `1.14.0` |
 | [obsync](apps/obsync/) | `ghcr.io/astrateam-net/obsync` | `3.5.2` |
 | [orb-agent](apps/orb-agent/) | `ghcr.io/astrateam-net/orb-agent` | `2.11.0` |
