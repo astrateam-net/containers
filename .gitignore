@@ -1,8 +1,10 @@
 .bin
 .upstream
+.archive
 .just/local.just
 docker-bake.json
 webstudio/
+.mcp.json
 
 # macOS Finder metadata
 .DS_Store
