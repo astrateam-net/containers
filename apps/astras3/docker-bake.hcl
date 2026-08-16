@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=quay.io/minio/aistor/minio versioning=regex:^RELEASE\.(?<major>\d{4})-(?<minor>\d{2})-(?<patch>\d{2})T(?<build>\d{2}-\d{2}-\d{2})Z$
-  default = "RELEASE.2026-06-06T02-44-06Z"
+  default = "RELEASE.2026-08-07T18-34-35Z"
 }
 
 variable "SOURCE" {
