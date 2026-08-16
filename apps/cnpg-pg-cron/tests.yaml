@@ -1,0 +1,24 @@
+schemaVersion: "2.0.0"
+
+# The image is FROM scratch, so it has no shell and commandTests cannot run.
+# What matters is the layout CloudNativePG mounts, so assert exactly that.
+fileExistenceTests:
+  - name: shared library is present
+    path: /lib/pg_cron.so
+    shouldExist: true
+
+  - name: extension control file is present
+    path: /share/extension/pg_cron.control
+    shouldExist: true
+
+  - name: base install script is present
+    path: /share/extension/pg_cron--1.0.sql
+    shouldExist: true
+
+  - name: upgrade path to the default version is present
+    path: /share/extension/pg_cron--1.5--1.6.sql
+    shouldExist: true
+
+  - name: licence is retained
+    path: /licenses/postgresql-18-cron/copyright
+    shouldExist: true
