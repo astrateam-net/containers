@@ -2,7 +2,7 @@
 # Custom Newt build with Docker Swarm cluster-wide service discovery.
 # Tracks the feature branch on the fork until upstream (fosrl/newt) merges it.
 
-FROM public.ecr.aws/docker/library/golang:1.25-alpine AS builder
+FROM public.ecr.aws/docker/library/golang:1.26-alpine AS builder
 
 ARG VERSION
 ARG SOURCE_REF
@@ -27,6 +27,11 @@ RUN apk --no-cache add ca-certificates tzdata iputils
 
 COPY --from=builder /newt /usr/local/bin/
 COPY --from=builder /src/entrypoint.sh /
+
+# Disables newt's built-in self-update, matching upstream's image. Without it,
+# newt can replace this patched binary with the official release at runtime
+# and silently drop Swarm discovery.
+ENV NEWT_SYSTEM_SUBSTRATE="CONTAINER"
 
 # Admin/metrics endpoint (Prometheus scrape)
 EXPOSE 2112
