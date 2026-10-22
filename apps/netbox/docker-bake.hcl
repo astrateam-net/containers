@@ -3,31 +3,31 @@ target "docker-metadata-action" {}
 # Base tag = v${VERSION}-${NETBOX_DOCKER_VERSION}; tracked as two independent lines. VERSION drives our tag.
 variable "VERSION" {
   // renovate: datasource=docker depName=netboxcommunity/netbox extractVersion=^v(?<version>\d+\.\d+\.\d+)$
-  default = "4.6.8"
+  default = "4.7.3"
 }
 
 variable "NETBOX_DOCKER_VERSION" {
   // renovate: datasource=github-tags depName=netbox-community/netbox-docker
-  default = "5.0.2"
+  default = "5.1.1"
 }
 
 # Carried plugins — must stay NetBox-4.6-compatible. netbox_branching MUST be last in PLUGINS
 # (see configuration/plugins.py). Dropped in the 4.6 move: nextbox-ui (no 4.6 build), netbox-routing.
 variable "NETBOX_ACLS_VERSION" {
   // renovate: datasource=pypi depName=netbox-acls
-  default = "2.0.2"
+  default = "2.1.0"
 }
 
 # Diode NetBox plugin — write-side API for the Diode ingestion / NetBox Discovery pipeline.
 # NetBox 4.6 requires >= 1.12.0 (plugin min_version 4.4.10 / max_version 4.6.99).
 variable "NETBOX_DIODE_VERSION" {
   // renovate: datasource=pypi depName=netboxlabs-diode-netbox-plugin
-  default = "1.14.1"
+  default = "1.18.2"
 }
 
 variable "NETBOX_BRANCHING_VERSION" {
   // renovate: datasource=pypi depName=netboxlabs-netbox-branching
-  default = "1.1.2"
+  default = "1.2.2"
 }
 
 variable "SOURCE" {
