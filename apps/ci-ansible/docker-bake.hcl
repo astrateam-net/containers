@@ -6,7 +6,7 @@ variable "VERSION" {
 
 variable "ANSIBLE_CORE_VERSION" {
   // renovate: datasource=pypi depName=ansible-core
-  default = "2.21.2"
+  default = "2.22.0"
 }
 
 variable "PARAMIKO_VERSION" {
