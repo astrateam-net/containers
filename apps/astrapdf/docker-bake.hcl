@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=docker.io/stirlingtools/stirling-pdf
-  default = "2.14.2"
+  default = "2.14.3"
 }
 
 # SOURCE_REF is the git ref on our fork carrying the AstraPDF patch set, applied
