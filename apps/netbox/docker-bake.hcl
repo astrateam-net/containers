@@ -27,7 +27,7 @@ variable "NETBOX_DIODE_VERSION" {
 
 variable "NETBOX_BRANCHING_VERSION" {
   // renovate: datasource=pypi depName=netboxlabs-netbox-branching
-  default = "1.2.2"
+  default = "1.2.4"
 }
 
 variable "SOURCE" {
