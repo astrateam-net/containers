@@ -16,9 +16,9 @@ file:
 addr:
   tcp://localhost:8080:
     reachable: true
-    timeout: 120s
+    timeout: 120000
 
 http:
   http://localhost:8080/api/v1/info/status:
     status: 200
-    timeout: 180s
+    timeout: 180000
