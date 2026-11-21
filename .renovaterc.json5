@@ -11,8 +11,8 @@
     managerFilePatterns: ["/(^|/)ansible-requirements\\.ya?ml$/"],
   },
   // Limit concurrent PRs to avoid noise
-  prConcurrentLimit: 5,
-  branchConcurrentLimit: 5,
+  prConcurrentLimit: 15,
+  branchConcurrentLimit: 15,
   // Keep major updates separate for review
   separateMajorMinor: true,
   customManagers: [
