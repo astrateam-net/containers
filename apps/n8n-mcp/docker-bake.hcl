@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=github-releases depName=czlonkowski/n8n-mcp extractVersion=^v(?<version>.+)$
-  default = "2.47.12"
+  default = "2.103.2"
 }
 
 variable "AGENTS_SDK_VERSION" {
