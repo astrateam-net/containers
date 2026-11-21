@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=ghcr.io/gitroomhq/postiz-app
-  default = "v2.25.1"
+  default = "v2.26.0"
 }
 
 variable "SOURCE" {
