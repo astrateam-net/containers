@@ -8,4 +8,4 @@ file:
 addr:
   tcp://localhost:1688:
     reachable: true
-    timeout: 10s
+    timeout: 10000
