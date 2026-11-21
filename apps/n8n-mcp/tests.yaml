@@ -1,9 +1,19 @@
-addr:
-  tcp://localhost:3000:
-    reachable: true
-    timeout: 30s
+file:
+  /app/data/nodes.db:
+    exists: true
+    owner: nodejs
+  /app/.db-seed/nodes.db:
+    exists: true
+    owner: nodejs
 
-http:
-  http://localhost:3000/health:
-    status: 200
-    timeout: 30s
+command:
+  agents-sdk-nodes-data:
+    exec: node -e "const D=require('/app/node_modules/better-sqlite3');console.log(new D('/app/data/nodes.db',{readonly:true}).prepare(\"select count(*) c from nodes where node_type like 'nodes-agents-sdk.%' and length(properties_schema)>50\").get().c)"
+    exit-status: 0
+    stdout:
+      - "/^[1-9][0-9]*$/"
+  agents-sdk-nodes-seed:
+    exec: node -e "const D=require('/app/node_modules/better-sqlite3');console.log(new D('/app/.db-seed/nodes.db',{readonly:true}).prepare(\"select count(*) c from nodes where node_type like 'nodes-agents-sdk.%' and length(properties_schema)>50\").get().c)"
+    exit-status: 0
+    stdout:
+      - "/^[1-9][0-9]*$/"
