@@ -10,7 +10,7 @@ variable "VERSION" {
 # stack pins in its own compose.
 variable "TRAEFIK_VERSION" {
   // renovate: datasource=docker depName=traefik
-  default = "v3.7.18"
+  default = "v3.7.19"
 }
 
 variable "S6_OVERLAY_VERSION" {
