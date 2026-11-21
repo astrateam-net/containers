@@ -7,7 +7,7 @@ variable "VERSION" {
 
 variable "UBUNTU_VERSION" {
   // renovate: datasource=docker depName=ubuntu
-  default = "24.04"
+  default = "26.04"
 }
 
 variable "GH_RUNNER_VERSION" {
