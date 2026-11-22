@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=couchdb versioning=docker
-  default = "3.5.2"
+  default = "3.5.3"
 }
 
 variable "DENO_VERSION" {
