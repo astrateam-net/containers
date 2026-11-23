@@ -28,7 +28,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [postgres-pgbackrest](apps/postgres-pgbackrest/) | `ghcr.io/astrateam-net/postgres-pgbackrest` | `17.8.0` |
 | [postiz](apps/postiz/) | `ghcr.io/astrateam-net/postiz` | `v2.26.0` |
 | [vlmcsd](apps/vlmcsd/) | `ghcr.io/astrateam-net/vlmcsd` | `svn1113` |
-| [xtrabackup](apps/xtrabackup/) | `ghcr.io/astrateam-net/xtrabackup` | `8.4.0-7.1` |
+| [xtrabackup](apps/xtrabackup/) | `ghcr.io/astrateam-net/xtrabackup` | `8.4.0-8.1` |
 
 ---
 
