@@ -19,7 +19,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [gerbil-traefik-s6](apps/gerbil-traefik-s6/) | `ghcr.io/astrateam-net/gerbil-traefik-s6` | `1.6.0` |
 | [gh-actions-runner](apps/gh-actions-runner/) | `ghcr.io/astrateam-net/gh-actions-runner` | `0.3.0` |
 | [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.40.0` |
-| [inbox-zero](apps/inbox-zero/) | `ghcr.io/astrateam-net/inbox-zero` | `122474b` |
+| [inbox-zero](apps/inbox-zero/) | `ghcr.io/astrateam-net/inbox-zero` | `122474b7d3197822e951d56f43d1b5f14141c335` |
 | [inbox-zero-unsubscribe-router](apps/inbox-zero-unsubscribe-router/) | `ghcr.io/astrateam-net/inbox-zero-unsubscribe-router` | `122474b7d3197822e951d56f43d1b5f14141c335` |
 | [inbox-zero-unsubscribe-runner](apps/inbox-zero-unsubscribe-runner/) | `ghcr.io/astrateam-net/inbox-zero-unsubscribe-runner` | `122474b7d3197822e951d56f43d1b5f14141c335` |
 | [k8s-sidecar](apps/k8s-sidecar/) | `ghcr.io/astrateam-net/k8s-sidecar` | `2.14.3` |
