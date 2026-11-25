@@ -1,0 +1,13 @@
+diff --git a/apps/web/utils/sso/extract-sso-provider-config-from-xml.ts b/apps/web/utils/sso/extract-sso-provider-config-from-xml.ts
+index efaf207..48e5394 100644
+--- a/apps/web/utils/sso/extract-sso-provider-config-from-xml.ts
++++ b/apps/web/utils/sso/extract-sso-provider-config-from-xml.ts
+@@ -167,7 +167,7 @@ export function extractSSOProviderConfigFromXML(
+ 
+   const spMetadata = `<?xml version="1.0"?>
+ <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="${baseUrl}">
+-  <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
++  <md:SPSSODescriptor AuthnRequestsSigned="false" WantAssertionsSigned="true" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+     <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="${acsUrl}" index="0"/>
+     <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+   </md:SPSSODescriptor>

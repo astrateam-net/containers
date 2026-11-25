@@ -1,7 +1,7 @@
 target "docker-metadata-action" {}
 
 variable "VERSION" {
-  default = "122474b"
+  default = "122474b7d3197822e951d56f43d1b5f14141c335"
 }
 
 variable "SOURCE" {
@@ -29,5 +29,6 @@ target "image-local" {
 
 target "image-all" {
   inherits  = ["image"]
-  platforms = ["linux/amd64", "linux/arm64"]
+  # amd64 only: a Next.js build under arm64 emulation takes hours, and every consumer is amd64.
+  platforms = ["linux/amd64"]
 }
