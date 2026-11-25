@@ -16,7 +16,7 @@ variable "PARAMIKO_VERSION" {
 
 variable "ANSIBLE_LINT_VERSION" {
   // renovate: datasource=pypi depName=ansible-lint
-  default = "26.6.0"
+  default = "26.11.1"
 }
 
 variable "SOURCE" {
