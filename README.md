@@ -20,7 +20,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [gh-actions-runner](apps/gh-actions-runner/) | `ghcr.io/astrateam-net/gh-actions-runner` | `0.3.0` |
 | [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.40.0` |
 | [inbox-zero](apps/inbox-zero/) | `ghcr.io/astrateam-net/inbox-zero` | `122474b` |
-| [k8s-sidecar](apps/k8s-sidecar/) | `ghcr.io/astrateam-net/k8s-sidecar` | `2.10.1` |
+| [k8s-sidecar](apps/k8s-sidecar/) | `ghcr.io/astrateam-net/k8s-sidecar` | `2.14.3` |
 | [n8n-mcp](apps/n8n-mcp/) | `ghcr.io/astrateam-net/n8n-mcp` | `2.103.2` |
 | [netbox](apps/netbox/) | `ghcr.io/astrateam-net/netbox` | `4.7.5` |
 | [newt-swarm](apps/newt-swarm/) | `ghcr.io/astrateam-net/newt-swarm` | `1.20.0` |
