@@ -18,7 +18,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [cnpg-pg-cron](apps/cnpg-pg-cron/) | `ghcr.io/astrateam-net/cnpg-pg-cron` | `1.6.7` |
 | [gerbil-traefik-s6](apps/gerbil-traefik-s6/) | `ghcr.io/astrateam-net/gerbil-traefik-s6` | `1.6.0` |
 | [gh-actions-runner](apps/gh-actions-runner/) | `ghcr.io/astrateam-net/gh-actions-runner` | `0.3.0` |
-| [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.34.0` |
+| [gotenberg](apps/gotenberg/) | `ghcr.io/astrateam-net/gotenberg` | `8.40.0` |
 | [k8s-sidecar](apps/k8s-sidecar/) | `ghcr.io/astrateam-net/k8s-sidecar` | `2.10.1` |
 | [n8n-mcp](apps/n8n-mcp/) | `ghcr.io/astrateam-net/n8n-mcp` | `2.103.2` |
 | [netbox](apps/netbox/) | `ghcr.io/astrateam-net/netbox` | `4.7.5` |
