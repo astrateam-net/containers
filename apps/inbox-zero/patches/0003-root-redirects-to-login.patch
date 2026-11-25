@@ -1,0 +1,16 @@
+diff --git a/apps/web/app/(landing)/page.tsx b/apps/web/app/(landing)/page.tsx
+index 61b5a40..27e1de9 100644
+--- a/apps/web/app/(landing)/page.tsx
++++ b/apps/web/app/(landing)/page.tsx
+@@ -1,9 +1,5 @@
+-import type { Metadata } from "next";
+-import { getHomeMetadata } from "@/app/(landing)/home/home-metadata";
+-import { HomePage } from "@/app/(landing)/home/HomePage";
+-
+-export const metadata: Metadata = getHomeMetadata("en");
++import { redirect } from "next/navigation";
+ 
+ export default function NewLanding() {
+-  return <HomePage locale="en" />;
++  redirect("/login");
+ }

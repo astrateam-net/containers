@@ -1,0 +1,14 @@
+diff --git a/apps/web/utils/decision-model/decision-model.ts b/apps/web/utils/decision-model/decision-model.ts
+index 6c8181f..bee74a1 100644
+--- a/apps/web/utils/decision-model/decision-model.ts
++++ b/apps/web/utils/decision-model/decision-model.ts
+@@ -228,7 +228,8 @@ export function createDecisionModelConfig(
+         modelId,
+         model: createSystemOneDecisionModel({
+           provider,
+-          url: "https://api.typesafe.ai/v1/systemone",
++          // eslint-disable-next-line no-process-env -- self-host gateway override
++          url: process.env.TYPESAFE_SYSTEMONE_URL || "https://api.typesafe.ai/v1/systemone",
+           apiKey,
+           modelId,
+         }),

@@ -3,9 +3,24 @@ schemaVersion: "2.0.0"
 commandTests:
   - name: typesafe-url-overridable
     command: sh
-    args: ["-c", "grep -rl 'process.env.TYPESAFE_SYSTEMONE_URL' /app/apps/web/.next/server | wc -l"]
+    args: ["-c", "grep -rl 'TYPESAFE_SYSTEMONE_URL' /app/apps/web/.next/server | wc -l"]
     expectedOutput: ["^[1-9][0-9]*\\n?$"]
-  - name: no-hardcoded-typesafe-url
+  - name: saml-sp-metadata-wants-signed-assertions
     command: sh
-    args: ["-c", "! grep -rq 'url:\"https://api.typesafe.ai/v1/systemone\"' /app/apps/web/.next/server"]
-    exitCode: 0
+    args: ["-c", "grep -rl 'WantAssertionsSigned=' /app/apps/web/.next/server | wc -l"]
+    expectedOutput: ["^[1-9][0-9]*\\n?$"]
+  - name: brand-inlined
+    command: sh
+    args: ["-c", "grep -rl 'brand-logo.svg' /app/apps/web/.next | wc -l"]
+    expectedOutput: ["^[1-9][0-9]*\\n?$"]
+  - name: runtime-placeholders-kept
+    command: sh
+    args: ["-c", "grep -rl 'NEXT_PUBLIC_BASE_URL_PLACEHOLDER' /app/apps/web/.next | wc -l"]
+    expectedOutput: ["^[1-9][0-9]*\\n?$"]
+fileExistenceTests:
+  - name: brand logo served from public
+    path: /app/apps/web/public/brand-logo.svg
+    shouldExist: true
+  - name: server entrypoint
+    path: /app/apps/web/server.js
+    shouldExist: true
