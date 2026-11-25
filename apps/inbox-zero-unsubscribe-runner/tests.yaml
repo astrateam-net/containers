@@ -1,0 +1,15 @@
+---
+schemaVersion: "2.0.0"
+commandTests:
+  - name: runner entrypoint present
+    command: test
+    args: ["-f", "/app/src/runner.ts"]
+    exitCode: 0
+  - name: chromium installed for playwright
+    command: sh
+    args: ["-c", "ls -d /opt/browsers/chromium-* | head -1"]
+    expectedOutput: ["/opt/browsers/chromium-"]
+  - name: runs as unprivileged user
+    command: id
+    args: ["-u"]
+    expectedOutput: ["^1000"]

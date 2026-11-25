@@ -1,0 +1,15 @@
+---
+schemaVersion: "2.0.0"
+fileExistenceTests:
+  - name: router script
+    path: /router.sh
+    shouldExist: true
+commandTests:
+  - name: nft present
+    command: nft
+    args: ["--version"]
+    exitCode: 0
+  - name: iptables present
+    command: iptables
+    args: ["--version"]
+    exitCode: 0
