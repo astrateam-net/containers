@@ -11,7 +11,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | App | Image | Version |
 |-----|-------|---------|
 | [actions-runner](apps/actions-runner/) | `ghcr.io/astrateam-net/actions-runner` | `2.338.2` |
-| [astravaultnet](apps/astravaultnet/) | `ghcr.io/astrateam-net/astravaultnet` | `0.43.121` |
+| [astravaultnet](apps/astravaultnet/) | `ghcr.io/astrateam-net/astravaultnet` | `0.45.14` |
 | [bird-maxmind](apps/bird-maxmind/) | `ghcr.io/astrateam-net/bird-maxmind` | `0.1.2` |
 | [ci-ansible](apps/ci-ansible/) | `ghcr.io/astrateam-net/ci-ansible` | `1.2.0` |
 | [ci-opentofu](apps/ci-opentofu/) | `ghcr.io/astrateam-net/ci-opentofu` | `1.13.10` |
