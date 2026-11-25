@@ -1,0 +1,11 @@
+---
+schemaVersion: "2.0.0"
+commandTests:
+  - name: typesafe-url-overridable
+    command: sh
+    args: ["-c", "grep -rl 'process.env.TYPESAFE_SYSTEMONE_URL' /app/apps/web/.next/server | wc -l"]
+    expectedOutput: ["^[1-9][0-9]*\\n?$"]
+  - name: no-hardcoded-typesafe-url
+    command: sh
+    args: ["-c", "! grep -rq 'url:\"https://api.typesafe.ai/v1/systemone\"' /app/apps/web/.next/server"]
+    exitCode: 0
