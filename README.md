@@ -24,7 +24,7 @@ Images are built for `linux/amd64` and `linux/arm64`, versioned with semver tags
 | [inbox-zero-unsubscribe-runner](apps/inbox-zero-unsubscribe-runner/) | `ghcr.io/astrateam-net/inbox-zero-unsubscribe-runner` | `122474b7d3197822e951d56f43d1b5f14141c335` |
 | [k8s-sidecar](apps/k8s-sidecar/) | `ghcr.io/astrateam-net/k8s-sidecar` | `2.14.3` |
 | [n8n-mcp](apps/n8n-mcp/) | `ghcr.io/astrateam-net/n8n-mcp` | `2.103.2` |
-| [netbox](apps/netbox/) | `ghcr.io/astrateam-net/netbox` | `4.7.5` |
+| [netbox](apps/netbox/) | `ghcr.io/astrateam-net/netbox` | `4.7.6` |
 | [newt-swarm](apps/newt-swarm/) | `ghcr.io/astrateam-net/newt-swarm` | `1.20.0` |
 | [obsync](apps/obsync/) | `ghcr.io/astrateam-net/obsync` | `3.5.3` |
 | [orb-agent](apps/orb-agent/) | `ghcr.io/astrateam-net/orb-agent` | `2.11.0` |
