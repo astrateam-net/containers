@@ -16,7 +16,7 @@
 
 services:
   relay:
-    image: ghcr.io/astrateam-net/astravaultnet:0.43.121
+    image: ghcr.io/astrateam-net/astravaultnet:0.45.15
     restart: unless-stopped
 
     environment:
