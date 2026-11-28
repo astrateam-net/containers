@@ -12,7 +12,7 @@ variable "VERSION" {
 
 variable "PROXMOX_PROVIDER_VERSION" {
   // renovate: datasource=github-releases depName=bpg/terraform-provider-proxmox
-  default = "0.111.1"
+  default = "0.124.0"
 }
 
 variable "SOURCE" {
