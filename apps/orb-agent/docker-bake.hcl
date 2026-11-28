@@ -2,7 +2,7 @@ target "docker-metadata-action" {}
 
 variable "VERSION" {
   // renovate: datasource=docker depName=netboxlabs/orb-agent
-  default = "2.11.0"
+  default = "2.17.0"
 }
 
 # Overlay on netboxlabs/orb-agent (patched snmp-discovery); VERSION tracks
