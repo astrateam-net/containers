@@ -11,7 +11,7 @@ variable "ANSIBLE_CORE_VERSION" {
 
 variable "PARAMIKO_VERSION" {
   // renovate: datasource=pypi depName=paramiko
-  default = "5.0.0"
+  default = "5.1.0"
 }
 
 variable "ANSIBLE_LINT_VERSION" {
